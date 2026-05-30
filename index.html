@@ -1704,12 +1704,13 @@ async function loadReservas(filtro = 'hoy') {
     <tr>
       <td><strong>${r.nombre_cliente}</strong><br><span style="font-size:12px;color:var(--muted)">${r.telefono_cliente}</span></td>
       <td>${r.fecha} ${r.hora}</td>
-      <td>${r.personas} pax</td>
+      <td>${r.personas} pax${r.union_mesas ? ' <span style="font-size:10px;color:var(--warning);">(unir mesas)</span>' : ''}</td>
       <td>${r.zona}</td>
       <td><span class="res-status status-${r.estado}">${r.estado}</span></td>
       <td style="display:flex;gap:6px;">
-        ${r.estado==='pendiente' ? `<div class="icon-btn" onclick="updateReservaEstado('${r.id}','confirmada')">✓</div>` : ''}
-        <div class="icon-btn danger" onclick="updateReservaEstado('${r.id}','cancelada')">✕</div>
+        <div class="icon-btn" onclick="editReserva('${r.id}')" title="Editar">✏️</div>
+        ${r.estado==='pendiente' ? `<div class="icon-btn" onclick="updateReservaEstado('${r.id}','confirmada')" title="Confirmar">✓</div>` : ''}
+        ${r.estado!=='cancelada' ? `<div class="icon-btn danger" onclick="updateReservaEstado('${r.id}','cancelada')" title="Cancelar">✕</div>` : ''}
       </td>
     </tr>`).join('');
 }
@@ -1719,6 +1720,25 @@ async function updateReservaEstado(id, estado) {
   toast(estado === 'confirmada' ? '✅ Reserva confirmada' : 'Reserva cancelada');
   loadReservas();
   loadDashboard();
+}
+
+let editandoReservaId = null;
+
+function editReserva(id) {
+  const reservas = document.getElementById('reservasBody');
+  // Buscar la reserva en Supabase
+  sb.from('reservas').select('*').eq('id', id).single().then(({ data: r }) => {
+    if (!r) return;
+    editandoReservaId = id;
+    document.getElementById('resNombre').value = r.nombre_cliente;
+    document.getElementById('resTelefono').value = r.telefono_cliente;
+    document.getElementById('resFecha').value = r.fecha;
+    document.getElementById('resHora').value = r.hora;
+    document.getElementById('resPersonas').value = r.personas;
+    document.getElementById('resZona').value = r.zona || 'Interior';
+    document.getElementById('resNotas').value = r.notas || '';
+    document.getElementById('modalReserva').style.display = 'block';
+  });
 }
 
 // ── PEDIDOS ───────────────────────────────────────────
@@ -2287,6 +2307,7 @@ async function deleteMesa(id) {
 
 // ── NUEVA RESERVA ─────────────────────────────────────
 function showAddReserva() {
+  editandoReservaId = null;
   const hoy = new Date().toISOString().split('T')[0];
   document.getElementById('resFecha').value = hoy;
   document.getElementById('resHora').value = '21:00';
@@ -2301,6 +2322,7 @@ function showAddReserva() {
 
 function hideModalReserva() {
   document.getElementById('modalReserva').style.display = 'none';
+  editandoReservaId = null;
 }
 
 async function saveReserva() {
@@ -2321,8 +2343,7 @@ async function saveReserva() {
   const mesaMayor = mesasData.reduce((max, m) => Math.max(max, m.comensales_max), 0);
   const union_mesas = personas > mesaMayor;
 
-  const { error } = await sb.from('reservas').insert({
-    negocio_id: currentNegocio.id,
+  const payload = {
     nombre_cliente: nombre,
     telefono_cliente: telefono,
     fecha,
@@ -2330,17 +2351,22 @@ async function saveReserva() {
     personas,
     zona,
     notas: notas || null,
-    union_mesas,
-    estado: 'confirmada'
-  });
+    union_mesas
+  };
 
-  if (error) {
-    toast('Error al crear reserva: ' + error.message, true);
-    return;
+  if (editandoReservaId) {
+    const { error } = await sb.from('reservas').update(payload).eq('id', editandoReservaId);
+    if (error) { toast('Error al actualizar: ' + error.message, true); return; }
+    toast('✅ Reserva actualizada');
+  } else {
+    payload.negocio_id = currentNegocio.id;
+    payload.estado = 'confirmada';
+    const { error } = await sb.from('reservas').insert(payload);
+    if (error) { toast('Error al crear: ' + error.message, true); return; }
+    toast(union_mesas ? '✅ Reserva creada (requiere unir mesas)' : '✅ Reserva confirmada');
   }
 
   hideModalReserva();
-  toast(union_mesas ? '✅ Reserva creada (requiere unir mesas)' : '✅ Reserva confirmada');
   await loadReservas();
   await loadDashboard();
 }

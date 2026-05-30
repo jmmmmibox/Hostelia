@@ -1700,10 +1700,13 @@ async function loadReservas(filtro = 'hoy') {
     tbody.innerHTML = '<tr><td colspan="6" class="loading-row" style="color:var(--muted)">No hay reservas para este período</td></tr>';
     return;
   }
-  tbody.innerHTML = data.map(r => `
-    <tr>
+  tbody.innerHTML = data.map(r => {
+    const fp = (r.fecha||'').split('-');
+    const fechaFmt = fp.length===3 ? `${fp[2]}-${fp[1]}-${fp[0].slice(2)}` : r.fecha;
+    const horaFmt = (r.hora||'').slice(0,5);
+    return `<tr>
       <td><strong>${r.nombre_cliente}</strong><br><span style="font-size:12px;color:var(--muted)">${r.telefono_cliente}</span></td>
-      <td>${r.fecha} ${r.hora}</td>
+      <td>${fechaFmt} · ${horaFmt}h</td>
       <td>${r.personas} pax${r.union_mesas ? ' <span style="font-size:10px;color:var(--warning);">(unir mesas)</span>' : ''}</td>
       <td>${r.zona}</td>
       <td><span class="res-status status-${r.estado}">${r.estado}</span></td>
@@ -1712,7 +1715,8 @@ async function loadReservas(filtro = 'hoy') {
         ${r.estado==='pendiente' ? `<div class="icon-btn" onclick="updateReservaEstado('${r.id}','confirmada')" title="Confirmar">✓</div>` : ''}
         ${r.estado!=='cancelada' ? `<div class="icon-btn danger" onclick="updateReservaEstado('${r.id}','cancelada')" title="Cancelar">✕</div>` : ''}
       </td>
-    </tr>`).join('');
+    </tr>`;
+  }).join('');
 }
 
 async function updateReservaEstado(id, estado) {

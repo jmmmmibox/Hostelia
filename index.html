@@ -443,6 +443,71 @@
     animation:fadeIn .2s ease;
   }
   @keyframes fadeIn { from{opacity:0} to{opacity:1} }
+
+  /* MESAS */
+  .mesa-card {
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    padding:20px;
+    text-align:center;
+    position:relative;
+    transition:border-color .2s;
+  }
+  .mesa-card:hover { border-color:rgba(255,107,53,.3); }
+  .mesa-icon { font-size:28px; margin-bottom:8px; }
+  .mesa-count {
+    font-family:'Syne',sans-serif;
+    font-size:28px;
+    font-weight:800;
+    color:var(--text);
+    margin-bottom:2px;
+  }
+  .mesa-label { font-size:12px; color:var(--muted); margin-bottom:10px; }
+  .mesa-capacity {
+    display:inline-block;
+    background:rgba(255,107,53,.12);
+    color:var(--accent);
+    border-radius:100px;
+    padding:3px 12px;
+    font-size:11px;
+    font-weight:600;
+  }
+  .mesa-delete {
+    position:absolute;
+    top:8px; right:8px;
+    width:24px; height:24px;
+    border-radius:50%;
+    background:var(--surface2);
+    border:1px solid var(--border);
+    display:flex; align-items:center; justify-content:center;
+    font-size:11px;
+    cursor:pointer;
+    opacity:0;
+    transition:opacity .2s;
+  }
+  .mesa-card:hover .mesa-delete { opacity:1; }
+  .mesa-delete:hover { background:rgba(224,82,82,.15); border-color:var(--danger); }
+
+  /* DISPONIBILIDAD */
+  .dispo-card {
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    padding:16px;
+    text-align:center;
+  }
+  .dispo-card.full { border-color:rgba(224,82,82,.4); }
+  .dispo-card.partial { border-color:rgba(240,165,0,.4); }
+  .dispo-card.free { border-color:rgba(76,175,125,.4); }
+  .dispo-hora { font-family:'Syne',sans-serif; font-size:16px; font-weight:700; margin-bottom:8px; }
+  .dispo-bar-wrap { height:6px; background:var(--surface2); border-radius:100px; overflow:hidden; margin-bottom:8px; }
+  .dispo-bar-fill { height:100%; border-radius:100px; transition:width .3s; }
+  .dispo-bar-fill.green { background:var(--success); }
+  .dispo-bar-fill.orange { background:var(--warning); }
+  .dispo-bar-fill.red { background:var(--danger); }
+  .dispo-text { font-size:12px; color:var(--muted); }
+  .dispo-text strong { color:var(--text); }
 </style>
 </head>
 <body>
@@ -947,43 +1012,116 @@
       <div class="panel" id="panel-reservas">
         <div class="page-header">
           <div class="page-title">Reservas</div>
-          <div class="page-sub">Gestiona todas las reservas de tu negocio.</div>
+          <div class="page-sub">Gestiona las mesas de tu local, las reservas y la disponibilidad.</div>
         </div>
-        <div class="config-reservas">
-          <div class="config-card">
-            <div class="config-card-label">Máx. reservas / día</div>
-            <input type="number" id="cfgMaxRes" value="20" onchange="saveReservasConfig()">
+
+        <!-- Pestañas -->
+        <div class="kb-tabs" style="margin-bottom:24px;">
+          <div class="kb-tab active" onclick="switchResTab('mesas',this)">🪑 Mesas</div>
+          <div class="kb-tab" onclick="switchResTab('disponibilidad',this)">📊 Disponibilidad</div>
+          <div class="kb-tab" onclick="switchResTab('listado',this)">📋 Reservas</div>
+          <div class="kb-tab" onclick="switchResTab('configres',this)">⚙️ Configuración</div>
+        </div>
+
+        <!-- TAB: MESAS -->
+        <div class="kb-content active" id="res-mesas">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+            <div class="card-title" style="margin-bottom:0;">Mesas del local</div>
+            <button class="topbar-btn accent" onclick="showAddMesa()">+ Añadir mesas</button>
           </div>
-          <div class="config-card">
-            <div class="config-card-label">Antelación máx. (días)</div>
-            <input type="number" id="cfgMaxDias" value="30" onchange="saveReservasConfig()">
+          <p style="font-size:13px;color:var(--muted);margin-bottom:16px;">Define cuántas mesas tienes y de qué capacidad. Para grupos grandes se pueden unir mesas.</p>
+
+          <div id="mesasGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;margin-bottom:20px;">
+            <div class="loading-row" style="width:100%;">Cargando mesas...</div>
           </div>
-          <div class="config-card">
-            <div class="config-card-label">Antelación mín. (horas)</div>
-            <input type="number" id="cfgMinHoras" value="2" onchange="saveReservasConfig()">
+
+          <!-- Resumen total -->
+          <div class="card" style="margin-bottom:16px;">
+            <div style="display:flex;gap:24px;flex-wrap:wrap;">
+              <div>
+                <div class="setting-label">Total mesas</div>
+                <div style="font-family:'Syne',sans-serif;font-size:24px;font-weight:800;" id="totalMesas">0</div>
+              </div>
+              <div>
+                <div class="setting-label">Capacidad total</div>
+                <div style="font-family:'Syne',sans-serif;font-size:24px;font-weight:800;" id="totalComensales">0</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Modal añadir mesa -->
+          <div id="modalMesa" style="display:none;">
+            <div class="card">
+              <div class="card-title">Añadir grupo de mesas</div>
+              <div style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;">
+                <div style="flex:1;min-width:120px;">
+                  <div class="setting-label">Cantidad de mesas</div>
+                  <input class="setting-input" id="mesaCantidad" type="number" min="1" value="1" placeholder="Ej: 5">
+                </div>
+                <div style="flex:1;min-width:120px;">
+                  <div class="setting-label">Comensales por mesa</div>
+                  <input class="setting-input" id="mesaComensales" type="number" min="1" value="2" placeholder="Ej: 4">
+                </div>
+                <button class="btn-primary" style="width:auto;padding:10px 20px;margin:0;height:42px;" onclick="saveMesa()">Añadir</button>
+                <button class="btn-secondary" style="padding:10px 16px;height:42px;" onclick="document.getElementById('modalMesa').style.display='none'">Cancelar</button>
+              </div>
+            </div>
           </div>
         </div>
-        <div class="reservas-header">
-          <div class="date-filter">
-            <div class="date-btn active" onclick="setDateFilter('hoy',this)">Hoy</div>
-            <div class="date-btn" onclick="setDateFilter('manana',this)">Mañana</div>
-            <div class="date-btn" onclick="setDateFilter('semana',this)">Esta semana</div>
-            <div class="date-btn" onclick="setDateFilter('todas',this)">Todas</div>
+
+        <!-- TAB: DISPONIBILIDAD -->
+        <div class="kb-content" id="res-disponibilidad">
+          <div style="display:flex;gap:12px;align-items:center;margin-bottom:20px;">
+            <div class="setting-label" style="margin-bottom:0;">Fecha:</div>
+            <input class="setting-input" id="dispoFecha" type="date" style="width:200px;" onchange="loadDisponibilidad()">
           </div>
-          <div style="margin-left:auto;">
-            <button class="topbar-btn accent" onclick="toast('Funcionalidad próximamente')">+ Nueva reserva</button>
+          <div id="dispoGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;">
+            <div class="loading-row" style="width:100%;">Selecciona una fecha</div>
           </div>
         </div>
-        <table class="reservas-table">
-          <thead>
-            <tr>
-              <th>Cliente</th><th>Fecha y hora</th><th>Personas</th><th>Zona</th><th>Estado</th><th>Acciones</th>
-            </tr>
-          </thead>
-          <tbody id="reservasBody">
-            <tr><td colspan="6" class="loading-row">Cargando reservas...</td></tr>
-          </tbody>
-        </table>
+
+        <!-- TAB: LISTADO RESERVAS -->
+        <div class="kb-content" id="res-listado">
+          <div class="reservas-header">
+            <div class="date-filter">
+              <div class="date-btn active" onclick="setDateFilter('hoy',this)">Hoy</div>
+              <div class="date-btn" onclick="setDateFilter('manana',this)">Mañana</div>
+              <div class="date-btn" onclick="setDateFilter('semana',this)">Esta semana</div>
+              <div class="date-btn" onclick="setDateFilter('todas',this)">Todas</div>
+            </div>
+            <div style="margin-left:auto;">
+              <button class="topbar-btn accent" onclick="toast('Funcionalidad próximamente')">+ Nueva reserva</button>
+            </div>
+          </div>
+          <table class="reservas-table">
+            <thead>
+              <tr>
+                <th>Cliente</th><th>Fecha y hora</th><th>Personas</th><th>Zona</th><th>Estado</th><th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="reservasBody">
+              <tr><td colspan="6" class="loading-row">Cargando reservas...</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- TAB: CONFIGURACIÓN -->
+        <div class="kb-content" id="res-configres">
+          <div class="config-reservas">
+            <div class="config-card">
+              <div class="config-card-label">Máx. reservas / día</div>
+              <input type="number" id="cfgMaxRes" value="20" onchange="saveReservasConfig()">
+            </div>
+            <div class="config-card">
+              <div class="config-card-label">Antelación máx. (días)</div>
+              <input type="number" id="cfgMaxDias" value="30" onchange="saveReservasConfig()">
+            </div>
+            <div class="config-card">
+              <div class="config-card-label">Antelación mín. (horas)</div>
+              <input type="number" id="cfgMinHoras" value="2" onchange="saveReservasConfig()">
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- PEDIDOS -->
@@ -1698,7 +1836,7 @@ function showPanel(name, el) {
   document.getElementById('topbarTitle').textContent = titles[name] || name;
   hideSaveBar();
   if (name === 'carta') loadCategorias();
-  if (name === 'reservas') loadReservas();
+  if (name === 'reservas') { loadMesas(); loadReservas(); loadReservasConfig(); }
   if (name === 'pedidos') loadPedidos();
   if (name === 'agente') loadCuestionario();
 }
@@ -2016,6 +2154,142 @@ async function togglePlatoDispo(id, activar) {
   await sb.from('carta').update({ disponible: activar }).eq('id', id);
   toast(activar ? 'Plato activado ✓' : 'Plato desactivado');
   await loadPlatos(categoriaActiva);
+}
+
+// ── RESERVAS — PESTAÑAS ──────────────────────────────
+function switchResTab(tab, el) {
+  const panel = document.getElementById('panel-reservas');
+  panel.querySelectorAll('.kb-tab').forEach(t => t.classList.remove('active'));
+  panel.querySelectorAll('.kb-content').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('res-' + tab).classList.add('active');
+  if (tab === 'listado') loadReservas();
+  if (tab === 'mesas') loadMesas();
+  if (tab === 'disponibilidad') {
+    const hoy = new Date().toISOString().split('T')[0];
+    document.getElementById('dispoFecha').value = hoy;
+    loadDisponibilidad();
+  }
+  if (tab === 'configres') loadReservasConfig();
+}
+
+// ── MESAS ─────────────────────────────────────────────
+let mesasData = [];
+
+async function loadMesas() {
+  const { data } = await sb.from('mesas').select('*')
+    .eq('negocio_id', currentNegocio.id).order('comensales_max');
+  mesasData = data || [];
+  renderMesas();
+}
+
+function renderMesas() {
+  const grid = document.getElementById('mesasGrid');
+  if (mesasData.length === 0) {
+    grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1;"><div class="empty-icon">🪑</div><div class="empty-title">Sin mesas configuradas</div><div class="empty-sub">Añade las mesas de tu local para gestionar la disponibilidad.</div></div>';
+    document.getElementById('totalMesas').textContent = '0';
+    document.getElementById('totalComensales').textContent = '0';
+    return;
+  }
+  grid.innerHTML = mesasData.map(m => `
+    <div class="mesa-card">
+      <div class="mesa-delete" onclick="deleteMesa('${m.id}')" title="Eliminar">🗑️</div>
+      <div class="mesa-icon">🪑</div>
+      <div class="mesa-count">${m.cantidad}</div>
+      <div class="mesa-label">${m.cantidad === 1 ? 'mesa' : 'mesas'}</div>
+      <div class="mesa-capacity">${m.comensales_max} comensales/mesa</div>
+    </div>`).join('');
+
+  const totalM = mesasData.reduce((s, m) => s + m.cantidad, 0);
+  const totalC = mesasData.reduce((s, m) => s + (m.cantidad * m.comensales_max), 0);
+  document.getElementById('totalMesas').textContent = totalM;
+  document.getElementById('totalComensales').textContent = totalC + ' personas';
+}
+
+function showAddMesa() {
+  document.getElementById('mesaCantidad').value = 1;
+  document.getElementById('mesaComensales').value = 2;
+  document.getElementById('modalMesa').style.display = 'block';
+}
+
+async function saveMesa() {
+  const cantidad = parseInt(document.getElementById('mesaCantidad').value);
+  const comensales_max = parseInt(document.getElementById('mesaComensales').value);
+
+  if (!cantidad || cantidad < 1) { toast('Introduce una cantidad válida', true); return; }
+  if (!comensales_max || comensales_max < 1) { toast('Introduce comensales válidos', true); return; }
+
+  // Comprobar si ya existe un grupo con esa capacidad
+  const existente = mesasData.find(m => m.comensales_max === comensales_max);
+  if (existente) {
+    await sb.from('mesas').update({ cantidad: existente.cantidad + cantidad }).eq('id', existente.id);
+    toast(`Añadidas ${cantidad} mesas de ${comensales_max} comensales ✓`);
+  } else {
+    await sb.from('mesas').insert({ negocio_id: currentNegocio.id, cantidad, comensales_max });
+    toast(`Creadas ${cantidad} mesas de ${comensales_max} comensales ✓`);
+  }
+  document.getElementById('modalMesa').style.display = 'none';
+  await loadMesas();
+}
+
+async function deleteMesa(id) {
+  if (!confirm('¿Eliminar este grupo de mesas?')) return;
+  await sb.from('mesas').delete().eq('id', id);
+  toast('Mesas eliminadas');
+  await loadMesas();
+}
+
+// ── DISPONIBILIDAD ────────────────────────────────────
+async function loadDisponibilidad() {
+  const fecha = document.getElementById('dispoFecha').value;
+  if (!fecha) return;
+
+  const grid = document.getElementById('dispoGrid');
+  grid.innerHTML = '<div class="loading-row" style="grid-column:1/-1;">Calculando disponibilidad...</div>';
+
+  // Obtener total de mesas
+  const totalMesas = mesasData.reduce((s, m) => s + m.cantidad, 0);
+  if (totalMesas === 0) {
+    grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1;"><div class="empty-icon">🪑</div><div class="empty-title">Configura tus mesas primero</div><div class="empty-sub">Ve a la pestaña "Mesas" y añade las mesas de tu local.</div></div>';
+    return;
+  }
+
+  // Obtener reservas de ese día (solo confirmadas y pendientes)
+  const { data: reservas } = await sb.from('reservas').select('*')
+    .eq('negocio_id', currentNegocio.id)
+    .eq('fecha', fecha)
+    .in('estado', ['confirmada', 'pendiente']);
+
+  // Horarios típicos de servicio
+  const horas = ['13:00','13:30','14:00','14:30','15:00','15:30','20:00','20:30','21:00','21:30','22:00','22:30','23:00'];
+
+  // Calcular reservas por franja horaria (una reserva ocupa ~1.5h)
+  grid.innerHTML = horas.map(hora => {
+    const horaNum = parseInt(hora.replace(':',''));
+    const reservasEnHora = (reservas || []).filter(r => {
+      const rHoraNum = parseInt((r.hora || '').replace(':',''));
+      return Math.abs(rHoraNum - horaNum) < 130; // ~1.5h de margen
+    });
+
+    const mesasOcupadas = reservasEnHora.length;
+    const mesasLibres = Math.max(0, totalMesas - mesasOcupadas);
+    const pct = totalMesas > 0 ? (mesasOcupadas / totalMesas) * 100 : 0;
+
+    let clase = 'free';
+    let barClase = 'green';
+    if (pct >= 100) { clase = 'full'; barClase = 'red'; }
+    else if (pct >= 50) { clase = 'partial'; barClase = 'orange'; }
+
+    return `<div class="dispo-card ${clase}">
+      <div class="dispo-hora">${hora}</div>
+      <div class="dispo-bar-wrap">
+        <div class="dispo-bar-fill ${barClase}" style="width:${Math.min(pct,100)}%"></div>
+      </div>
+      <div class="dispo-text">
+        <strong>${mesasLibres}</strong> libre${mesasLibres !== 1 ? 's' : ''} / ${totalMesas}
+      </div>
+    </div>`;
+  }).join('');
 }
 </script>
 </body>

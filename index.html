@@ -416,13 +416,14 @@
   .plato-card.unavailable { opacity:.5; }
   .plato-img {
     width:100%;
-    height:160px;
+    height:180px;
     background:var(--surface2);
     display:flex; align-items:center; justify-content:center;
     font-size:40px;
     overflow:hidden;
+    position:relative;
   }
-  .plato-img img { width:100%; height:100%; object-fit:cover; }
+  .plato-img img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:center; }
   .plato-body { padding:14px; }
   .plato-name { font-size:15px; font-weight:600; margin-bottom:4px; }
   .plato-desc { font-size:12px; color:var(--muted); line-height:1.5; margin-bottom:10px; min-height:18px; }

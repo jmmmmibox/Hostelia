@@ -1468,15 +1468,19 @@ async function loadDashboard() {
   if (!proxRes || proxRes.length === 0) {
     dashRes.innerHTML = '<div class="empty-state"><div class="empty-icon">📅</div><div class="empty-title">Sin reservas próximas</div><div class="empty-sub">Las reservas que haga tu agente aparecerán aquí.</div></div>';
   } else {
-    dashRes.innerHTML = proxRes.map(r => `
-      <div class="reservation-item">
+    dashRes.innerHTML = proxRes.map(r => {
+      const fp = (r.fecha||'').split('-');
+      const fechaFmt = fp.length===3 ? `${fp[2]}-${fp[1]}-${fp[0].slice(2)}` : r.fecha;
+      const horaFmt = (r.hora||'').slice(0,5);
+      return `<div class="reservation-item">
         <div class="res-avatar">👤</div>
         <div class="res-info">
           <div class="res-name">${r.nombre_cliente}</div>
-          <div class="res-detail">${r.fecha} ${r.hora} · ${r.personas} pax · ${r.zona}</div>
+          <div class="res-detail">${horaFmt}h · ${fechaFmt} · ${r.personas} pax · ${r.zona}</div>
         </div>
         <div class="res-status status-${r.estado}">${r.estado}</div>
-      </div>`).join('');
+      </div>`;
+    }).join('');
   }
 
   // Agente info
@@ -1706,7 +1710,7 @@ async function loadReservas(filtro = 'hoy') {
     const horaFmt = (r.hora||'').slice(0,5);
     return `<tr>
       <td><strong>${r.nombre_cliente}</strong><br><span style="font-size:12px;color:var(--muted)">${r.telefono_cliente}</span></td>
-      <td>${fechaFmt} · ${horaFmt}h</td>
+      <td>${horaFmt}h · ${fechaFmt}</td>
       <td>${r.personas} pax${r.union_mesas ? ' <span style="font-size:10px;color:var(--warning);">(unir mesas)</span>' : ''}</td>
       <td>${r.zona}</td>
       <td><span class="res-status status-${r.estado}">${r.estado}</span></td>

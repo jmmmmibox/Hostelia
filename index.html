@@ -1090,7 +1090,7 @@
               <div class="date-btn" onclick="setDateFilter('todas',this)">Todas</div>
             </div>
             <div style="margin-left:auto;">
-              <button class="topbar-btn accent" onclick="toast('Funcionalidad próximamente')">+ Nueva reserva</button>
+              <button class="topbar-btn accent" onclick="showAddReserva()">+ Nueva reserva</button>
             </div>
           </div>
           <table class="reservas-table">
@@ -1103,6 +1103,52 @@
               <tr><td colspan="6" class="loading-row">Cargando reservas...</td></tr>
             </tbody>
           </table>
+
+          <!-- Modal nueva reserva -->
+          <div id="modalReserva" style="display:none;">
+            <div class="card" style="margin-top:20px;">
+              <div class="card-title">Nueva reserva</div>
+              <div style="display:flex;flex-wrap:wrap;gap:12px;">
+                <div style="flex:1;min-width:140px;">
+                  <div class="setting-label">Nombre</div>
+                  <input class="setting-input" id="resNombre" type="text" placeholder="Nombre del cliente">
+                </div>
+                <div style="flex:1;min-width:140px;">
+                  <div class="setting-label">Teléfono</div>
+                  <input class="setting-input" id="resTelefono" type="tel" placeholder="+34 600...">
+                </div>
+              </div>
+              <div style="display:flex;flex-wrap:wrap;gap:12px;margin-top:12px;">
+                <div style="flex:1;min-width:120px;">
+                  <div class="setting-label">Fecha</div>
+                  <input class="setting-input" id="resFecha" type="date">
+                </div>
+                <div style="flex:1;min-width:100px;">
+                  <div class="setting-label">Hora</div>
+                  <input class="setting-input" id="resHora" type="time" value="21:00">
+                </div>
+                <div style="flex:1;min-width:80px;">
+                  <div class="setting-label">Personas</div>
+                  <input class="setting-input" id="resPersonas" type="number" min="1" value="2">
+                </div>
+                <div style="flex:1;min-width:100px;">
+                  <div class="setting-label">Zona</div>
+                  <select class="setting-select" id="resZona">
+                    <option>Interior</option>
+                    <option>Terraza</option>
+                  </select>
+                </div>
+              </div>
+              <div style="margin-top:12px;">
+                <div class="setting-label">Notas (opcional)</div>
+                <input class="setting-input" id="resNotas" type="text" placeholder="Ej: cumpleaños, alergias...">
+              </div>
+              <div style="display:flex;gap:10px;margin-top:16px;">
+                <button class="btn-primary" style="flex:1;" onclick="saveReserva()">Confirmar reserva</button>
+                <button class="btn-secondary" style="padding:10px 20px;" onclick="hideModalReserva()">Cancelar</button>
+              </div>
+            </div>
+          </div>
         </div>
 
         <!-- TAB: CONFIGURACIÓN -->
@@ -2239,6 +2285,66 @@ async function deleteMesa(id) {
   await loadMesas();
 }
 
+// ── NUEVA RESERVA ─────────────────────────────────────
+function showAddReserva() {
+  const hoy = new Date().toISOString().split('T')[0];
+  document.getElementById('resFecha').value = hoy;
+  document.getElementById('resHora').value = '21:00';
+  document.getElementById('resPersonas').value = 2;
+  document.getElementById('resNombre').value = '';
+  document.getElementById('resTelefono').value = '';
+  document.getElementById('resNotas').value = '';
+  document.getElementById('resZona').value = 'Interior';
+  document.getElementById('modalReserva').style.display = 'block';
+  document.getElementById('resNombre').focus();
+}
+
+function hideModalReserva() {
+  document.getElementById('modalReserva').style.display = 'none';
+}
+
+async function saveReserva() {
+  const nombre = document.getElementById('resNombre').value.trim();
+  const telefono = document.getElementById('resTelefono').value.trim();
+  const fecha = document.getElementById('resFecha').value;
+  const hora = document.getElementById('resHora').value;
+  const personas = parseInt(document.getElementById('resPersonas').value);
+  const zona = document.getElementById('resZona').value;
+  const notas = document.getElementById('resNotas').value.trim();
+
+  if (!nombre) { toast('Introduce el nombre del cliente', true); return; }
+  if (!telefono) { toast('Introduce el teléfono', true); return; }
+  if (!fecha) { toast('Selecciona una fecha', true); return; }
+  if (!hora) { toast('Selecciona una hora', true); return; }
+  if (!personas || personas < 1) { toast('Introduce número de personas', true); return; }
+
+  const mesaMayor = mesasData.reduce((max, m) => Math.max(max, m.comensales_max), 0);
+  const union_mesas = personas > mesaMayor;
+
+  const { error } = await sb.from('reservas').insert({
+    negocio_id: currentNegocio.id,
+    nombre_cliente: nombre,
+    telefono_cliente: telefono,
+    fecha,
+    hora,
+    personas,
+    zona,
+    notas: notas || null,
+    union_mesas,
+    estado: 'confirmada'
+  });
+
+  if (error) {
+    toast('Error al crear reserva: ' + error.message, true);
+    return;
+  }
+
+  hideModalReserva();
+  toast(union_mesas ? '✅ Reserva creada (requiere unir mesas)' : '✅ Reserva confirmada');
+  await loadReservas();
+  await loadDashboard();
+}
+
 // ── DISPONIBILIDAD ────────────────────────────────────
 async function loadDisponibilidad() {
   const fecha = document.getElementById('dispoFecha').value;
@@ -2247,28 +2353,24 @@ async function loadDisponibilidad() {
   const grid = document.getElementById('dispoGrid');
   grid.innerHTML = '<div class="loading-row" style="grid-column:1/-1;">Calculando disponibilidad...</div>';
 
-  // Obtener total de mesas
   const totalMesas = mesasData.reduce((s, m) => s + m.cantidad, 0);
   if (totalMesas === 0) {
     grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1;"><div class="empty-icon">🪑</div><div class="empty-title">Configura tus mesas primero</div><div class="empty-sub">Ve a la pestaña "Mesas" y añade las mesas de tu local.</div></div>';
     return;
   }
 
-  // Obtener reservas de ese día (solo confirmadas y pendientes)
   const { data: reservas } = await sb.from('reservas').select('*')
     .eq('negocio_id', currentNegocio.id)
     .eq('fecha', fecha)
     .in('estado', ['confirmada', 'pendiente']);
 
-  // Horarios típicos de servicio
   const horas = ['13:00','13:30','14:00','14:30','15:00','15:30','20:00','20:30','21:00','21:30','22:00','22:30','23:00'];
 
-  // Calcular reservas por franja horaria (una reserva ocupa ~1.5h)
   grid.innerHTML = horas.map(hora => {
     const horaNum = parseInt(hora.replace(':',''));
     const reservasEnHora = (reservas || []).filter(r => {
       const rHoraNum = parseInt((r.hora || '').replace(':',''));
-      return Math.abs(rHoraNum - horaNum) < 130; // ~1.5h de margen
+      return Math.abs(rHoraNum - horaNum) < 130;
     });
 
     const mesasOcupadas = reservasEnHora.length;

@@ -2153,7 +2153,7 @@ function switchWebTab(tab, el) {
 
 async function loadWebConfig() {
   const { data } = await sb.from('web_config').select('*')
-    .eq('negocio_id', currentNegocio.id).single();
+    .eq('negocio_id', currentNegocio.id).order('creado_en', { ascending: false }).limit(1).maybeSingle();
   webConfigData = data;
 
   if (!data) return; // Primera vez, campos vacíos

@@ -473,12 +473,12 @@ window.addEventListener('DOMContentLoaded', async () => {
   try {
     const [n, w, c, p, m, rc, ec] = await Promise.all([
       sb.from('negocios').select('*').eq('id', NID).single(),
-      sb.from('web_config').select('*').eq('negocio_id', NID).single(),
+      sb.from('web_config').select('*').eq('negocio_id', NID).order('creado_en', { ascending: false }).limit(1).maybeSingle(),
       sb.from('categorias').select('*').eq('negocio_id', NID).eq('activa', true).order('orden'),
       sb.from('carta').select('*').eq('negocio_id', NID).eq('disponible', true).order('orden'),
       sb.from('mesas').select('*').eq('negocio_id', NID),
-      sb.from('reservas_config').select('*').eq('negocio_id', NID).single(),
-      sb.from('envio_config').select('*').eq('negocio_id', NID).single()
+      sb.from('reservas_config').select('*').eq('negocio_id', NID).limit(1).maybeSingle(),
+      sb.from('envio_config').select('*').eq('negocio_id', NID).limit(1).maybeSingle()
     ]);
     negocio = n.data; webConf = w.data;
     categorias = c.data||[]; platos = p.data||[];

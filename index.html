@@ -2256,14 +2256,17 @@ async function saveWebConfig() {
   };
 
   if (webConfigData) {
-    await sb.from('web_config').update(payload).eq('id', webConfigData.id);
+    const { error } = await sb.from('web_config').update(payload).eq('id', webConfigData.id);
+    if (error) { toast('Error al guardar: ' + error.message, true); return; }
   } else {
-    const { data } = await sb.from('web_config').insert(payload).select().single();
+    const { data, error } = await sb.from('web_config').insert(payload).select().single();
+    if (error) { toast('Error al crear: ' + error.message, true); return; }
     webConfigData = data;
   }
 
   hideSaveBar();
-  toast('Web guardada ✓');
+  const imgs = [logo_url ? 'logo ✓' : '', hero_imagen_url ? 'hero ✓' : '', sobre_nosotros_imagen_url ? 'sobre ✓' : ''].filter(Boolean).join(', ');
+  toast('Web guardada ✓' + (imgs ? ' — Imágenes: ' + imgs : ''));
 }
 
 function previewWebImg(input, previewId, tipo) {
@@ -2281,10 +2284,18 @@ function previewWebImg(input, previewId, tipo) {
 async function uploadWebImg(file, tipo) {
   const ext = file.name.split('.').pop();
   const fileName = `web/${currentNegocio.id}/${tipo}_${Date.now()}.${ext}`;
+  toast(`Subiendo imagen ${tipo}...`);
   const { error } = await sb.storage.from('imagenes').upload(fileName, file, { upsert: true });
-  if (error) { toast('Error al subir imagen', true); return null; }
+  if (error) {
+    toast(`Error al subir ${tipo}: ${error.message}`, true);
+    console.error('Upload error:', error);
+    return null;
+  }
   const { data } = sb.storage.from('imagenes').getPublicUrl(fileName);
-  return data?.publicUrl || null;
+  const url = data?.publicUrl || null;
+  if (url) toast(`✅ Imagen ${tipo} subida`);
+  else toast(`⚠️ Imagen subida pero sin URL`, true);
+  return url;
 }
 
 function toast(msg, isError = false) {

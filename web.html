@@ -483,6 +483,15 @@ window.addEventListener('DOMContentLoaded', async () => {
     negocio = n.data; webConf = w.data;
     categorias = c.data||[]; platos = p.data||[];
     mesasData = m.data||[]; resConfig = rc.data; envioConf = ec.data;
+
+    console.log('Negocio:', negocio);
+    console.log('Web config:', webConf);
+    console.log('Categorías:', categorias.length);
+    console.log('Platos:', platos.length);
+    console.log('Mesas:', mesasData.length);
+    console.log('Reservas config:', resConfig);
+    console.log('Envío config:', envioConf);
+    console.log('Errores:', { n:n.error, w:w.error, c:c.error, p:p.error, m:m.error, rc:rc.error, ec:ec.error });
     if (!negocio) { document.getElementById('loader').innerHTML = '<p>Negocio no encontrado</p>'; return; }
     render();
   } catch(e) { console.error(e); }

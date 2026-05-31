@@ -2258,11 +2258,18 @@ async function saveWebConfig() {
   if (webConfigData) {
     const { error } = await sb.from('web_config').update(payload).eq('id', webConfigData.id);
     if (error) { toast('Error al guardar: ' + error.message, true); return; }
+    // Actualizar datos locales para que no se pierdan en el próximo guardado
+    webConfigData = { ...webConfigData, ...payload };
   } else {
     const { data, error } = await sb.from('web_config').insert(payload).select().single();
     if (error) { toast('Error al crear: ' + error.message, true); return; }
     webConfigData = data;
   }
+
+  // Recargar desde la base de datos para estar 100% sincronizado
+  const { data: fresh } = await sb.from('web_config').select('*')
+    .eq('negocio_id', currentNegocio.id).order('creado_en', { ascending: false }).limit(1).maybeSingle();
+  if (fresh) webConfigData = fresh;
 
   hideSaveBar();
   const imgs = [logo_url ? 'logo ✓' : '', hero_imagen_url ? 'hero ✓' : '', sobre_nosotros_imagen_url ? 'sobre ✓' : ''].filter(Boolean).join(', ');

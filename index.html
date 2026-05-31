@@ -1205,33 +1205,208 @@
       <div class="panel" id="panel-web">
         <div class="page-header">
           <div class="page-title">Mi Web</div>
-          <div class="page-sub">Tu web pública con el agente integrado.</div>
+          <div class="page-sub">Personaliza cada detalle de la web pública de tu negocio.</div>
         </div>
-        <div class="web-preview">
-          <div class="web-preview-bar">
-            <div class="browser-dots"><div class="browser-dot bd-red"></div><div class="browser-dot bd-yellow"></div><div class="browser-dot bd-green"></div></div>
-            <div class="browser-url" id="webUrl">cargando...</div>
-            <button class="topbar-btn" style="padding:4px 12px;font-size:12px;">↗️ Abrir</button>
-          </div>
-          <div class="web-preview-content">
-            <div class="preview-mockup">
-              <div class="pm-logo" id="previewNombre">Mi Restaurante</div>
-              <div class="pm-sub">Hostelia — Tu agente IA</div>
-              <div class="pm-btns">
-                <div class="pm-btn pm-btn-primary">Reservar mesa</div>
-                <div class="pm-btn pm-btn-secondary">Ver carta</div>
+
+        <div class="kb-tabs" style="margin-bottom:24px;">
+          <div class="kb-tab active" onclick="switchWebTab('diseno',this)">🎨 Diseño</div>
+          <div class="kb-tab" onclick="switchWebTab('portada',this)">🏠 Portada</div>
+          <div class="kb-tab" onclick="switchWebTab('sobre',this)">📝 Sobre nosotros</div>
+          <div class="kb-tab" onclick="switchWebTab('contacto',this)">📍 Contacto</div>
+          <div class="kb-tab" onclick="switchWebTab('secciones',this)">⚙️ Secciones</div>
+        </div>
+
+        <!-- DISEÑO -->
+        <div class="kb-content active" id="web-diseno">
+          <div class="settings-grid">
+            <div class="setting-group">
+              <div class="setting-label">Color primario</div>
+              <div style="display:flex;gap:8px;align-items:center;">
+                <input class="setting-input" id="webColorP" type="color" value="#ff6b35" style="width:50px;height:40px;padding:2px;cursor:pointer;" oninput="showSaveBar('web')">
+                <input class="setting-input" id="webColorPText" type="text" value="#ff6b35" style="flex:1;" oninput="document.getElementById('webColorP').value=this.value;showSaveBar('web')">
               </div>
             </div>
-            <div class="chat-bubble-preview">💬</div>
+            <div class="setting-group">
+              <div class="setting-label">Color secundario</div>
+              <div style="display:flex;gap:8px;align-items:center;">
+                <input class="setting-input" id="webColorS" type="color" value="#ffb347" style="width:50px;height:40px;padding:2px;cursor:pointer;" oninput="showSaveBar('web')">
+                <input class="setting-input" id="webColorSText" type="text" value="#ffb347" style="flex:1;" oninput="document.getElementById('webColorS').value=this.value;showSaveBar('web')">
+              </div>
+            </div>
+            <div class="setting-group">
+              <div class="setting-label">Tipografía</div>
+              <select class="setting-select" id="webFont" onchange="showSaveBar('web')">
+                <option>Outfit</option>
+                <option>Syne</option>
+                <option>DM Sans</option>
+                <option>Inter</option>
+                <option>Playfair Display</option>
+                <option>Lora</option>
+                <option>Montserrat</option>
+                <option>Poppins</option>
+              </select>
+            </div>
+            <div class="setting-group">
+              <div class="setting-label">Logo del negocio</div>
+              <div style="display:flex;align-items:center;gap:12px;">
+                <div id="webLogoPreview" style="width:60px;height:60px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;overflow:hidden;cursor:pointer;font-size:24px;" onclick="document.getElementById('webLogoInput').click()">🍽️</div>
+                <div>
+                  <input type="file" id="webLogoInput" accept="image/*" style="display:none;" onchange="previewWebImg(this,'webLogoPreview','logo')">
+                  <button class="btn-secondary" style="padding:6px 14px;font-size:12px;" onclick="document.getElementById('webLogoInput').click()">Subir logo</button>
+                </div>
+              </div>
+            </div>
           </div>
+          <button class="btn-primary" style="max-width:220px;margin-top:16px;" onclick="saveWebConfig()">Guardar diseño</button>
         </div>
-        <div class="card-title" style="margin-bottom:14px;">Secciones de tu web</div>
-        <div class="sections-list">
-          <div class="section-item"><div class="drag-handle">⠿</div><div class="section-name">Hero — Portada principal</div><div class="section-type">Texto + fondo</div><div class="icon-btn" onclick="toast('Editor próximamente')">✏️</div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
-          <div class="section-item"><div class="drag-handle">⠿</div><div class="section-name">Sobre nosotros</div><div class="section-type">Texto + imagen</div><div class="icon-btn" onclick="toast('Editor próximamente')">✏️</div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
-          <div class="section-item"><div class="drag-handle">⠿</div><div class="section-name">Carta</div><div class="section-type">Galería + texto</div><div class="icon-btn" onclick="toast('Editor próximamente')">✏️</div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
-          <div class="section-item"><div class="drag-handle">⠿</div><div class="section-name">Reservas</div><div class="section-type">Módulo de reservas</div><div class="icon-btn" onclick="toast('Editor próximamente')">✏️</div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
-          <div class="section-item"><div class="drag-handle">⠿</div><div class="section-name">Contacto y ubicación</div><div class="section-type">Mapa + datos</div><div class="icon-btn" onclick="toast('Editor próximamente')">✏️</div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+
+        <!-- PORTADA -->
+        <div class="kb-content" id="web-portada">
+          <div class="card" style="margin-bottom:16px;">
+            <div class="card-title">Imagen de fondo</div>
+            <div id="webHeroPreview" style="width:100%;height:200px;background:var(--surface2);border:2px dashed var(--border);border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;cursor:pointer;overflow:hidden;margin-bottom:12px;" onclick="document.getElementById('webHeroInput').click()">
+              <span style="color:var(--muted);font-size:13px;">📸 Haz clic para subir imagen de portada</span>
+            </div>
+            <input type="file" id="webHeroInput" accept="image/*" style="display:none;" onchange="previewWebImg(this,'webHeroPreview','hero')">
+          </div>
+          <div class="settings-grid">
+            <div class="setting-group">
+              <div class="setting-label">Título de la portada</div>
+              <input class="setting-input" id="webHeroTitulo" type="text" placeholder="Nombre de tu restaurante" oninput="showSaveBar('web')">
+            </div>
+            <div class="setting-group">
+              <div class="setting-label">Subtítulo</div>
+              <input class="setting-input" id="webHeroSub" type="text" placeholder="Ej: Cocina mediterránea en el corazón de Madrid" oninput="showSaveBar('web')">
+            </div>
+          </div>
+          <div class="card" style="margin-top:16px;">
+            <div class="card-title">Botones de la portada</div>
+            <div class="toggle-row">
+              <div class="toggle-info">
+                <div class="toggle-title">Botón "Reservar mesa"</div>
+                <div class="toggle-sub">Enlaza a la sección de reservas</div>
+              </div>
+              <div class="toggle on" id="webBtnReservas" onclick="this.classList.toggle('on');showSaveBar('web')"></div>
+            </div>
+            <div class="toggle-row">
+              <div class="toggle-info">
+                <div class="toggle-title">Botón "Hacer pedido"</div>
+                <div class="toggle-sub">Enlaza a la sección de pedidos</div>
+              </div>
+              <div class="toggle on" id="webBtnPedidos" onclick="this.classList.toggle('on');showSaveBar('web')"></div>
+            </div>
+          </div>
+          <button class="btn-primary" style="max-width:220px;margin-top:16px;" onclick="saveWebConfig()">Guardar portada</button>
+        </div>
+
+        <!-- SOBRE NOSOTROS -->
+        <div class="kb-content" id="web-sobre">
+          <div class="card" style="margin-bottom:16px;">
+            <div class="setting-label" style="margin-bottom:10px;">Texto de "Sobre nosotros"</div>
+            <textarea class="textarea-kb" id="webSobreTexto" placeholder="Cuenta la historia de tu negocio, lo que os hace especiales, vuestra filosofía..." oninput="showSaveBar('web')"></textarea>
+          </div>
+          <div class="card">
+            <div class="card-title">Imagen de "Sobre nosotros"</div>
+            <div id="webSobrePreview" style="width:100%;height:180px;background:var(--surface2);border:2px dashed var(--border);border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;cursor:pointer;overflow:hidden;margin-bottom:12px;" onclick="document.getElementById('webSobreInput').click()">
+              <span style="color:var(--muted);font-size:13px;">📸 Haz clic para subir imagen</span>
+            </div>
+            <input type="file" id="webSobreInput" accept="image/*" style="display:none;" onchange="previewWebImg(this,'webSobrePreview','sobre')">
+          </div>
+          <button class="btn-primary" style="max-width:220px;margin-top:16px;" onclick="saveWebConfig()">Guardar</button>
+        </div>
+
+        <!-- CONTACTO -->
+        <div class="kb-content" id="web-contacto">
+          <div class="settings-grid">
+            <div class="setting-group">
+              <div class="setting-label">Dirección</div>
+              <input class="setting-input" id="webDireccion" type="text" placeholder="Calle Mayor 14, Madrid" oninput="showSaveBar('web')">
+            </div>
+            <div class="setting-group">
+              <div class="setting-label">Teléfono</div>
+              <input class="setting-input" id="webTelefono" type="tel" placeholder="+34 600 000 000" oninput="showSaveBar('web')">
+            </div>
+            <div class="setting-group">
+              <div class="setting-label">Email</div>
+              <input class="setting-input" id="webEmail" type="email" placeholder="info@restaurante.com" oninput="showSaveBar('web')">
+            </div>
+            <div class="setting-group">
+              <div class="setting-label">Enlace Google Maps</div>
+              <input class="setting-input" id="webMaps" type="url" placeholder="https://maps.google.com/..." oninput="showSaveBar('web')">
+            </div>
+          </div>
+          <div class="card" style="margin-top:16px;margin-bottom:16px;">
+            <div class="setting-label" style="margin-bottom:10px;">Horarios</div>
+            <textarea class="setting-input" id="webHorarios" rows="4" style="resize:vertical;" placeholder="Lunes a viernes: 13:00–16:00 y 20:00–23:30&#10;Sábados: 12:00–24:00&#10;Domingos: cerrado" oninput="showSaveBar('web')"></textarea>
+          </div>
+          <div class="card">
+            <div class="card-title">Redes sociales</div>
+            <div class="questions-grid" style="gap:12px;">
+              <div>
+                <div class="setting-label">📸 Instagram</div>
+                <input class="setting-input" id="webInsta" type="url" placeholder="https://instagram.com/turestaurante" oninput="showSaveBar('web')">
+              </div>
+              <div>
+                <div class="setting-label">📘 Facebook</div>
+                <input class="setting-input" id="webFb" type="url" placeholder="https://facebook.com/turestaurante" oninput="showSaveBar('web')">
+              </div>
+              <div>
+                <div class="setting-label">🎵 TikTok</div>
+                <input class="setting-input" id="webTiktok" type="url" placeholder="https://tiktok.com/@turestaurante" oninput="showSaveBar('web')">
+              </div>
+            </div>
+          </div>
+          <button class="btn-primary" style="max-width:220px;margin-top:16px;" onclick="saveWebConfig()">Guardar contacto</button>
+        </div>
+
+        <!-- SECCIONES -->
+        <div class="kb-content" id="web-secciones">
+          <p style="font-size:13px;color:var(--muted);margin-bottom:16px;">Activa o desactiva las secciones que quieres mostrar en tu web pública.</p>
+          <div class="card">
+            <div class="toggle-row">
+              <div class="toggle-info">
+                <div class="toggle-title">🏠 Portada (Hero)</div>
+                <div class="toggle-sub">Siempre visible — imagen de fondo, título y botones</div>
+              </div>
+              <div class="toggle on" style="opacity:.5;pointer-events:none;"></div>
+            </div>
+            <div class="toggle-row">
+              <div class="toggle-info">
+                <div class="toggle-title">📝 Sobre nosotros</div>
+                <div class="toggle-sub">Texto e imagen sobre tu negocio</div>
+              </div>
+              <div class="toggle on" id="webSecSobre" onclick="this.classList.toggle('on');showSaveBar('web')"></div>
+            </div>
+            <div class="toggle-row">
+              <div class="toggle-info">
+                <div class="toggle-title">🍽️ Carta</div>
+                <div class="toggle-sub">Categorías y platos con imágenes y precios</div>
+              </div>
+              <div class="toggle on" id="webSecCarta" onclick="this.classList.toggle('on');showSaveBar('web')"></div>
+            </div>
+            <div class="toggle-row">
+              <div class="toggle-info">
+                <div class="toggle-title">📅 Reservas</div>
+                <div class="toggle-sub">Formulario de reserva para los clientes</div>
+              </div>
+              <div class="toggle on" id="webSecReservas" onclick="this.classList.toggle('on');showSaveBar('web')"></div>
+            </div>
+            <div class="toggle-row">
+              <div class="toggle-info">
+                <div class="toggle-title">🛵 Pedidos a domicilio</div>
+                <div class="toggle-sub">Carta interactiva con carrito y checkout</div>
+              </div>
+              <div class="toggle" id="webSecPedidos" onclick="this.classList.toggle('on');showSaveBar('web')"></div>
+            </div>
+            <div class="toggle-row">
+              <div class="toggle-info">
+                <div class="toggle-title">📍 Contacto y ubicación</div>
+                <div class="toggle-sub">Datos, horarios y enlace a Google Maps</div>
+              </div>
+              <div class="toggle on" id="webSecContacto" onclick="this.classList.toggle('on');showSaveBar('web')"></div>
+            </div>
+          </div>
+          <button class="btn-primary" style="max-width:220px;margin-top:16px;" onclick="saveWebConfig()">Guardar secciones</button>
         </div>
       </div>
 
@@ -1913,6 +2088,7 @@ function showPanel(name, el) {
   if (name === 'reservas') { loadMesas(); loadReservas(); loadReservasConfig(); }
   if (name === 'pedidos') loadPedidos();
   if (name === 'agente') loadCuestionario();
+  if (name === 'web') loadWebConfig();
 }
 
 function switchAgTab(tab, el) {
@@ -1947,7 +2123,7 @@ function setDateFilter(filtro, el) {
 
 function showSaveBar(ctx) { currentSaveContext = ctx; document.getElementById('saveBar').classList.add('visible'); }
 function hideSaveBar() { document.getElementById('saveBar').classList.remove('visible'); }
-function autoSave() { if (currentSaveContext === 'agente') saveAgente(); else if (currentSaveContext === 'config') saveConfig(); else hideSaveBar(); }
+function autoSave() { if (currentSaveContext === 'agente') saveAgente(); else if (currentSaveContext === 'config') saveConfig(); else if (currentSaveContext === 'web') saveWebConfig(); else hideSaveBar(); }
 
 function updateSnippet() {
   const id = currentNegocio?.id || 'TU_NEGOCIO_ID';
@@ -1963,6 +2139,154 @@ function copySnippet() {
 function slugify(str) { return (str || '').toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,''); }
 
 let toastTimer;
+// ── WEB CONFIG ─────────────────────────────────────────
+let webConfigData = null;
+let webImgFiles = { logo: null, hero: null, sobre: null };
+
+function switchWebTab(tab, el) {
+  const panel = document.getElementById('panel-web');
+  panel.querySelectorAll('.kb-tab').forEach(t => t.classList.remove('active'));
+  panel.querySelectorAll('.kb-content').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('web-' + tab).classList.add('active');
+}
+
+async function loadWebConfig() {
+  const { data } = await sb.from('web_config').select('*')
+    .eq('negocio_id', currentNegocio.id).single();
+  webConfigData = data;
+
+  if (!data) return; // Primera vez, campos vacíos
+
+  // Diseño
+  document.getElementById('webColorP').value = data.color_primario || '#ff6b35';
+  document.getElementById('webColorPText').value = data.color_primario || '#ff6b35';
+  document.getElementById('webColorS').value = data.color_secundario || '#ffb347';
+  document.getElementById('webColorSText').value = data.color_secundario || '#ffb347';
+  document.getElementById('webFont').value = data.tipografia || 'Outfit';
+  if (data.logo_url) {
+    document.getElementById('webLogoPreview').innerHTML = `<img src="${data.logo_url}" style="width:100%;height:100%;object-fit:contain;">`;
+  }
+
+  // Portada
+  document.getElementById('webHeroTitulo').value = data.hero_titulo || '';
+  document.getElementById('webHeroSub').value = data.hero_subtitulo || '';
+  if (data.hero_imagen_url) {
+    document.getElementById('webHeroPreview').innerHTML = `<img src="${data.hero_imagen_url}" style="width:100%;height:100%;object-fit:cover;">`;
+  }
+  if (data.btn_reservas) document.getElementById('webBtnReservas').classList.add('on');
+  else document.getElementById('webBtnReservas').classList.remove('on');
+  if (data.btn_pedidos) document.getElementById('webBtnPedidos').classList.add('on');
+  else document.getElementById('webBtnPedidos').classList.remove('on');
+
+  // Sobre nosotros
+  document.getElementById('webSobreTexto').value = data.sobre_nosotros_texto || '';
+  if (data.sobre_nosotros_imagen_url) {
+    document.getElementById('webSobrePreview').innerHTML = `<img src="${data.sobre_nosotros_imagen_url}" style="width:100%;height:100%;object-fit:cover;">`;
+  }
+
+  // Contacto
+  document.getElementById('webDireccion').value = data.contacto_direccion || '';
+  document.getElementById('webTelefono').value = data.contacto_telefono || '';
+  document.getElementById('webEmail').value = data.contacto_email || '';
+  document.getElementById('webMaps').value = data.contacto_google_maps_url || '';
+  document.getElementById('webHorarios').value = data.contacto_horarios || '';
+  document.getElementById('webInsta').value = data.red_instagram || '';
+  document.getElementById('webFb').value = data.red_facebook || '';
+  document.getElementById('webTiktok').value = data.red_tiktok || '';
+
+  // Secciones
+  const setToggle = (id, val) => {
+    const el = document.getElementById(id);
+    if (val === false) el.classList.remove('on');
+    else el.classList.add('on');
+  };
+  setToggle('webSecSobre', data.seccion_sobre_nosotros);
+  setToggle('webSecCarta', data.seccion_carta);
+  setToggle('webSecReservas', data.seccion_reservas);
+  setToggle('webSecPedidos', data.seccion_pedidos);
+  setToggle('webSecContacto', data.seccion_contacto);
+}
+
+async function saveWebConfig() {
+  // Subir imágenes si hay nuevas
+  let logo_url = webConfigData?.logo_url || null;
+  let hero_imagen_url = webConfigData?.hero_imagen_url || null;
+  let sobre_nosotros_imagen_url = webConfigData?.sobre_nosotros_imagen_url || null;
+
+  if (webImgFiles.logo) {
+    logo_url = await uploadWebImg(webImgFiles.logo, 'logo');
+    webImgFiles.logo = null;
+  }
+  if (webImgFiles.hero) {
+    hero_imagen_url = await uploadWebImg(webImgFiles.hero, 'hero');
+    webImgFiles.hero = null;
+  }
+  if (webImgFiles.sobre) {
+    sobre_nosotros_imagen_url = await uploadWebImg(webImgFiles.sobre, 'sobre');
+    webImgFiles.sobre = null;
+  }
+
+  const payload = {
+    negocio_id: currentNegocio.id,
+    color_primario: document.getElementById('webColorP').value,
+    color_secundario: document.getElementById('webColorS').value,
+    tipografia: document.getElementById('webFont').value,
+    logo_url,
+    hero_imagen_url,
+    hero_titulo: document.getElementById('webHeroTitulo').value.trim(),
+    hero_subtitulo: document.getElementById('webHeroSub').value.trim(),
+    btn_reservas: document.getElementById('webBtnReservas').classList.contains('on'),
+    btn_pedidos: document.getElementById('webBtnPedidos').classList.contains('on'),
+    sobre_nosotros_texto: document.getElementById('webSobreTexto').value.trim(),
+    sobre_nosotros_imagen_url,
+    seccion_sobre_nosotros: document.getElementById('webSecSobre').classList.contains('on'),
+    seccion_carta: document.getElementById('webSecCarta').classList.contains('on'),
+    seccion_reservas: document.getElementById('webSecReservas').classList.contains('on'),
+    seccion_pedidos: document.getElementById('webSecPedidos').classList.contains('on'),
+    seccion_contacto: document.getElementById('webSecContacto').classList.contains('on'),
+    contacto_direccion: document.getElementById('webDireccion').value.trim(),
+    contacto_telefono: document.getElementById('webTelefono').value.trim(),
+    contacto_email: document.getElementById('webEmail').value.trim(),
+    contacto_google_maps_url: document.getElementById('webMaps').value.trim(),
+    contacto_horarios: document.getElementById('webHorarios').value.trim(),
+    red_instagram: document.getElementById('webInsta').value.trim(),
+    red_facebook: document.getElementById('webFb').value.trim(),
+    red_tiktok: document.getElementById('webTiktok').value.trim(),
+  };
+
+  if (webConfigData) {
+    await sb.from('web_config').update(payload).eq('id', webConfigData.id);
+  } else {
+    const { data } = await sb.from('web_config').insert(payload).select().single();
+    webConfigData = data;
+  }
+
+  hideSaveBar();
+  toast('Web guardada ✓');
+}
+
+function previewWebImg(input, previewId, tipo) {
+  if (!input.files || !input.files[0]) return;
+  webImgFiles[tipo] = input.files[0];
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const style = tipo === 'logo' ? 'width:100%;height:100%;object-fit:contain;' : 'width:100%;height:100%;object-fit:cover;';
+    document.getElementById(previewId).innerHTML = `<img src="${e.target.result}" style="${style}">`;
+  };
+  reader.readAsDataURL(webImgFiles[tipo]);
+  showSaveBar('web');
+}
+
+async function uploadWebImg(file, tipo) {
+  const ext = file.name.split('.').pop();
+  const fileName = `web/${currentNegocio.id}/${tipo}_${Date.now()}.${ext}`;
+  const { error } = await sb.storage.from('imagenes').upload(fileName, file, { upsert: true });
+  if (error) { toast('Error al subir imagen', true); return null; }
+  const { data } = sb.storage.from('imagenes').getPublicUrl(fileName);
+  return data?.publicUrl || null;
+}
+
 function toast(msg, isError = false) {
   const t = document.getElementById('toast');
   t.textContent = msg;

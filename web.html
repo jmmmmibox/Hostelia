@@ -493,21 +493,6 @@ window.addEventListener('DOMContentLoaded', async () => {
     console.log('Envío config:', envioConf);
     console.log('Errores:', { n:n.error, w:w.error, c:c.error, p:p.error, m:m.error, rc:rc.error, ec:ec.error });
 
-    // DEBUG VISUAL (quitar después)
-    const dbg = document.createElement('div');
-    dbg.style.cssText = 'position:fixed;bottom:0;left:0;right:0;background:#1a1714;color:#fff;padding:12px 16px;font-size:11px;z-index:9999;max-height:40vh;overflow:auto;font-family:monospace;line-height:1.8;';
-    dbg.innerHTML = `
-      <strong style="color:#ff6b35;">DEBUG HOSTELIA</strong> <span onclick="this.parentElement.remove()" style="float:right;cursor:pointer;color:#888;">✕ Cerrar</span><br>
-      Negocio: ${negocio ? '✅ ' + negocio.nombre : '❌ ' + (n.error?.message||'no encontrado')}<br>
-      Web config: ${webConf ? '✅ cargado (color: '+webConf.color_primario+', hero: '+(webConf.hero_titulo||'vacío')+')' : '❌ ' + (w.error?.message||'no existe')}<br>
-      Categorías: ${categorias.length > 0 ? '✅ '+categorias.length : '⚠️ 0'}<br>
-      Platos: ${platos.length > 0 ? '✅ '+platos.length : '⚠️ 0'}<br>
-      Mesas: ${mesasData.length > 0 ? '✅ '+mesasData.length+' grupos' : '⚠️ 0'}<br>
-      Reservas config: ${resConfig ? '✅' : '❌ ' + (rc.error?.message||'no existe')}<br>
-      Envío config: ${envioConf ? '✅' : '⚠️ no configurado'}<br>
-      Secciones: sobre=${webConf?.seccion_sobre_nosotros} carta=${webConf?.seccion_carta} reservas=${webConf?.seccion_reservas} pedidos=${webConf?.seccion_pedidos} contacto=${webConf?.seccion_contacto}
-    `;
-    document.body.appendChild(dbg);
     if (!negocio) { document.getElementById('loader').innerHTML = '<p>Negocio no encontrado</p>'; return; }
     render();
   } catch(e) { console.error(e); }
@@ -548,8 +533,8 @@ function render() {
   document.getElementById('heroTitle').textContent = wc.hero_titulo || negocio.nombre;
   document.getElementById('heroSub').textContent = wc.hero_subtitulo || '';
   let btns = '';
-  if (wc.btn_reservas !== false) btns += '<button class="btn-hero btn-hero-primary" onclick="goPage(\'reservas\')">📅 Reservar mesa</button>';
-  if (wc.btn_pedidos) btns += '<button class="btn-hero btn-hero-secondary" onclick="goPage(\'pedidos\')">🛵 Pedir a domicilio</button>';
+  if (wc.btn_reservas !== false && wc.seccion_reservas !== false) btns += '<button class="btn-hero btn-hero-primary" onclick="goPage(\'reservas\')">📅 Reservar mesa</button>';
+  if (wc.btn_pedidos && wc.seccion_pedidos) btns += '<button class="btn-hero btn-hero-secondary" onclick="goPage(\'pedidos\')">🛵 Pedir a domicilio</button>';
   if (!btns && wc.seccion_carta !== false) btns = '<button class="btn-hero btn-hero-primary" onclick="goPage(\'carta\')">🍽️ Ver carta</button>';
   document.getElementById('heroBtns').innerHTML = btns;
 
@@ -575,7 +560,14 @@ function render() {
   if (wc.contacto_direccion) { document.getElementById('cDireccion').style.display='flex'; document.getElementById('cDirVal').textContent=wc.contacto_direccion; }
   if (wc.contacto_telefono) { document.getElementById('cTelefono').style.display='flex'; document.getElementById('cTelVal').textContent=wc.contacto_telefono; }
   if (wc.contacto_email) { document.getElementById('cEmail').style.display='flex'; document.getElementById('cEmailVal').textContent=wc.contacto_email; }
-  if (wc.contacto_google_maps_url) { document.getElementById('cMapsWrap').style.display='block'; document.getElementById('cMapsLink').href=wc.contacto_google_maps_url; }
+  if (wc.contacto_google_maps_url) {
+    document.getElementById('cMapsWrap').style.display='block';
+    const mapsLink = document.getElementById('cMapsLink');
+    mapsLink.href = wc.contacto_google_maps_url;
+    mapsLink.setAttribute('target', '_blank');
+    mapsLink.setAttribute('rel', 'noopener noreferrer');
+    mapsLink.onclick = function(e) { e.stopPropagation(); window.open(wc.contacto_google_maps_url, '_blank'); };
+  }
   if (wc.contacto_horarios) { document.getElementById('horariosCard').style.display='block'; document.getElementById('horariosText').textContent=wc.contacto_horarios; }
 
   let socials = '';

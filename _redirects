@@ -1,7 +1,0 @@
-# Archivos estáticos pasan directamente
-/index.html  /index.html  200
-/web.html    /web.html    200
-/sql/*       /sql/:splat  200
-
-# Todo lo demás se trata como slug de negocio
-/*  /web.html?slug=:splat  200

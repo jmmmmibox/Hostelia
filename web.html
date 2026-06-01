@@ -473,6 +473,16 @@ let carrito = [];
 
 // ── INIT ──────────────────────────────────────────────
 window.addEventListener('DOMContentLoaded', async () => {
+  // Debug temporal
+  document.getElementById('loader').innerHTML = `
+    <div class="loader-spin"></div>
+    <div style="font-size:12px;color:#777;text-align:center;margin-top:12px;">
+      Path: ${location.pathname}<br>
+      Slug detectado: ${SLUG || 'ninguno'}<br>
+      NID: ${NID || 'ninguno'}<br>
+      Buscando negocio...
+    </div>`;
+
   if (!NID && !SLUG) { document.getElementById('loader').innerHTML = '<p style="color:#777;font-size:14px;">Página no encontrada</p>'; return; }
   try {
     // Si viene por slug, buscar el negocio primero

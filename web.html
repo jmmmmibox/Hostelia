@@ -433,7 +433,7 @@
         <div class="contact-item" id="cTelefono" style="display:none;"><div class="contact-icon">📞</div><div><div class="contact-label">Teléfono</div><div class="contact-value" id="cTelVal"></div></div></div>
         <div class="contact-item" id="cEmail" style="display:none;"><div class="contact-icon">✉️</div><div><div class="contact-label">Email</div><div class="contact-value" id="cEmailVal"></div></div></div>
         <div id="cMapsWrap" style="display:none;margin-top:12px;">
-          <a id="cMapsLink" href="#" target="_blank" class="btn-submit" style="display:inline-block;width:auto;padding:12px 28px;text-align:center;">📍 Cómo llegar</a>
+          <a id="cMapsLink" href="#" target="_blank" rel="noopener noreferrer" style="display:inline-block;padding:14px 28px;border-radius:12px;background:linear-gradient(135deg,var(--primary),var(--primary2));color:#fff;font-family:var(--font);font-size:15px;font-weight:700;text-align:center;text-decoration:none;">📍 Cómo llegar</a>
         </div>
         <div class="social-links" id="socialLinks" style="display:none;"></div>
       </div>
@@ -562,11 +562,7 @@ function render() {
   if (wc.contacto_email) { document.getElementById('cEmail').style.display='flex'; document.getElementById('cEmailVal').textContent=wc.contacto_email; }
   if (wc.contacto_google_maps_url) {
     document.getElementById('cMapsWrap').style.display='block';
-    const mapsLink = document.getElementById('cMapsLink');
-    mapsLink.href = wc.contacto_google_maps_url;
-    mapsLink.setAttribute('target', '_blank');
-    mapsLink.setAttribute('rel', 'noopener noreferrer');
-    mapsLink.onclick = function(e) { e.stopPropagation(); window.open(wc.contacto_google_maps_url, '_blank'); };
+    document.getElementById('cMapsLink').href = wc.contacto_google_maps_url;
   }
   if (wc.contacto_horarios) { document.getElementById('horariosCard').style.display='block'; document.getElementById('horariosText').textContent=wc.contacto_horarios; }
 

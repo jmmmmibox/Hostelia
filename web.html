@@ -6,439 +6,358 @@
 <title>Cargando...</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500&family=Inter:wght@400;500;600;700&family=Syne:wght@400;600;700;800&family=Lora:ital,wght@0,400;0,700;1,400&family=Montserrat:wght@400;500;600;700;800&family=Poppins:wght@400;500;600;700&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:wght@300;400;500&family=Inter:wght@400;500;600;700&family=Syne:wght@400;600;700;800&family=Lora:ital,wght@0,400;0,700;1,400&family=Montserrat:wght@400;500;600;700;800&family=Poppins:wght@400;500;600;700&display=swap');
 
   :root {
-    --primary: #ff6b35;
-    --primary2: #ffb347;
-    --bg: #fafaf8;
-    --surface: #ffffff;
-    --text: #1a1714;
-    --muted: #777;
-    --border: #e8e4df;
-    --radius: 16px;
-    --font: 'Outfit', sans-serif;
+    --p: #ff6b35; --p2: #ffb347; --p-glow: rgba(255,107,53,0.15);
+    --bg: #fafaf8; --bg2: #f3f1ee; --surface: #fff;
+    --text: #1a1714; --text2: #444; --muted: #999; --border: #e8e4df;
+    --success: #34a853; --r: 16px; --font: 'Outfit', sans-serif;
+    --shadow-sm: 0 2px 8px rgba(0,0,0,0.04);
+    --shadow: 0 4px 20px rgba(0,0,0,0.07);
+    --shadow-lg: 0 12px 40px rgba(0,0,0,0.1);
+    --transition: cubic-bezier(0.4, 0, 0.2, 1);
   }
-  * { margin:0; padding:0; box-sizing:border-box; }
-  body { font-family:var(--font); background:var(--bg); color:var(--text); }
-  img { max-width:100%; }
-  a { text-decoration:none; color:inherit; }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:var(--font);background:var(--bg);color:var(--text);overflow-x:hidden;-webkit-font-smoothing:antialiased}
+  img{max-width:100%;display:block}
+  a{text-decoration:none;color:inherit}
+  button{font-family:var(--font);cursor:pointer}
 
   /* LOADER */
-  .loader { position:fixed; inset:0; background:var(--bg); display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:9999; gap:16px; }
-  .loader-spin { width:36px; height:36px; border:3px solid var(--border); border-top-color:var(--primary); border-radius:50%; animation:spin .8s linear infinite; }
-  @keyframes spin { to{transform:rotate(360deg)} }
+  .loader{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;gap:16px;transition:opacity .5s}
+  .loader.hide{opacity:0;pointer-events:none}
+  .loader-ring{width:40px;height:40px;border:3px solid var(--border);border-top-color:var(--p);border-radius:50%;animation:spin .7s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
 
   /* NAV */
-  .nav {
-    position:fixed; top:0; left:0; right:0;
-    height:64px;
-    background:rgba(255,255,255,0.92);
-    backdrop-filter:blur(20px);
-    border-bottom:1px solid var(--border);
-    display:flex; align-items:center; justify-content:space-between;
-    padding:0 32px;
-    z-index:100;
-    transition:box-shadow .3s;
-  }
-  .nav.scrolled { box-shadow:0 2px 20px rgba(0,0,0,0.06); }
-  .nav-logo { display:flex; align-items:center; gap:10px; }
-  .nav-logo img { height:36px; width:auto; border-radius:6px; }
-  .nav-logo-text { font-size:18px; font-weight:700; }
-  .nav-links { display:flex; gap:6px; }
-  .nav-link {
-    padding:8px 16px;
-    border-radius:100px;
-    font-size:13px;
-    font-weight:500;
-    color:var(--muted);
-    cursor:pointer;
-    transition:all .2s;
-  }
-  .nav-link:hover { color:var(--text); background:rgba(0,0,0,0.04); }
-  .nav-link.active { color:var(--primary); background:rgba(255,107,53,0.08); font-weight:600; }
-  .nav-cta {
-    padding:9px 20px;
-    border-radius:100px;
-    background:linear-gradient(135deg,var(--primary),var(--primary2));
-    color:#fff;
-    font-size:13px;
-    font-weight:600;
-    cursor:pointer;
-    transition:opacity .2s, transform .15s;
-    border:none;
-    font-family:var(--font);
-  }
-  .nav-cta:hover { opacity:.9; transform:translateY(-1px); }
-  .nav-mobile { display:none; background:none; border:none; font-size:24px; cursor:pointer; }
+  .nav{position:fixed;top:0;left:0;right:0;height:64px;display:flex;align-items:center;justify-content:space-between;padding:0 clamp(16px,4vw,40px);z-index:100;transition:all .4s var(--transition);background:transparent}
+  .nav.solid{background:rgba(255,255,255,.92);backdrop-filter:blur(24px) saturate(1.4);border-bottom:1px solid rgba(0,0,0,.06);box-shadow:0 1px 12px rgba(0,0,0,.04)}
+  .nav-logo{display:flex;align-items:center;gap:10px;font-size:18px;font-weight:700;color:#fff;transition:color .4s}
+  .nav.solid .nav-logo{color:var(--text)}
+  .nav-logo img{height:34px;border-radius:8px}
+  .nav-links{display:flex;gap:2px}
+  .nav-link{padding:8px 16px;border-radius:100px;font-size:13px;font-weight:500;color:rgba(255,255,255,.7);cursor:pointer;transition:all .25s;position:relative}
+  .nav.solid .nav-link{color:var(--muted)}
+  .nav-link:hover{color:#fff;background:rgba(255,255,255,.12)}
+  .nav.solid .nav-link:hover{color:var(--text);background:rgba(0,0,0,.04)}
+  .nav-link.active{color:#fff;background:rgba(255,255,255,.18);font-weight:600}
+  .nav.solid .nav-link.active{color:var(--p);background:var(--p-glow)}
+  .nav-cta{padding:9px 22px;border-radius:100px;background:var(--p);color:#fff;font-size:13px;font-weight:600;border:none;transition:all .25s;box-shadow:0 2px 12px rgba(255,107,53,.25)}
+  .nav-cta:hover{transform:translateY(-1px);box-shadow:0 4px 20px rgba(255,107,53,.35)}
+  .nav-mobile{display:none;background:none;border:none;color:#fff;font-size:26px;transition:color .4s}
+  .nav.solid .nav-mobile{color:var(--text)}
+  .mobile-menu{display:none;position:fixed;inset:0;background:rgba(255,255,255,.98);backdrop-filter:blur(20px);z-index:150;padding:80px 32px;animation:fadeIn .3s}
+  .mobile-menu.open{display:block}
+  .mobile-menu-item{padding:16px 0;font-size:18px;font-weight:600;border-bottom:1px solid var(--border);cursor:pointer;transition:color .2s}
+  .mobile-menu-item:hover{color:var(--p)}
+  .mobile-menu-close{position:absolute;top:20px;right:20px;font-size:28px;cursor:pointer;color:var(--text)}
+
+  /* ANIMATIONS */
+  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+  @keyframes scaleIn{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:scale(1)}}
+  .reveal{opacity:0;transform:translateY(24px);transition:opacity .7s var(--transition),transform .7s var(--transition)}
+  .reveal.visible{opacity:1;transform:translateY(0)}
+  .reveal-delay-1{transition-delay:.1s}.reveal-delay-2{transition-delay:.2s}.reveal-delay-3{transition-delay:.3s}
 
   /* HERO */
-  .hero {
-    min-height:100vh;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    text-align:center;
-    position:relative;
-    overflow:hidden;
-    padding:80px 24px;
-  }
-  .hero-bg {
-    position:absolute; inset:0;
-    background-size:cover; background-position:center;
-    filter:brightness(0.35);
-  }
-  .hero-content { position:relative; z-index:2; color:#fff; max-width:700px; }
-  .hero-title {
-    font-size:clamp(36px,8vw,72px);
-    font-weight:900;
-    line-height:1.1;
-    margin-bottom:16px;
-    letter-spacing:-1px;
-  }
-  .hero-sub {
-    font-size:clamp(16px,3vw,22px);
-    font-weight:300;
-    opacity:.85;
-    margin-bottom:36px;
-    line-height:1.5;
-  }
-  .hero-btns { display:flex; gap:12px; justify-content:center; flex-wrap:wrap; }
-  .btn-hero {
-    padding:14px 32px;
-    border-radius:100px;
-    font-size:15px;
-    font-weight:600;
-    cursor:pointer;
-    transition:all .2s;
-    border:none;
-    font-family:var(--font);
-  }
-  .btn-hero-primary { background:linear-gradient(135deg,var(--primary),var(--primary2)); color:#fff; }
-  .btn-hero-primary:hover { transform:translateY(-2px); box-shadow:0 8px 24px rgba(255,107,53,0.3); }
-  .btn-hero-secondary { background:rgba(255,255,255,0.15); color:#fff; backdrop-filter:blur(10px); border:1px solid rgba(255,255,255,0.2); }
-  .btn-hero-secondary:hover { background:rgba(255,255,255,0.25); }
-  .hero-scroll { position:absolute; bottom:32px; left:50%; transform:translateX(-50%); color:rgba(255,255,255,0.5); font-size:13px; animation:bounce 2s infinite; }
-  @keyframes bounce { 0%,100%{transform:translateX(-50%) translateY(0)} 50%{transform:translateX(-50%) translateY(8px)} }
+  .hero{min-height:100vh;display:flex;align-items:center;justify-content:center;text-align:center;position:relative;overflow:hidden}
+  .hero-bg{position:absolute;inset:0;background-size:cover;background-position:center;transition:transform 8s ease}
+  .hero:hover .hero-bg{transform:scale(1.03)}
+  .hero-overlay{position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.3) 0%,rgba(0,0,0,.55) 60%,rgba(0,0,0,.7) 100%)}
+  .hero-content{position:relative;z-index:2;color:#fff;max-width:720px;padding:0 24px;animation:fadeUp .8s ease}
+  .hero-tag{display:inline-block;background:rgba(255,255,255,.12);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.15);border-radius:100px;padding:6px 20px;font-size:12px;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:20px}
+  .hero-title{font-size:clamp(38px,8vw,76px);font-weight:900;line-height:1.05;margin-bottom:16px;letter-spacing:-2px}
+  .hero-sub{font-size:clamp(16px,3vw,21px);font-weight:300;opacity:.85;margin-bottom:40px;line-height:1.6;max-width:540px;margin-left:auto;margin-right:auto}
+  .hero-btns{display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
+  .btn{display:inline-flex;align-items:center;gap:8px;padding:14px 32px;border-radius:100px;font-size:15px;font-weight:600;border:none;transition:all .3s var(--transition)}
+  .btn-primary{background:var(--p);color:#fff;box-shadow:0 4px 20px rgba(255,107,53,.3)}
+  .btn-primary:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(255,107,53,.4)}
+  .btn-ghost{background:rgba(255,255,255,.1);color:#fff;backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.2)}
+  .btn-ghost:hover{background:rgba(255,255,255,.2)}
+  .hero-scroll{position:absolute;bottom:28px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:6px;color:rgba(255,255,255,.4);font-size:11px;letter-spacing:1px;text-transform:uppercase;animation:float 3s ease infinite}
+  @keyframes float{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(8px)}}
+  .scroll-line{width:1px;height:30px;background:linear-gradient(180deg,rgba(255,255,255,.4),transparent)}
 
   /* SECTIONS */
-  .section { padding:80px 24px; max-width:1100px; margin:0 auto; }
-  .section-tag { display:inline-block; background:rgba(255,107,53,0.08); color:var(--primary); border-radius:100px; padding:5px 16px; font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:1.5px; margin-bottom:14px; }
-  .section-title { font-size:clamp(28px,5vw,42px); font-weight:800; margin-bottom:12px; letter-spacing:-0.5px; line-height:1.2; }
-  .section-sub { font-size:16px; color:var(--muted); max-width:560px; line-height:1.7; margin-bottom:48px; }
+  .section{padding:100px clamp(20px,5vw,48px);max-width:1140px;margin:0 auto}
+  .section-header{margin-bottom:56px}
+  .section-tag{display:inline-block;background:var(--p-glow);color:var(--p);border-radius:100px;padding:6px 18px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:2px;margin-bottom:16px}
+  .section-title{font-size:clamp(30px,5vw,46px);font-weight:800;letter-spacing:-1px;line-height:1.15;margin-bottom:12px}
+  .section-sub{font-size:16px;color:var(--text2);max-width:520px;line-height:1.8}
 
-  /* SOBRE NOSOTROS */
-  .about-grid { display:grid; grid-template-columns:1fr 1fr; gap:48px; align-items:center; }
-  .about-img { border-radius:var(--radius); overflow:hidden; aspect-ratio:4/3; }
-  .about-img img { width:100%; height:100%; object-fit:cover; }
-  .about-text { font-size:16px; line-height:1.8; color:#555; }
+  /* ABOUT */
+  .about-grid{display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:center}
+  .about-img{border-radius:20px;overflow:hidden;aspect-ratio:4/3;box-shadow:var(--shadow-lg)}
+  .about-img img{width:100%;height:100%;object-fit:cover;transition:transform .6s var(--transition)}
+  .about-img:hover img{transform:scale(1.04)}
+  .about-text{font-size:16px;line-height:2;color:var(--text2)}
 
   /* CARTA */
-  .cat-filter { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:32px; }
-  .cat-pill {
-    padding:8px 20px; border-radius:100px; font-size:13px; font-weight:500;
-    cursor:pointer; border:1px solid var(--border); color:var(--muted);
-    transition:all .2s; background:var(--surface);
-  }
-  .cat-pill:hover { border-color:var(--primary); color:var(--text); }
-  .cat-pill.active { background:var(--primary); border-color:var(--primary); color:#fff; }
-  .menu-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:20px; }
-  .menu-card {
-    background:var(--surface); border-radius:var(--radius); overflow:hidden;
-    box-shadow:0 2px 12px rgba(0,0,0,0.06); transition:transform .2s, box-shadow .2s;
-  }
-  .menu-card:hover { transform:translateY(-4px); box-shadow:0 8px 30px rgba(0,0,0,0.1); }
-  .menu-card-img { height:180px; background:#f0ede8; overflow:hidden; }
-  .menu-card-img img { width:100%; height:100%; object-fit:cover; }
-  .menu-card-body { padding:16px; }
-  .menu-card-name { font-size:16px; font-weight:600; margin-bottom:4px; }
-  .menu-card-desc { font-size:13px; color:var(--muted); line-height:1.5; margin-bottom:10px; min-height:20px; }
-  .menu-card-price { font-size:20px; font-weight:800; color:var(--primary); }
-  .menu-card-unavailable { opacity:.4; pointer-events:none; }
+  .filter-bar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:36px}
+  .filter-pill{padding:9px 22px;border-radius:100px;font-size:13px;font-weight:500;cursor:pointer;border:1px solid var(--border);color:var(--muted);transition:all .25s;background:var(--surface)}
+  .filter-pill:hover{border-color:var(--p);color:var(--text)}
+  .filter-pill.active{background:var(--p);border-color:var(--p);color:#fff;box-shadow:0 2px 12px rgba(255,107,53,.2)}
+  .menu-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:24px}
+  .menu-card{background:var(--surface);border-radius:20px;overflow:hidden;box-shadow:var(--shadow-sm);transition:all .35s var(--transition);border:1px solid transparent}
+  .menu-card:hover{transform:translateY(-6px);box-shadow:var(--shadow-lg);border-color:rgba(255,107,53,.12)}
+  .menu-card-img{height:200px;background:var(--bg2);overflow:hidden;position:relative}
+  .menu-card-img img{width:100%;height:100%;object-fit:cover;transition:transform .5s var(--transition)}
+  .menu-card:hover .menu-card-img img{transform:scale(1.06)}
+  .menu-card-img .no-img{height:100%;display:flex;align-items:center;justify-content:center;font-size:48px;opacity:.3}
+  .menu-card-body{padding:18px 20px 20px}
+  .menu-card-name{font-size:17px;font-weight:700;margin-bottom:5px}
+  .menu-card-desc{font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:12px;min-height:20px}
+  .menu-card-footer{display:flex;align-items:center;justify-content:space-between}
+  .menu-card-price{font-size:22px;font-weight:800;color:var(--p)}
+  .btn-add{padding:8px 18px;border-radius:100px;background:var(--p-glow);color:var(--p);font-size:12px;font-weight:700;border:none;transition:all .25s}
+  .btn-add:hover{background:var(--p);color:#fff;transform:scale(1.05)}
 
   /* RESERVAS */
-  .reserva-card {
-    background:var(--surface); border-radius:20px; padding:40px;
-    box-shadow:0 4px 24px rgba(0,0,0,0.06); max-width:560px; margin:0 auto;
-  }
-  .reserva-card h3 { font-size:22px; font-weight:700; margin-bottom:6px; }
-  .reserva-card .sub { font-size:14px; color:var(--muted); margin-bottom:28px; }
-  .field { margin-bottom:16px; }
-  .field label { display:block; font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:.5px; color:var(--muted); margin-bottom:6px; }
-  .field input, .field select {
-    width:100%; padding:12px 16px; border:1px solid var(--border); border-radius:10px;
-    font-family:var(--font); font-size:14px; color:var(--text); outline:none;
-    transition:border-color .2s; background:#fff;
-  }
-  .field input:focus, .field select:focus { border-color:var(--primary); }
-  .field-row { display:flex; gap:12px; }
-  .field-row .field { flex:1; }
-  .btn-submit {
-    width:100%; padding:14px; border:none; border-radius:12px;
-    background:linear-gradient(135deg,var(--primary),var(--primary2));
-    color:#fff; font-family:var(--font); font-size:15px; font-weight:700;
-    cursor:pointer; transition:opacity .2s; margin-top:8px;
-  }
-  .btn-submit:hover { opacity:.9; }
-  .btn-submit:disabled { opacity:.5; cursor:not-allowed; }
-  .dispo-banner {
-    background:rgba(255,107,53,0.06); border:1px solid rgba(255,107,53,0.15);
-    border-radius:10px; padding:12px 16px; font-size:13px; color:var(--primary);
-    font-weight:500; text-align:center; margin-bottom:20px;
-  }
-  .confirm-banner {
-    background:rgba(76,175,125,0.08); border:1px solid rgba(76,175,125,0.25);
-    border-radius:12px; padding:24px; text-align:center;
-  }
-  .confirm-banner .icon { font-size:36px; margin-bottom:8px; }
-  .confirm-banner h3 { font-size:18px; font-weight:700; color:#2e7d52; margin-bottom:8px; }
-  .confirm-banner p { font-size:13px; color:#555; line-height:1.6; }
+  .reserva-wrap{max-width:540px;margin:0 auto}
+  .reserva-card{background:var(--surface);border-radius:24px;padding:clamp(24px,5vw,44px);box-shadow:var(--shadow-lg);border:1px solid rgba(0,0,0,.04)}
+  .field{margin-bottom:18px}
+  .field label{display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);margin-bottom:7px}
+  .field input,.field select{width:100%;padding:13px 16px;border:1px solid var(--border);border-radius:12px;font-family:var(--font);font-size:14px;color:var(--text);outline:none;transition:all .25s;background:var(--bg)}
+  .field input:focus,.field select:focus{border-color:var(--p);background:#fff;box-shadow:0 0 0 3px var(--p-glow)}
+  .field-row{display:flex;gap:14px}.field-row .field{flex:1}
+  .btn-submit{width:100%;padding:15px;border:none;border-radius:14px;background:linear-gradient(135deg,var(--p),var(--p2));color:#fff;font-size:15px;font-weight:700;transition:all .3s var(--transition);box-shadow:0 4px 16px rgba(255,107,53,.25)}
+  .btn-submit:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(255,107,53,.35)}
+  .btn-submit:disabled{opacity:.5;cursor:not-allowed;transform:none;box-shadow:none}
+  .dispo-banner{border-radius:14px;padding:14px 20px;font-size:13px;font-weight:600;text-align:center;margin-bottom:24px;animation:fadeIn .4s}
+  .dispo-green{background:rgba(52,168,83,.06);border:1px solid rgba(52,168,83,.2);color:var(--success)}
+  .dispo-orange{background:var(--p-glow);border:1px solid rgba(255,107,53,.2);color:var(--p)}
+  .dispo-red{background:rgba(220,53,69,.06);border:1px solid rgba(220,53,69,.2);color:#dc3545}
+  .confirm-card{background:rgba(52,168,83,.04);border:1px solid rgba(52,168,83,.2);border-radius:20px;padding:36px;text-align:center;animation:scaleIn .4s}
+  .confirm-icon{font-size:44px;margin-bottom:12px}
+  .confirm-title{font-size:20px;font-weight:700;color:#2e7d52;margin-bottom:8px}
+  .confirm-detail{font-size:14px;color:var(--text2);line-height:1.7}
 
   /* PEDIDOS */
-  .pedido-layout { display:grid; grid-template-columns:1fr 360px; gap:32px; }
-  .cart-sidebar {
-    background:var(--surface); border-radius:var(--radius); padding:24px;
-    box-shadow:0 2px 12px rgba(0,0,0,0.06); position:sticky; top:80px; align-self:start;
-  }
-  .cart-title { font-size:16px; font-weight:700; margin-bottom:16px; display:flex; align-items:center; gap:8px; }
-  .cart-empty { text-align:center; padding:24px 0; color:var(--muted); font-size:13px; }
-  .cart-item { display:flex; align-items:center; gap:10px; padding:10px 0; border-bottom:1px solid var(--border); }
-  .cart-item:last-child { border-bottom:none; }
-  .cart-item-info { flex:1; }
-  .cart-item-name { font-size:14px; font-weight:500; }
-  .cart-item-price { font-size:12px; color:var(--muted); }
-  .cart-qty { display:flex; align-items:center; gap:6px; }
-  .cart-qty button {
-    width:26px; height:26px; border-radius:50%; border:1px solid var(--border);
-    background:#fff; font-size:14px; cursor:pointer; display:flex; align-items:center;
-    justify-content:center; transition:all .15s;
-  }
-  .cart-qty button:hover { border-color:var(--primary); color:var(--primary); }
-  .cart-qty span { font-size:14px; font-weight:600; min-width:20px; text-align:center; }
-  .cart-total { margin-top:16px; padding-top:16px; border-top:2px solid var(--border); }
-  .cart-row { display:flex; justify-content:space-between; font-size:14px; margin-bottom:8px; }
-  .cart-row.total { font-size:18px; font-weight:800; color:var(--primary); }
-  .envio-msg { font-size:12px; color:var(--primary); text-align:center; margin-top:8px; padding:6px 0; }
+  .pedido-layout{display:grid;grid-template-columns:1fr 380px;gap:36px}
+  .cart{background:var(--surface);border-radius:20px;padding:24px;box-shadow:var(--shadow);position:sticky;top:80px;align-self:start;border:1px solid rgba(0,0,0,.04)}
+  .cart-title{font-size:17px;font-weight:700;margin-bottom:18px;display:flex;align-items:center;gap:8px}
+  .cart-badge{background:var(--p);color:#fff;font-size:11px;font-weight:700;border-radius:100px;padding:2px 8px}
+  .cart-empty{text-align:center;padding:32px 0;color:var(--muted);font-size:13px}
+  .cart-item{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--border)}
+  .cart-item:last-child{border-bottom:none}
+  .cart-item-info{flex:1}
+  .cart-item-name{font-size:14px;font-weight:600}
+  .cart-item-price{font-size:12px;color:var(--muted);margin-top:1px}
+  .qty-ctrl{display:flex;align-items:center;gap:6px}
+  .qty-btn{width:28px;height:28px;border-radius:50%;border:1px solid var(--border);background:var(--bg);font-size:15px;display:flex;align-items:center;justify-content:center;transition:all .2s;color:var(--text)}
+  .qty-btn:hover{border-color:var(--p);color:var(--p);background:var(--p-glow)}
+  .qty-num{font-size:14px;font-weight:700;min-width:20px;text-align:center}
+  .cart-divider{height:1px;background:var(--border);margin:16px 0}
+  .cart-row{display:flex;justify-content:space-between;font-size:14px;margin-bottom:8px;color:var(--text2)}
+  .cart-row.total{font-size:20px;font-weight:800;color:var(--p);margin-top:8px}
+  .envio-msg{font-size:12px;color:var(--p);text-align:center;margin:8px 0;font-weight:500}
+  .checkout-fields{margin-top:20px;padding-top:20px;border-top:1px solid var(--border)}
 
   /* CONTACTO */
-  .contact-grid { display:grid; grid-template-columns:1fr 1fr; gap:48px; }
-  .contact-item { display:flex; gap:14px; margin-bottom:24px; }
-  .contact-icon {
-    width:44px; height:44px; border-radius:12px;
-    background:rgba(255,107,53,0.08); display:flex; align-items:center;
-    justify-content:center; font-size:20px; flex-shrink:0;
-  }
-  .contact-label { font-size:12px; color:var(--muted); text-transform:uppercase; letter-spacing:.5px; margin-bottom:2px; }
-  .contact-value { font-size:15px; font-weight:500; }
-  .horarios-card {
-    background:var(--surface); border-radius:var(--radius); padding:28px;
-    box-shadow:0 2px 12px rgba(0,0,0,0.06);
-  }
-  .horarios-title { font-size:16px; font-weight:700; margin-bottom:16px; }
-  .horarios-text { font-size:14px; line-height:2; color:#555; white-space:pre-line; }
-  .social-links { display:flex; gap:10px; margin-top:24px; }
-  .social-link {
-    width:52px; height:52px; border-radius:14px; background:var(--surface);
-    border:1px solid var(--border); display:flex; align-items:center; justify-content:center;
-    font-size:20px; transition:all .2s; cursor:pointer;
-  }
-  .social-link:hover { border-color:var(--primary); background:rgba(255,107,53,0.06); transform:translateY(-2px); }
+  .contact-grid{display:grid;grid-template-columns:1fr 1fr;gap:56px}
+  .contact-item{display:flex;gap:16px;margin-bottom:28px}
+  .contact-icon{width:48px;height:48px;border-radius:14px;background:var(--p-glow);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+  .contact-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:3px;font-weight:600}
+  .contact-value{font-size:15px;font-weight:500}
+  .horarios-card{background:var(--surface);border-radius:20px;padding:32px;box-shadow:var(--shadow)}
+  .horarios-title{font-size:17px;font-weight:700;margin-bottom:18px;display:flex;align-items:center;gap:8px}
+  .horarios-text{font-size:14px;line-height:2.2;color:var(--text2);white-space:pre-line}
+  .btn-maps{display:inline-flex;align-items:center;gap:8px;padding:14px 28px;border-radius:14px;background:linear-gradient(135deg,var(--p),var(--p2));color:#fff;font-size:14px;font-weight:700;margin-top:20px;transition:all .3s;box-shadow:0 4px 16px rgba(255,107,53,.25)}
+  .btn-maps:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(255,107,53,.35)}
+  .social-links{display:flex;gap:12px;margin-top:28px}
+  .social-link{width:48px;height:48px;border-radius:14px;background:var(--surface);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;transition:all .3s var(--transition);color:var(--text2)}
+  .social-link:hover{border-color:var(--p);background:var(--p-glow);color:var(--p);transform:translateY(-3px);box-shadow:0 4px 12px rgba(255,107,53,.15)}
 
   /* FOOTER */
-  .footer {
-    background:#1a1714; color:rgba(255,255,255,0.6); padding:40px 24px;
-    text-align:center; font-size:13px; line-height:1.8;
-  }
-  .footer strong { color:#fff; }
-  .footer-powered { margin-top:12px; font-size:11px; opacity:.5; }
-  .footer-powered a { color:var(--primary); }
+  .footer{background:var(--text);color:rgba(255,255,255,.5);padding:48px 24px;text-align:center}
+  .footer-name{font-size:18px;font-weight:700;color:#fff;margin-bottom:6px}
+  .footer-info{font-size:13px;line-height:1.8;margin-bottom:16px}
+  .footer-powered{font-size:11px;opacity:.4}
+  .footer-powered a{color:var(--p)}
 
-  /* PAGE DISPLAY */
-  .page { display:none; }
-  .page.active { display:block; animation:fadeUp .4s ease; }
-  @keyframes fadeUp { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+  /* PAGE TRANSITIONS */
+  .page{display:none;opacity:0}
+  .page.active{display:block;animation:fadeUp .5s var(--transition) forwards}
 
   /* TOAST */
-  .web-toast {
-    position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(80px);
-    background:var(--text); color:#fff; padding:12px 24px; border-radius:100px;
-    font-size:14px; z-index:999; opacity:0; transition:all .3s;
-  }
-  .web-toast.show { transform:translateX(-50%) translateY(0); opacity:1; }
+  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--text);color:#fff;padding:13px 28px;border-radius:100px;font-size:14px;font-weight:500;z-index:999;opacity:0;transition:all .4s var(--transition);box-shadow:var(--shadow-lg)}
+  .toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+
+  /* FLOATING CTA */
+  .float-cta{position:fixed;bottom:24px;right:24px;z-index:90;display:none}
+  .float-cta button{padding:14px 24px;border-radius:100px;background:var(--p);color:#fff;font-size:14px;font-weight:700;border:none;box-shadow:0 4px 24px rgba(255,107,53,.35);transition:all .3s;animation:float 3s ease infinite}
+  .float-cta button:hover{transform:translateY(-3px);box-shadow:0 8px 32px rgba(255,107,53,.45)}
 
   /* RESPONSIVE */
-  @media (max-width:768px) {
-    .nav-links { display:none; }
-    .nav-mobile { display:block; }
-    .about-grid { grid-template-columns:1fr; }
-    .pedido-layout { grid-template-columns:1fr; }
-    .cart-sidebar { position:static; }
-    .contact-grid { grid-template-columns:1fr; }
-    .section { padding:60px 20px; }
-    .reserva-card { padding:24px; }
-    .nav { padding:0 16px; }
-    .field-row { flex-direction:column; gap:0; }
+  @media(max-width:768px){
+    .nav-links{display:none}.nav-mobile{display:block}
+    .about-grid,.contact-grid{grid-template-columns:1fr}
+    .pedido-layout{grid-template-columns:1fr}.cart{position:static}
+    .section{padding:64px 20px}.hero-title{letter-spacing:-1px}
+    .field-row{flex-direction:column;gap:0}
+    .menu-grid{grid-template-columns:repeat(auto-fill,minmax(240px,1fr))}
+    .float-cta{display:block}
   }
+  @media(min-width:769px){.float-cta{display:none !important}}
 </style>
 </head>
 <body>
 
-<div class="loader" id="loader">
-  <div class="loader-spin"></div>
-  <div style="font-size:14px;color:var(--muted);">Cargando...</div>
-</div>
+<div class="loader" id="loader"><div class="loader-ring"></div></div>
 
-<!-- NAV -->
 <nav class="nav" id="mainNav" style="display:none;">
-  <div class="nav-logo">
-    <span id="navLogoImg"></span>
-    <span class="nav-logo-text" id="navName">...</span>
-  </div>
+  <div class="nav-logo" id="navLogo"><span id="navLogoImg"></span><span id="navName">...</span></div>
   <div class="nav-links" id="navLinks"></div>
   <button class="nav-cta" id="navCta" style="display:none;" onclick="goPage('reservas')">Reservar</button>
-  <button class="nav-mobile" onclick="toggleMobileMenu()">☰</button>
+  <button class="nav-mobile" onclick="toggleMenu()">☰</button>
 </nav>
 
-<!-- MOBILE MENU -->
-<div id="mobileMenu" style="display:none;position:fixed;inset:0;background:rgba(255,255,255,0.98);z-index:150;padding:80px 32px;"></div>
+<div class="mobile-menu" id="mobileMenu">
+  <div class="mobile-menu-close" onclick="toggleMenu()">✕</div>
+  <div id="mobileMenuItems"></div>
+</div>
 
-<!-- HERO -->
+<div class="float-cta" id="floatCta"><button onclick="goPage('reservas')">📅 Reservar mesa</button></div>
+
 <div class="page active" id="page-inicio">
   <div class="hero" id="heroSection">
     <div class="hero-bg" id="heroBg"></div>
+    <div class="hero-overlay"></div>
     <div class="hero-content">
+      <div class="hero-tag" id="heroTag">Bienvenido</div>
       <h1 class="hero-title" id="heroTitle">...</h1>
-      <p class="hero-sub" id="heroSub">...</p>
+      <p class="hero-sub" id="heroSub"></p>
       <div class="hero-btns" id="heroBtns"></div>
     </div>
-    <div class="hero-scroll">↓ Scroll</div>
+    <div class="hero-scroll"><span>Descubre</span><div class="scroll-line"></div></div>
   </div>
 </div>
 
-<!-- SOBRE NOSOTROS -->
 <div class="page" id="page-sobre">
-  <div style="height:64px;"></div>
+  <div style="height:64px"></div>
   <div class="section">
-    <div class="section-tag">Sobre nosotros</div>
+    <div class="section-header reveal">
+      <div class="section-tag">Sobre nosotros</div>
+      <h2 class="section-title">Nuestra historia</h2>
+    </div>
     <div class="about-grid">
-      <div>
-        <h2 class="section-title" id="sobreTitulo">Nuestra historia</h2>
-        <div class="about-text" id="sobreTexto"></div>
-      </div>
-      <div class="about-img" id="sobreImg"></div>
+      <div class="about-text reveal" id="sobreTexto"></div>
+      <div class="about-img reveal reveal-delay-1" id="sobreImg"></div>
     </div>
   </div>
 </div>
 
-<!-- CARTA -->
 <div class="page" id="page-carta">
-  <div style="height:64px;"></div>
+  <div style="height:64px"></div>
   <div class="section">
-    <div class="section-tag">Nuestra carta</div>
-    <h2 class="section-title">¿Qué te apetece?</h2>
-    <p class="section-sub">Descubre todos nuestros platos, elaborados con productos frescos y de temporada.</p>
-    <div class="cat-filter" id="cartaFilter"></div>
+    <div class="section-header reveal">
+      <div class="section-tag">Nuestra carta</div>
+      <h2 class="section-title">¿Qué te apetece?</h2>
+      <p class="section-sub">Elaborados con productos frescos y de temporada.</p>
+    </div>
+    <div class="filter-bar reveal" id="cartaFilter"></div>
     <div class="menu-grid" id="cartaGrid"></div>
   </div>
 </div>
 
-<!-- RESERVAS -->
 <div class="page" id="page-reservas">
-  <div style="height:64px;"></div>
+  <div style="height:64px"></div>
   <div class="section">
-    <div class="section-tag">Reservas</div>
-    <h2 class="section-title">Reserva tu mesa</h2>
-    <p class="section-sub">Selecciona fecha, hora y número de comensales. Te confirmaremos en breve.</p>
-    <div id="dispoBanner" class="dispo-banner" style="display:none;max-width:560px;margin:0 auto 20px;"></div>
-    <div id="reservaForm">
-      <div class="reserva-card">
-        <div class="field-row">
-          <div class="field"><label>Nombre</label><input id="pubResNombre" type="text" placeholder="Tu nombre completo"></div>
-          <div class="field"><label>Teléfono</label><input id="pubResTel" type="tel" placeholder="+34 600..."></div>
-        </div>
-        <div class="field-row">
-          <div class="field"><label>Fecha</label><input id="pubResFecha" type="date" onchange="checkDispo()"></div>
-          <div class="field"><label>Hora</label>
-            <select id="pubResHora" onchange="checkDispo()">
-              <option>13:00</option><option>13:30</option><option>14:00</option><option>14:30</option><option>15:00</option>
-              <option>20:00</option><option>20:30</option><option selected>21:00</option><option>21:30</option><option>22:00</option><option>22:30</option>
-            </select>
-          </div>
-        </div>
-        <div class="field-row">
-          <div class="field"><label>Comensales</label><input id="pubResPers" type="number" min="1" value="2"></div>
-          <div class="field"><label>Zona</label>
-            <select id="pubResZona"><option>Interior</option><option>Terraza</option></select>
-          </div>
-        </div>
-        <button class="btn-submit" id="pubResBtn" onclick="submitReserva()">Reservar mesa</button>
-      </div>
+    <div class="section-header reveal" style="text-align:center;display:flex;flex-direction:column;align-items:center;">
+      <div class="section-tag">Reservas</div>
+      <h2 class="section-title">Reserva tu mesa</h2>
+      <p class="section-sub" style="text-align:center;">Selecciona fecha, hora y comensales. Confirmamos en breve.</p>
     </div>
-    <div id="reservaConfirm" style="display:none;">
-      <div class="confirm-banner">
-        <div class="icon">✅</div>
-        <h3>¡Reserva enviada!</h3>
-        <p id="confirmText">Te confirmaremos por SMS en breve.</p>
+    <div class="reserva-wrap">
+      <div id="dispoBanner" style="display:none"></div>
+      <div id="reservaForm">
+        <div class="reserva-card reveal">
+          <div class="field-row">
+            <div class="field"><label>Nombre</label><input id="pubResNombre" type="text" placeholder="Tu nombre completo"></div>
+            <div class="field"><label>Teléfono</label><input id="pubResTel" type="tel" placeholder="+34 600..."></div>
+          </div>
+          <div class="field-row">
+            <div class="field"><label>Fecha</label><input id="pubResFecha" type="date" onchange="checkDispo()"></div>
+            <div class="field"><label>Hora</label>
+              <select id="pubResHora" onchange="checkDispo()">
+                <option>13:00</option><option>13:30</option><option>14:00</option><option>14:30</option><option>15:00</option>
+                <option>20:00</option><option>20:30</option><option selected>21:00</option><option>21:30</option><option>22:00</option><option>22:30</option>
+              </select>
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field"><label>Comensales</label><input id="pubResPers" type="number" min="1" value="2"></div>
+            <div class="field"><label>Zona</label><select id="pubResZona"><option>Interior</option><option>Terraza</option></select></div>
+          </div>
+          <button class="btn-submit" id="pubResBtn" onclick="submitReserva()">Reservar mesa →</button>
+        </div>
+      </div>
+      <div id="reservaConfirm" style="display:none">
+        <div class="confirm-card">
+          <div class="confirm-icon">🎉</div>
+          <div class="confirm-title">¡Reserva enviada!</div>
+          <div class="confirm-detail" id="confirmText"></div>
+        </div>
       </div>
     </div>
   </div>
 </div>
 
-<!-- PEDIDOS -->
 <div class="page" id="page-pedidos">
-  <div style="height:64px;"></div>
+  <div style="height:64px"></div>
   <div class="section">
-    <div class="section-tag">Pedidos a domicilio</div>
-    <h2 class="section-title">Pide desde casa</h2>
-    <p class="section-sub">Elige tus platos favoritos y te los llevamos.</p>
+    <div class="section-header reveal">
+      <div class="section-tag">Pedidos a domicilio</div>
+      <h2 class="section-title">Pide desde casa</h2>
+      <p class="section-sub">Elige tus platos y te los llevamos.</p>
+    </div>
     <div class="pedido-layout">
       <div>
-        <div class="cat-filter" id="pedidoFilter"></div>
+        <div class="filter-bar" id="pedidoFilter"></div>
         <div class="menu-grid" id="pedidoGrid"></div>
       </div>
-      <div class="cart-sidebar">
-        <div class="cart-title">🛒 Tu pedido</div>
-        <div id="cartItems"><div class="cart-empty">Tu carrito está vacío</div></div>
-        <div class="cart-total" id="cartTotal" style="display:none;">
-          <div class="cart-row"><span>Subtotal</span><span id="cartSubtotal">0,00€</span></div>
-          <div class="cart-row" id="cartEnvioRow"><span>Envío</span><span id="cartEnvio">0,00€</span></div>
-          <div id="cartEnvioMsg" class="envio-msg" style="display:none;"></div>
-          <div class="cart-row total"><span>Total</span><span id="cartTotalVal">0,00€</span></div>
+      <div class="cart" id="cartSidebar">
+        <div class="cart-title">🛒 Tu pedido <span class="cart-badge" id="cartCount" style="display:none">0</span></div>
+        <div id="cartItems"><div class="cart-empty">Añade platos para empezar</div></div>
+        <div id="cartTotalSection" style="display:none">
+          <div class="cart-divider"></div>
+          <div class="cart-row"><span>Subtotal</span><span id="cartSubtotal">0€</span></div>
+          <div class="cart-row" id="cartEnvioRow"><span>Envío</span><span id="cartEnvio">0€</span></div>
+          <div id="cartEnvioMsg" class="envio-msg" style="display:none"></div>
+          <div class="cart-row total"><span>Total</span><span id="cartTotalVal">0€</span></div>
         </div>
-        <div id="cartCheckout" style="display:none;margin-top:16px;">
+        <div id="cartCheckout" style="display:none" class="checkout-fields">
           <div class="field"><label>Nombre</label><input id="pedNombre" type="text" placeholder="Tu nombre"></div>
           <div class="field"><label>Teléfono</label><input id="pedTel" type="tel" placeholder="+34 600..."></div>
-          <div class="field"><label>Dirección de entrega</label><input id="pedDir" type="text" placeholder="Calle, número, piso..."></div>
+          <div class="field"><label>Dirección</label><input id="pedDir" type="text" placeholder="Calle, número, piso..."></div>
           <div class="field"><label>Observaciones</label><input id="pedNotas" type="text" placeholder="Sin cebolla, portal 3B..."></div>
-          <div class="field"><label>Forma de pago</label>
-            <select id="pedPago"><option>Efectivo</option><option>Datáfono a la entrega</option><option>Pago online (próximamente)</option></select>
-          </div>
-          <button class="btn-submit" onclick="submitPedido()">Confirmar pedido</button>
+          <div class="field"><label>Forma de pago</label><select id="pedPago"><option>Efectivo</option><option>Datáfono a la entrega</option><option>Pago online (próximamente)</option></select></div>
+          <button class="btn-submit" onclick="submitPedido()">Confirmar pedido →</button>
         </div>
       </div>
     </div>
   </div>
 </div>
 
-<!-- CONTACTO -->
 <div class="page" id="page-contacto">
-  <div style="height:64px;"></div>
+  <div style="height:64px"></div>
   <div class="section">
-    <div class="section-tag">Contacto</div>
-    <h2 class="section-title">Encuéntranos</h2>
-    <p class="section-sub" id="contactoSub">Ven a vernos o contacta con nosotros.</p>
+    <div class="section-header reveal">
+      <div class="section-tag">Contacto</div>
+      <h2 class="section-title">Encuéntranos</h2>
+    </div>
     <div class="contact-grid">
-      <div>
-        <div class="contact-item" id="cDireccion" style="display:none;"><div class="contact-icon">📍</div><div><div class="contact-label">Dirección</div><div class="contact-value" id="cDirVal"></div></div></div>
-        <div class="contact-item" id="cTelefono" style="display:none;"><div class="contact-icon">📞</div><div><div class="contact-label">Teléfono</div><div class="contact-value" id="cTelVal"></div></div></div>
-        <div class="contact-item" id="cEmail" style="display:none;"><div class="contact-icon">✉️</div><div><div class="contact-label">Email</div><div class="contact-value" id="cEmailVal"></div></div></div>
-        <div id="cMapsWrap" style="display:none;margin-top:12px;">
-          <a id="cMapsLink" href="#" target="_blank" rel="noopener noreferrer" style="display:inline-block;padding:14px 28px;border-radius:12px;background:linear-gradient(135deg,var(--primary),var(--primary2));color:#fff;font-family:var(--font);font-size:15px;font-weight:700;text-align:center;text-decoration:none;">📍 Cómo llegar</a>
-        </div>
-        <div class="social-links" id="socialLinks" style="display:none;"></div>
+      <div class="reveal">
+        <div class="contact-item" id="cDir" style="display:none"><div class="contact-icon">📍</div><div><div class="contact-label">Dirección</div><div class="contact-value" id="cDirVal"></div></div></div>
+        <div class="contact-item" id="cTel" style="display:none"><div class="contact-icon">📞</div><div><div class="contact-label">Teléfono</div><div class="contact-value" id="cTelVal"></div></div></div>
+        <div class="contact-item" id="cMail" style="display:none"><div class="contact-icon">✉️</div><div><div class="contact-label">Email</div><div class="contact-value" id="cMailVal"></div></div></div>
+        <div id="cMapsWrap" style="display:none"><a id="cMapsLink" href="#" target="_blank" rel="noopener noreferrer" class="btn-maps">📍 Cómo llegar</a></div>
+        <div class="social-links" id="socialLinks" style="display:none"></div>
       </div>
-      <div>
-        <div class="horarios-card" id="horariosCard" style="display:none;">
+      <div class="reveal reveal-delay-1">
+        <div class="horarios-card" id="horariosCard" style="display:none">
           <div class="horarios-title">🕐 Horarios</div>
           <div class="horarios-text" id="horariosText"></div>
         </div>
@@ -447,367 +366,227 @@
   </div>
 </div>
 
-<!-- FOOTER -->
-<footer class="footer" id="footerSection" style="display:none;">
-  <div><strong id="footerName">...</strong></div>
-  <div id="footerDireccion"></div>
-  <div id="footerTel"></div>
-  <div class="footer-powered">Creado con <a href="#">Hostelia</a></div>
+<footer class="footer" id="footerEl" style="display:none">
+  <div class="footer-name" id="footerName"></div>
+  <div class="footer-info" id="footerInfo"></div>
+  <div class="footer-powered">Hecho con <a href="#">Hostelia</a></div>
 </footer>
 
-<!-- TOAST -->
-<div class="web-toast" id="webToast"></div>
+<div class="toast" id="toast"></div>
 
 <script>
-const SUPA_URL = 'https://rjpjqrsyzkeghofziejy.supabase.co';
-const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJqcGpxcnN5emtlZ2hvZnppZWp5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4NTI1MjYsImV4cCI6MjA5NDQyODUyNn0.httUrRI99cAO1YpiZzfcFcIAj5y41QB817b9pdfjbI4';
-const sb = supabase.createClient(SUPA_URL, SUPA_KEY);
-const params = new URLSearchParams(location.search);
-let NID = params.get('negocio');
+const SUPA_URL='https://rjpjqrsyzkeghofziejy.supabase.co';
+const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJqcGpxcnN5emtlZ2hvZnppZWp5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4NTI1MjYsImV4cCI6MjA5NDQyODUyNn0.httUrRI99cAO1YpiZzfcFcIAj5y41QB817b9pdfjbI4';
+const sb=supabase.createClient(SUPA_URL,SUPA_KEY);
+const params=new URLSearchParams(location.search);
+let NID=params.get('negocio');
+let negocio,webConf,categorias=[],platos=[],mesasData=[],resConfig,envioConf;
+let carrito=[];
 
-let negocio, webConf, categorias=[], platos=[], mesasData=[], resConfig, envioConf;
-let carrito = [];
-
-// ── INIT ──────────────────────────────────────────────
-window.addEventListener('DOMContentLoaded', async () => {
-  if (!NID) { document.getElementById('loader').innerHTML = '<p style="color:#777;font-size:14px;">Página no encontrada</p>'; return; }
-  try {
-    const [n, w, c, p, m, rc, ec] = await Promise.all([
-      sb.from('negocios').select('*').eq('id', NID).single(),
-      sb.from('web_config').select('*').eq('negocio_id', NID).order('creado_en', { ascending: false }).limit(1).maybeSingle(),
-      sb.from('categorias').select('*').eq('negocio_id', NID).eq('activa', true).order('orden'),
-      sb.from('carta').select('*').eq('negocio_id', NID).eq('disponible', true).order('orden'),
-      sb.from('mesas').select('*').eq('negocio_id', NID),
-      sb.from('reservas_config').select('*').eq('negocio_id', NID).limit(1).maybeSingle(),
-      sb.from('envio_config').select('*').eq('negocio_id', NID).limit(1).maybeSingle()
+window.addEventListener('DOMContentLoaded',async()=>{
+  if(!NID){document.getElementById('loader').innerHTML='<p style="color:#999;font-size:14px">Página no encontrada</p>';return}
+  try{
+    const[n,w,c,p,m,rc,ec]=await Promise.all([
+      sb.from('negocios').select('*').eq('id',NID).single(),
+      sb.from('web_config').select('*').eq('negocio_id',NID).order('creado_en',{ascending:false}).limit(1).maybeSingle(),
+      sb.from('categorias').select('*').eq('negocio_id',NID).eq('activa',true).order('orden'),
+      sb.from('carta').select('*').eq('negocio_id',NID).eq('disponible',true).order('orden'),
+      sb.from('mesas').select('*').eq('negocio_id',NID),
+      sb.from('reservas_config').select('*').eq('negocio_id',NID).limit(1).maybeSingle(),
+      sb.from('envio_config').select('*').eq('negocio_id',NID).limit(1).maybeSingle()
     ]);
-    negocio = n.data; webConf = w.data;
-    categorias = c.data||[]; platos = p.data||[];
-    mesasData = m.data||[]; resConfig = rc.data; envioConf = ec.data;
-
-    console.log('Negocio:', negocio);
-    console.log('Web config:', webConf);
-    console.log('Categorías:', categorias.length);
-    console.log('Platos:', platos.length);
-    console.log('Mesas:', mesasData.length);
-    console.log('Reservas config:', resConfig);
-    console.log('Envío config:', envioConf);
-    console.log('Errores:', { n:n.error, w:w.error, c:c.error, p:p.error, m:m.error, rc:rc.error, ec:ec.error });
-
-    if (!negocio) { document.getElementById('loader').innerHTML = '<p>Negocio no encontrado</p>'; return; }
+    negocio=n.data;webConf=w.data;categorias=c.data||[];platos=p.data||[];
+    mesasData=m.data||[];resConfig=rc.data;envioConf=ec.data;
+    if(!negocio){document.getElementById('loader').innerHTML='<p>Negocio no encontrado</p>';return}
     render();
-  } catch(e) { console.error(e); }
+  }catch(e){console.error(e)}
 });
 
-function render() {
-  const wc = webConf || {};
-  // Colores y fuente
-  document.documentElement.style.setProperty('--primary', wc.color_primario || '#ff6b35');
-  document.documentElement.style.setProperty('--primary2', wc.color_secundario || '#ffb347');
-  document.documentElement.style.setProperty('--font', `'${wc.tipografia||'Outfit'}', sans-serif`);
-  document.title = negocio.nombre;
+function render(){
+  const wc=webConf||{};
+  document.documentElement.style.setProperty('--p',wc.color_primario||'#ff6b35');
+  document.documentElement.style.setProperty('--p2',wc.color_secundario||'#ffb347');
+  document.documentElement.style.setProperty('--p-glow',hexToGlow(wc.color_primario||'#ff6b35'));
+  document.documentElement.style.setProperty('--font',`'${wc.tipografia||'Outfit'}',sans-serif`);
+  document.title=negocio.nombre;
 
   // Nav
-  document.getElementById('navName').textContent = negocio.nombre;
-  if (wc.logo_url) document.getElementById('navLogoImg').innerHTML = `<img src="${wc.logo_url}" style="height:32px;border-radius:6px;">`;
+  document.getElementById('navName').textContent=negocio.nombre;
+  if(wc.logo_url)document.getElementById('navLogoImg').innerHTML=`<img src="${wc.logo_url}" style="height:34px;border-radius:8px">`;
 
-  // Build nav links
-  const pages = [{ id:'inicio', label:'Inicio', show:true }];
-  if (wc.seccion_sobre_nosotros !== false) pages.push({ id:'sobre', label:'Sobre nosotros' });
-  if (wc.seccion_carta !== false) pages.push({ id:'carta', label:'Carta' });
-  if (wc.seccion_reservas !== false) pages.push({ id:'reservas', label:'Reservas' });
-  if (wc.seccion_pedidos) pages.push({ id:'pedidos', label:'Pedidos' });
-  if (wc.seccion_contacto !== false) pages.push({ id:'contacto', label:'Contacto' });
+  const pages=[{id:'inicio',label:'Inicio'}];
+  if(wc.seccion_sobre_nosotros!==false)pages.push({id:'sobre',label:'Sobre nosotros'});
+  if(wc.seccion_carta!==false)pages.push({id:'carta',label:'Carta'});
+  if(wc.seccion_reservas!==false)pages.push({id:'reservas',label:'Reservas'});
+  if(wc.seccion_pedidos)pages.push({id:'pedidos',label:'Pedidos'});
+  if(wc.seccion_contacto!==false)pages.push({id:'contacto',label:'Contacto'});
 
-  document.getElementById('navLinks').innerHTML = pages.map(p =>
-    `<div class="nav-link${p.id==='inicio'?' active':''}" onclick="goPage('${p.id}')">${p.label}</div>`
-  ).join('');
+  document.getElementById('navLinks').innerHTML=pages.map(p=>`<div class="nav-link${p.id==='inicio'?' active':''}" onclick="goPage('${p.id}')">${p.label}</div>`).join('');
+  document.getElementById('mobileMenuItems').innerHTML=pages.map(p=>`<div class="mobile-menu-item" onclick="goPage('${p.id}');toggleMenu()">${p.label}</div>`).join('');
 
-  if (wc.btn_reservas) {
-    document.getElementById('navCta').style.display = 'block';
-    document.getElementById('navCta').textContent = 'Reservar';
-  }
+  if(wc.btn_reservas!==false&&wc.seccion_reservas!==false){document.getElementById('navCta').style.display='block';document.getElementById('floatCta').style.display=''}
 
   // Hero
-  if (wc.hero_imagen_url) document.getElementById('heroBg').style.backgroundImage = `url(${wc.hero_imagen_url})`;
-  else document.getElementById('heroBg').style.background = 'linear-gradient(135deg,#1a1714,#2a2520)';
-  document.getElementById('heroTitle').textContent = wc.hero_titulo || negocio.nombre;
-  document.getElementById('heroSub').textContent = wc.hero_subtitulo || '';
-  let btns = '';
-  if (wc.btn_reservas !== false && wc.seccion_reservas !== false) btns += '<button class="btn-hero btn-hero-primary" onclick="goPage(\'reservas\')">📅 Reservar mesa</button>';
-  if (wc.btn_pedidos && wc.seccion_pedidos) btns += '<button class="btn-hero btn-hero-secondary" onclick="goPage(\'pedidos\')">🛵 Pedir a domicilio</button>';
-  if (!btns && wc.seccion_carta !== false) btns = '<button class="btn-hero btn-hero-primary" onclick="goPage(\'carta\')">🍽️ Ver carta</button>';
-  document.getElementById('heroBtns').innerHTML = btns;
+  if(wc.hero_imagen_url)document.getElementById('heroBg').style.backgroundImage=`url(${wc.hero_imagen_url})`;
+  else document.getElementById('heroBg').style.background='linear-gradient(135deg,#1a1714,#2a2520)';
+  document.getElementById('heroTitle').textContent=wc.hero_titulo||negocio.nombre;
+  document.getElementById('heroSub').textContent=wc.hero_subtitulo||'';
+  if(negocio.tipo)document.getElementById('heroTag').textContent=negocio.tipo;
+  let btns='';
+  if(wc.btn_reservas!==false&&wc.seccion_reservas!==false)btns+=`<button class="btn btn-primary" onclick="goPage('reservas')">📅 Reservar mesa</button>`;
+  if(wc.btn_pedidos&&wc.seccion_pedidos)btns+=`<button class="btn btn-ghost" onclick="goPage('pedidos')">🛵 Pedir a domicilio</button>`;
+  if(!btns&&wc.seccion_carta!==false)btns=`<button class="btn btn-primary" onclick="goPage('carta')">🍽️ Ver carta</button>`;
+  document.getElementById('heroBtns').innerHTML=btns;
 
-  // Sobre nosotros
-  document.getElementById('sobreTexto').innerHTML = (wc.sobre_nosotros_texto||'').replace(/\n/g,'<br>');
-  if (wc.sobre_nosotros_imagen_url) document.getElementById('sobreImg').innerHTML = `<img src="${wc.sobre_nosotros_imagen_url}">`;
+  // Sobre
+  document.getElementById('sobreTexto').innerHTML=(wc.sobre_nosotros_texto||'').replace(/\n/g,'<br>');
+  if(wc.sobre_nosotros_imagen_url)document.getElementById('sobreImg').innerHTML=`<img src="${wc.sobre_nosotros_imagen_url}">`;
 
-  // Carta
-  renderCarta('cartaFilter','cartaGrid',false);
-  // Pedidos
-  renderCarta('pedidoFilter','pedidoGrid',true);
+  // Carta y Pedidos
+  renderMenu('cartaFilter','cartaGrid',false);
+  renderMenu('pedidoFilter','pedidoGrid',true);
 
-  // Reservas - set min date
-  const hoy = new Date().toISOString().split('T')[0];
-  document.getElementById('pubResFecha').value = hoy;
-  document.getElementById('pubResFecha').min = hoy;
-  if (resConfig?.antelacion_max_dias) {
-    const max = new Date(); max.setDate(max.getDate() + resConfig.antelacion_max_dias);
-    document.getElementById('pubResFecha').max = max.toISOString().split('T')[0];
-  }
+  // Reservas
+  const hoy=new Date().toISOString().split('T')[0];
+  document.getElementById('pubResFecha').value=hoy;
+  document.getElementById('pubResFecha').min=hoy;
+  if(resConfig?.antelacion_max_dias){const max=new Date();max.setDate(max.getDate()+resConfig.antelacion_max_dias);document.getElementById('pubResFecha').max=max.toISOString().split('T')[0]}
 
   // Contacto
-  if (wc.contacto_direccion) { document.getElementById('cDireccion').style.display='flex'; document.getElementById('cDirVal').textContent=wc.contacto_direccion; }
-  if (wc.contacto_telefono) { document.getElementById('cTelefono').style.display='flex'; document.getElementById('cTelVal').textContent=wc.contacto_telefono; }
-  if (wc.contacto_email) { document.getElementById('cEmail').style.display='flex'; document.getElementById('cEmailVal').textContent=wc.contacto_email; }
-  if (wc.contacto_google_maps_url) {
-    document.getElementById('cMapsWrap').style.display='block';
-    document.getElementById('cMapsLink').href = wc.contacto_google_maps_url;
-  }
-  if (wc.contacto_horarios) { document.getElementById('horariosCard').style.display='block'; document.getElementById('horariosText').textContent=wc.contacto_horarios; }
+  if(wc.contacto_direccion){document.getElementById('cDir').style.display='flex';document.getElementById('cDirVal').textContent=wc.contacto_direccion}
+  if(wc.contacto_telefono){document.getElementById('cTel').style.display='flex';document.getElementById('cTelVal').textContent=wc.contacto_telefono}
+  if(wc.contacto_email){document.getElementById('cMail').style.display='flex';document.getElementById('cMailVal').textContent=wc.contacto_email}
+  if(wc.contacto_google_maps_url){document.getElementById('cMapsWrap').style.display='block';document.getElementById('cMapsLink').href=wc.contacto_google_maps_url}
+  if(wc.contacto_horarios){document.getElementById('horariosCard').style.display='block';document.getElementById('horariosText').textContent=wc.contacto_horarios}
 
-  let socials = '';
-  if (wc.red_instagram) socials += `<a class="social-link" href="${wc.red_instagram}" target="_blank" rel="noopener"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg></a>`;
-  if (wc.red_facebook) socials += `<a class="social-link" href="${wc.red_facebook}" target="_blank" rel="noopener"><svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg></a>`;
-  if (wc.red_tiktok) socials += `<a class="social-link" href="${wc.red_tiktok}" target="_blank" rel="noopener"><svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1v-3.5a6.37 6.37 0 0 0-.79-.05A6.34 6.34 0 0 0 3.15 15a6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.34-6.34V8.69a8.26 8.26 0 0 0 4.76 1.51V6.75a4.84 4.84 0 0 1-1-.06z"/></svg></a>`;
-  if (socials) { document.getElementById('socialLinks').style.display='flex'; document.getElementById('socialLinks').innerHTML=socials; }
+  let socials='';
+  if(wc.red_instagram)socials+=`<a class="social-link" href="${wc.red_instagram}" target="_blank" rel="noopener"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg></a>`;
+  if(wc.red_facebook)socials+=`<a class="social-link" href="${wc.red_facebook}" target="_blank" rel="noopener"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg></a>`;
+  if(wc.red_tiktok)socials+=`<a class="social-link" href="${wc.red_tiktok}" target="_blank" rel="noopener"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1v-3.5a6.37 6.37 0 0 0-.79-.05A6.34 6.34 0 0 0 3.15 15a6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.34-6.34V8.69a8.26 8.26 0 0 0 4.76 1.51V6.75a4.84 4.84 0 0 1-1-.06z"/></svg></a>`;
+  if(socials){document.getElementById('socialLinks').style.display='flex';document.getElementById('socialLinks').innerHTML=socials}
 
   // Footer
-  document.getElementById('footerName').textContent = negocio.nombre;
-  document.getElementById('footerDireccion').textContent = wc.contacto_direccion || '';
-  document.getElementById('footerTel').textContent = wc.contacto_telefono || '';
-  document.getElementById('footerSection').style.display = 'block';
-
-  // Mobile menu
-  document.getElementById('mobileMenu').innerHTML = pages.map(p =>
-    `<div style="padding:14px 0;font-size:20px;font-weight:600;cursor:pointer;border-bottom:1px solid var(--border);" onclick="goPage('${p.id}');toggleMobileMenu()">${p.label}</div>`
-  ).join('');
+  document.getElementById('footerName').textContent=negocio.nombre;
+  document.getElementById('footerInfo').innerHTML=[wc.contacto_direccion,wc.contacto_telefono].filter(Boolean).join(' · ');
+  document.getElementById('footerEl').style.display='block';
 
   // Show
-  document.getElementById('loader').style.display = 'none';
-  document.getElementById('mainNav').style.display = 'flex';
+  setTimeout(()=>{document.getElementById('loader').classList.add('hide')},300);
+  document.getElementById('mainNav').style.display='flex';
 
-  // Scroll effect
-  window.addEventListener('scroll', () => {
-    document.getElementById('mainNav').classList.toggle('scrolled', window.scrollY > 20);
+  // Scroll effects
+  window.addEventListener('scroll',()=>{
+    document.getElementById('mainNav').classList.toggle('solid',window.scrollY>80);
   });
+  initReveal();
 }
 
-// ── NAVIGATION ────────────────────────────────────────
-function goPage(id) {
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.getElementById('page-' + id).classList.add('active');
-  document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
-  document.querySelectorAll('.nav-link').forEach(l => { if (l.textContent.toLowerCase().includes(id === 'inicio' ? 'inicio' : id)) l.classList.add('active'); });
-  window.scrollTo(0, 0);
-  if (id === 'reservas') checkDispo();
+// NAV
+function goPage(id){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  document.querySelectorAll('.nav-link').forEach(l=>l.classList.remove('active'));
+  const links=document.querySelectorAll('.nav-link');
+  links.forEach(l=>{if(l.textContent.toLowerCase().replace(/\s/g,'').includes(id==='inicio'?'inicio':id))l.classList.add('active')});
+  window.scrollTo({top:0,behavior:'smooth'});
+  if(id==='reservas')checkDispo();
+  setTimeout(initReveal,100);
+}
+function toggleMenu(){document.getElementById('mobileMenu').classList.toggle('open')}
+
+// REVEAL ANIMATIONS
+function initReveal(){
+  const obs=new IntersectionObserver((entries)=>{entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('visible');obs.unobserve(e.target)}})},{threshold:0.1,rootMargin:'0px 0px -40px 0px'});
+  document.querySelectorAll('.reveal:not(.visible)').forEach(el=>obs.observe(el));
 }
 
-function toggleMobileMenu() {
-  const m = document.getElementById('mobileMenu');
-  m.style.display = m.style.display === 'none' ? 'block' : 'none';
-}
-
-// ── CARTA ─────────────────────────────────────────────
-let activeCatCarta = null, activeCatPedido = null;
-
-function renderCarta(filterId, gridId, pedido) {
-  const filterEl = document.getElementById(filterId);
-  const gridEl = document.getElementById(gridId);
-
-  filterEl.innerHTML = `<div class="cat-pill active" onclick="filterCat(null,'${filterId}','${gridId}',${pedido},this)">Todos</div>` +
-    categorias.map(c => `<div class="cat-pill" onclick="filterCat('${c.id}','${filterId}','${gridId}',${pedido},this)">${c.nombre}</div>`).join('');
-
-  const items = platos;
-  gridEl.innerHTML = items.map(p => {
-    const addBtn = pedido ? `<button style="margin-top:8px;width:100%;padding:8px;border:none;border-radius:8px;background:linear-gradient(135deg,var(--primary),var(--primary2));color:#fff;font-family:var(--font);font-size:13px;font-weight:600;cursor:pointer;" onclick="addToCart('${p.id}')">+ Añadir</button>` : '';
-    return `<div class="menu-card" data-cat="${p.categoria_id}">
-      <div class="menu-card-img">${p.imagen_url ? `<img src="${p.imagen_url}">` : '<div style="height:100%;display:flex;align-items:center;justify-content:center;font-size:40px;">🍽️</div>'}</div>
+// MENU
+function renderMenu(filterId,gridId,pedido){
+  const f=document.getElementById(filterId),g=document.getElementById(gridId);
+  f.innerHTML=`<div class="filter-pill active" onclick="filterMenu(null,'${filterId}','${gridId}',this)">Todos</div>`+categorias.map(c=>`<div class="filter-pill" onclick="filterMenu('${c.id}','${filterId}','${gridId}',this)">${c.nombre}</div>`).join('');
+  g.innerHTML=platos.map(p=>{
+    const addBtn=pedido?`<button class="btn-add" onclick="addToCart('${p.id}')">+ Añadir</button>`:'';
+    return`<div class="menu-card reveal" data-cat="${p.categoria_id}">
+      <div class="menu-card-img">${p.imagen_url?`<img src="${p.imagen_url}">`:'<div class="no-img">🍽️</div>'}</div>
       <div class="menu-card-body">
         <div class="menu-card-name">${p.nombre}</div>
         <div class="menu-card-desc">${p.descripcion||''}</div>
-        <div class="menu-card-price">${parseFloat(p.precio).toFixed(2)}€</div>
-        ${addBtn}
+        <div class="menu-card-footer"><div class="menu-card-price">${parseFloat(p.precio).toFixed(2)}€</div>${addBtn}</div>
       </div>
-    </div>`;
-  }).join('');
+    </div>`}).join('');
+  setTimeout(initReveal,50);
 }
-
-function filterCat(catId, filterId, gridId, pedido, el) {
-  document.querySelectorAll(`#${filterId} .cat-pill`).forEach(p => p.classList.remove('active'));
+function filterMenu(catId,filterId,gridId,el){
+  document.querySelectorAll(`#${filterId} .filter-pill`).forEach(p=>p.classList.remove('active'));
   el.classList.add('active');
-  document.querySelectorAll(`#${gridId} .menu-card`).forEach(c => {
-    c.style.display = (!catId || c.dataset.cat === catId) ? 'block' : 'none';
-  });
+  document.querySelectorAll(`#${gridId} .menu-card`).forEach(c=>{c.style.display=(!catId||c.dataset.cat===catId)?'':'none'});
 }
 
-// ── CARRITO ───────────────────────────────────────────
-function addToCart(platoId) {
-  const p = platos.find(x => x.id === platoId);
-  if (!p) return;
-  const existing = carrito.find(c => c.id === platoId);
-  if (existing) existing.qty++;
-  else carrito.push({ id:p.id, nombre:p.nombre, precio:parseFloat(p.precio), qty:1 });
-  renderCart();
-  webToast('Añadido al carrito ✓');
+// CART
+function addToCart(id){
+  const p=platos.find(x=>x.id===id);if(!p)return;
+  const ex=carrito.find(c=>c.id===id);
+  if(ex)ex.qty++;else carrito.push({id:p.id,nombre:p.nombre,precio:parseFloat(p.precio),qty:1});
+  renderCart();showToast('Añadido al pedido ✓');
 }
-
-function updateQty(platoId, delta) {
-  const item = carrito.find(c => c.id === platoId);
-  if (!item) return;
-  item.qty += delta;
-  if (item.qty <= 0) carrito = carrito.filter(c => c.id !== platoId);
+function updateQty(id,d){
+  const item=carrito.find(c=>c.id===id);if(!item)return;
+  item.qty+=d;if(item.qty<=0)carrito=carrito.filter(c=>c.id!==id);
   renderCart();
 }
-
-function renderCart() {
-  const el = document.getElementById('cartItems');
-  const totalEl = document.getElementById('cartTotal');
-  const checkoutEl = document.getElementById('cartCheckout');
-
-  if (carrito.length === 0) {
-    el.innerHTML = '<div class="cart-empty">Tu carrito está vacío</div>';
-    totalEl.style.display = 'none';
-    checkoutEl.style.display = 'none';
-    return;
-  }
-
-  el.innerHTML = carrito.map(c => `
-    <div class="cart-item">
-      <div class="cart-item-info">
-        <div class="cart-item-name">${c.nombre}</div>
-        <div class="cart-item-price">${(c.precio*c.qty).toFixed(2)}€</div>
-      </div>
-      <div class="cart-qty">
-        <button onclick="updateQty('${c.id}',-1)">−</button>
-        <span>${c.qty}</span>
-        <button onclick="updateQty('${c.id}',1)">+</button>
-      </div>
-    </div>`).join('');
-
-  const subtotal = carrito.reduce((s,c) => s + c.precio*c.qty, 0);
-  const ec = envioConf || {};
-  let envio = parseFloat(ec.coste_envio) || 3;
-  let envioMsg = '';
-
-  if (ec.envio_gratis_siempre) { envio = 0; }
-  else if (!ec.cobrar_envio_siempre && subtotal >= (parseFloat(ec.pedido_minimo_envio_gratis)||25)) { envio = 0; envioMsg = '¡Envío gratis! 🎉'; }
-  else {
-    const faltan = (parseFloat(ec.pedido_minimo_envio_gratis)||25) - subtotal;
-    if (faltan > 0) envioMsg = `Te faltan ${faltan.toFixed(2)}€ para envío gratis`;
-  }
-
-  document.getElementById('cartSubtotal').textContent = subtotal.toFixed(2) + '€';
-  document.getElementById('cartEnvio').textContent = envio === 0 ? 'Gratis' : envio.toFixed(2) + '€';
-  document.getElementById('cartTotalVal').textContent = (subtotal + envio).toFixed(2) + '€';
-  const msgEl = document.getElementById('cartEnvioMsg');
-  if (envioMsg) { msgEl.style.display='block'; msgEl.textContent=envioMsg; } else { msgEl.style.display='none'; }
-
-  totalEl.style.display = 'block';
-  checkoutEl.style.display = 'block';
+function renderCart(){
+  const el=document.getElementById('cartItems'),tot=document.getElementById('cartTotalSection'),chk=document.getElementById('cartCheckout'),cnt=document.getElementById('cartCount');
+  if(carrito.length===0){el.innerHTML='<div class="cart-empty">Añade platos para empezar</div>';tot.style.display='none';chk.style.display='none';cnt.style.display='none';return}
+  cnt.style.display='inline';cnt.textContent=carrito.reduce((s,c)=>s+c.qty,0);
+  el.innerHTML=carrito.map(c=>`<div class="cart-item"><div class="cart-item-info"><div class="cart-item-name">${c.nombre}</div><div class="cart-item-price">${(c.precio*c.qty).toFixed(2)}€</div></div><div class="qty-ctrl"><button class="qty-btn" onclick="updateQty('${c.id}',-1)">−</button><span class="qty-num">${c.qty}</span><button class="qty-btn" onclick="updateQty('${c.id}',1)">+</button></div></div>`).join('');
+  const sub=carrito.reduce((s,c)=>s+c.precio*c.qty,0);
+  const ec=envioConf||{};let envio=parseFloat(ec.coste_envio)||3;let msg='';
+  if(ec.envio_gratis_siempre)envio=0;
+  else if(!ec.cobrar_envio_siempre&&sub>=(parseFloat(ec.pedido_minimo_envio_gratis)||25)){envio=0;msg='¡Envío gratis! 🎉'}
+  else{const f=(parseFloat(ec.pedido_minimo_envio_gratis)||25)-sub;if(f>0)msg=`Te faltan ${f.toFixed(2)}€ para envío gratis`}
+  document.getElementById('cartSubtotal').textContent=sub.toFixed(2)+'€';
+  document.getElementById('cartEnvio').textContent=envio===0?'Gratis':envio.toFixed(2)+'€';
+  document.getElementById('cartTotalVal').textContent=(sub+envio).toFixed(2)+'€';
+  const m=document.getElementById('cartEnvioMsg');if(msg){m.style.display='block';m.textContent=msg}else m.style.display='none';
+  tot.style.display='block';chk.style.display='block';
+}
+async function submitPedido(){
+  const nombre=document.getElementById('pedNombre').value.trim(),tel=document.getElementById('pedTel').value.trim(),dir=document.getElementById('pedDir').value.trim();
+  if(!nombre||!tel||!dir){showToast('Rellena nombre, teléfono y dirección');return}
+  const sub=carrito.reduce((s,c)=>s+c.precio*c.qty,0);const ec=envioConf||{};let envio=parseFloat(ec.coste_envio)||3;
+  if(ec.envio_gratis_siempre||(!ec.cobrar_envio_siempre&&sub>=(parseFloat(ec.pedido_minimo_envio_gratis)||25)))envio=0;
+  await sb.from('pedidos').insert({negocio_id:NID,nombre_cliente:nombre,telefono_cliente:tel,direccion_entrega:dir,items:carrito.map(c=>({nombre:c.nombre,precio:c.precio,qty:c.qty})),total:sub+envio,forma_pago:document.getElementById('pedPago').value,notas:document.getElementById('pedNotas').value.trim(),estado:'nuevo'});
+  carrito=[];renderCart();showToast('¡Pedido enviado! Confirmamos por SMS.');
+  ['pedNombre','pedTel','pedDir','pedNotas'].forEach(id=>document.getElementById(id).value='');
 }
 
-async function submitPedido() {
-  const nombre = document.getElementById('pedNombre').value.trim();
-  const tel = document.getElementById('pedTel').value.trim();
-  const dir = document.getElementById('pedDir').value.trim();
-  if (!nombre || !tel || !dir) { webToast('Rellena todos los campos'); return; }
-
-  const subtotal = carrito.reduce((s,c) => s + c.precio*c.qty, 0);
-  const ec = envioConf || {};
-  let envio = parseFloat(ec.coste_envio) || 3;
-  if (ec.envio_gratis_siempre || (!ec.cobrar_envio_siempre && subtotal >= (parseFloat(ec.pedido_minimo_envio_gratis)||25))) envio = 0;
-
-  await sb.from('pedidos').insert({
-    negocio_id: NID,
-    nombre_cliente: nombre,
-    telefono_cliente: tel,
-    direccion_entrega: dir,
-    items: carrito.map(c => ({ nombre:c.nombre, precio:c.precio, qty:c.qty })),
-    total: subtotal + envio,
-    forma_pago: document.getElementById('pedPago').value,
-    notas: document.getElementById('pedNotas').value.trim(),
-    estado: 'nuevo'
-  });
-
-  carrito = [];
-  renderCart();
-  webToast('¡Pedido enviado! Te confirmaremos por SMS.');
-  document.getElementById('pedNombre').value = '';
-  document.getElementById('pedTel').value = '';
-  document.getElementById('pedDir').value = '';
-  document.getElementById('pedNotas').value = '';
+// RESERVAS
+async function checkDispo(){
+  const fecha=document.getElementById('pubResFecha').value;if(!fecha||mesasData.length===0)return;
+  const totalMesas=mesasData.reduce((s,m)=>s+m.cantidad,0);const hora=document.getElementById('pubResHora').value;
+  const horaNum=parseInt(hora.replace(':',''));
+  const{data:reservas}=await sb.from('reservas').select('*').eq('negocio_id',NID).eq('fecha',fecha).in('estado',['confirmada','pendiente']);
+  const enHora=(reservas||[]).filter(r=>{const rh=parseInt((r.hora||'').replace(':',''));return Math.abs(rh-horaNum)<130});
+  const libres=Math.max(0,totalMesas-enHora.length);
+  const b=document.getElementById('dispoBanner');
+  if(libres<=0){b.style.display='block';b.className='dispo-banner dispo-red';b.textContent='⚠️ No quedan mesas para esta franja.';document.getElementById('pubResBtn').disabled=true}
+  else if(libres<=3){b.style.display='block';b.className='dispo-banner dispo-orange';b.textContent=`🔥 ¡Solo ${libres} mesa${libres>1?'s':''} disponible${libres>1?'s':''}! Reserva ya.`;document.getElementById('pubResBtn').disabled=false}
+  else{b.style.display='block';b.className='dispo-banner dispo-green';b.textContent=`✅ ${libres} mesas disponibles.`;document.getElementById('pubResBtn').disabled=false}
+}
+async function submitReserva(){
+  const nombre=document.getElementById('pubResNombre').value.trim(),tel=document.getElementById('pubResTel').value.trim();
+  const fecha=document.getElementById('pubResFecha').value,hora=document.getElementById('pubResHora').value;
+  const personas=parseInt(document.getElementById('pubResPers').value),zona=document.getElementById('pubResZona').value;
+  if(!nombre||!tel){showToast('Rellena nombre y teléfono');return}
+  await sb.from('reservas').insert({negocio_id:NID,nombre_cliente:nombre,telefono_cliente:tel,fecha,hora,personas,zona,estado:'pendiente'});
+  document.getElementById('reservaForm').style.display='none';
+  document.getElementById('reservaConfirm').style.display='block';
+  document.getElementById('confirmText').textContent=`${nombre}, tu reserva para ${personas} persona${personas>1?'s':''} el ${fecha} a las ${hora} ha sido enviada. Te confirmaremos por SMS en breve.`;
 }
 
-// ── RESERVAS ──────────────────────────────────────────
-async function checkDispo() {
-  const fecha = document.getElementById('pubResFecha').value;
-  if (!fecha || mesasData.length === 0) return;
-
-  const totalMesas = mesasData.reduce((s,m) => s + m.cantidad, 0);
-  const hora = document.getElementById('pubResHora').value;
-  const horaNum = parseInt(hora.replace(':',''));
-
-  const { data: reservas } = await sb.from('reservas').select('*')
-    .eq('negocio_id', NID).eq('fecha', fecha).in('estado', ['confirmada','pendiente']);
-
-  const reservasEnHora = (reservas||[]).filter(r => {
-    const rh = parseInt((r.hora||'').replace(':',''));
-    return Math.abs(rh - horaNum) < 130;
-  });
-
-  const libres = Math.max(0, totalMesas - reservasEnHora.length);
-  const banner = document.getElementById('dispoBanner');
-
-  if (libres <= 0) {
-    banner.style.display = 'block';
-    banner.textContent = '⚠️ No quedan mesas disponibles para esta franja horaria.';
-    banner.style.background = 'rgba(224,82,82,0.08)';
-    banner.style.borderColor = 'rgba(224,82,82,0.2)';
-    banner.style.color = '#e05252';
-    document.getElementById('pubResBtn').disabled = true;
-  } else if (libres <= 3) {
-    banner.style.display = 'block';
-    banner.textContent = `🔥 ¡Solo quedan ${libres} mesa${libres>1?'s':''} disponible${libres>1?'s':''}! Reserva ya.`;
-    banner.style.background = ''; banner.style.borderColor = ''; banner.style.color = '';
-    document.getElementById('pubResBtn').disabled = false;
-  } else {
-    banner.style.display = 'block';
-    banner.textContent = `✅ ${libres} mesas disponibles para esta fecha y hora.`;
-    banner.style.background = 'rgba(76,175,125,0.06)';
-    banner.style.borderColor = 'rgba(76,175,125,0.2)';
-    banner.style.color = '#2e7d52';
-    document.getElementById('pubResBtn').disabled = false;
-  }
-}
-
-async function submitReserva() {
-  const nombre = document.getElementById('pubResNombre').value.trim();
-  const tel = document.getElementById('pubResTel').value.trim();
-  const fecha = document.getElementById('pubResFecha').value;
-  const hora = document.getElementById('pubResHora').value;
-  const personas = parseInt(document.getElementById('pubResPers').value);
-  const zona = document.getElementById('pubResZona').value;
-
-  if (!nombre || !tel) { webToast('Rellena tu nombre y teléfono'); return; }
-
-  await sb.from('reservas').insert({
-    negocio_id: NID, nombre_cliente:nombre, telefono_cliente:tel,
-    fecha, hora, personas, zona, estado:'pendiente'
-  });
-
-  document.getElementById('reservaForm').style.display = 'none';
-  document.getElementById('reservaConfirm').style.display = 'block';
-  document.getElementById('confirmText').textContent = `${nombre}, tu reserva para ${personas} persona${personas>1?'s':''} el ${fecha} a las ${hora} ha sido enviada. Te confirmaremos por SMS.`;
-}
-
-// ── HELPERS ───────────────────────────────────────────
-function webToast(msg) {
-  const t = document.getElementById('webToast');
-  t.textContent = msg; t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 2500);
-}
+// HELPERS
+function hexToGlow(hex){try{const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);return`rgba(${r},${g},${b},0.12)`}catch(e){return'rgba(255,107,53,0.12)'}}
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500)}
 </script>
 </body>
 </html>

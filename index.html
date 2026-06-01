@@ -766,7 +766,7 @@
       <div class="topbar-title" id="topbarTitle">Resumen</div>
       <div class="topbar-actions">
         <button class="topbar-btn" onclick="copySnippet()">📋 Copiar snippet</button>
-        <button class="topbar-btn accent" onclick="const s=currentNegocio.slug; window.open(s ? '/'+s : '/web.html?negocio='+currentNegocio.id,'_blank')">👁️ Ver mi web</button>
+        <button class="topbar-btn accent" onclick="window.open('/web.html?negocio='+currentNegocio.id,'_blank')">👁️ Ver mi web</button>
         <div class="avatar" id="avatarInitial">?</div>
       </div>
     </div>
@@ -2019,9 +2019,8 @@ function autoSlug() {
 }
 
 function updateSlugPreview() {
-  const slug = document.getElementById('cfgSlug').value.trim().toLowerCase().replace(/[^a-z0-9-]/g, '') || 'mi-negocio';
   const base = window.location.origin;
-  document.getElementById('slugUrl').textContent = base + '/' + slug;
+  document.getElementById('slugUrl').textContent = base + '/web.html?negocio=' + currentNegocio.id;
 }
 
 function copyPublicUrl() {

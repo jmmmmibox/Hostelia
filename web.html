@@ -464,33 +464,13 @@ const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsI
 const sb = supabase.createClient(SUPA_URL, SUPA_KEY);
 const params = new URLSearchParams(location.search);
 let NID = params.get('negocio');
-// Leer slug desde la ruta: /mi-restaurante → "mi-restaurante"
-const pathSlug = location.pathname.replace(/^\/+|\/+$/g, '').toLowerCase();
-const SLUG = params.get('slug') || (pathSlug && pathSlug !== '' && pathSlug !== 'web.html' && pathSlug !== 'index.html' ? pathSlug : null);
 
 let negocio, webConf, categorias=[], platos=[], mesasData=[], resConfig, envioConf;
 let carrito = [];
 
 // ── INIT ──────────────────────────────────────────────
 window.addEventListener('DOMContentLoaded', async () => {
-  // Debug temporal
-  document.getElementById('loader').innerHTML = `
-    <div class="loader-spin"></div>
-    <div style="font-size:12px;color:#777;text-align:center;margin-top:12px;">
-      Path: ${location.pathname}<br>
-      Slug detectado: ${SLUG || 'ninguno'}<br>
-      NID: ${NID || 'ninguno'}<br>
-      Buscando negocio...
-    </div>`;
-
-  if (!NID && !SLUG) { document.getElementById('loader').innerHTML = '<p style="color:#777;font-size:14px;">Página no encontrada</p>'; return; }
-  try {
-    // Si viene por slug, buscar el negocio primero
-    if (!NID && SLUG) {
-      const { data: negBySlug } = await sb.from('negocios').select('id').eq('slug', SLUG).maybeSingle();
-      if (negBySlug) NID = negBySlug.id;
-      else { document.getElementById('loader').innerHTML = '<p style="color:#777;font-size:14px;">Negocio no encontrado</p>'; return; }
-    }
+  if (!NID) { document.getElementById('loader').innerHTML = '<p style="color:#777;font-size:14px;">Página no encontrada</p>'; return; }
   try {
     const [n, w, c, p, m, rc, ec] = await Promise.all([
       sb.from('negocios').select('*').eq('id', NID).single(),

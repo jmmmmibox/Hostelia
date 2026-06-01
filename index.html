@@ -766,7 +766,7 @@
       <div class="topbar-title" id="topbarTitle">Resumen</div>
       <div class="topbar-actions">
         <button class="topbar-btn" onclick="copySnippet()">📋 Copiar snippet</button>
-        <button class="topbar-btn accent" onclick="window.open('/web.html?negocio='+currentNegocio.id,'_blank')">👁️ Ver mi web</button>
+        <button class="topbar-btn accent" onclick="const s=currentNegocio.slug; window.open(s ? '/'+s : '/web.html?negocio='+currentNegocio.id,'_blank')">👁️ Ver mi web</button>
         <div class="avatar" id="avatarInitial">?</div>
       </div>
     </div>
@@ -1455,12 +1455,28 @@
         <div class="card" style="margin-bottom:20px;">
           <div class="card-title">Datos del negocio</div>
           <div class="settings-grid">
-            <div class="setting-group"><div class="setting-label">Nombre del negocio</div><input class="setting-input" id="cfgNombre" type="text" oninput="showSaveBar('config')"></div>
+            <div class="setting-group"><div class="setting-label">Nombre del negocio</div><input class="setting-input" id="cfgNombre" type="text" oninput="showSaveBar('config');autoSlug()"></div>
             <div class="setting-group"><div class="setting-label">Tipo de negocio</div><select class="setting-select" id="cfgTipo" onchange="showSaveBar('config')"><option>Restaurante</option><option>Bar / Tapas</option><option>Cafetería</option><option>Pub / Disco</option><option>Fast food</option></select></div>
             <div class="setting-group"><div class="setting-label">Teléfono</div><input class="setting-input" id="cfgTel" type="tel" oninput="showSaveBar('config')"></div>
             <div class="setting-group"><div class="setting-label">Email de contacto</div><input class="setting-input" id="cfgEmail" type="email" oninput="showSaveBar('config')"></div>
           </div>
           <button class="btn-primary" style="max-width:220px;" onclick="saveConfig()">Guardar cambios</button>
+        </div>
+        <div class="card" style="margin-bottom:20px;">
+          <div class="card-title">URL de tu web pública</div>
+          <p style="font-size:13px;color:var(--muted);margin-bottom:14px;">Esta es la dirección que compartes en Instagram, redes sociales o cualquier sitio.</p>
+          <div class="setting-group" style="margin-bottom:12px;">
+            <div class="setting-label">Slug (dirección corta)</div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span style="font-size:13px;color:var(--muted);white-space:nowrap;">/</span>
+              <input class="setting-input" id="cfgSlug" type="text" placeholder="mi-restaurante" oninput="updateSlugPreview();showSaveBar('config')" style="font-family:monospace;">
+            </div>
+          </div>
+          <div id="slugPreview" style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px 16px;font-family:monospace;font-size:14px;color:var(--accent);margin-bottom:12px;word-break:break-all;display:flex;align-items:center;justify-content:space-between;">
+            <span id="slugUrl">...</span>
+            <button class="btn-secondary" style="padding:6px 14px;font-size:12px;white-space:nowrap;margin-left:12px;" onclick="copyPublicUrl()">📋 Copiar</button>
+          </div>
+          <button class="btn-primary" style="max-width:220px;" onclick="saveConfig()">Guardar slug</button>
         </div>
         <div class="card" style="margin-bottom:20px;">
           <div class="card-title">Notificaciones SMS</div>
@@ -1963,21 +1979,54 @@ async function loadConfigPanel() {
   document.getElementById('cfgTipo').value = currentNegocio.tipo || 'Restaurante';
   document.getElementById('cfgTel').value = currentNegocio.telefono || '';
   document.getElementById('cfgEmail').value = currentNegocio.email || '';
+  document.getElementById('cfgSlug').value = currentNegocio.slug || '';
+  updateSlugPreview();
 }
 
 async function saveConfig() {
   const nombre = document.getElementById('cfgNombre').value;
+  const slug = document.getElementById('cfgSlug').value.trim().toLowerCase().replace(/[^a-z0-9-]/g, '').replace(/--+/g, '-');
+  
+  if (slug) {
+    // Verificar que el slug no está en uso por otro negocio
+    const { data: existe } = await sb.from('negocios').select('id').eq('slug', slug).neq('id', currentNegocio.id).maybeSingle();
+    if (existe) { toast('Ese slug ya está en uso. Elige otro.', true); return; }
+  }
+
   await sb.from('negocios').update({
     nombre,
     tipo: document.getElementById('cfgTipo').value,
     telefono: document.getElementById('cfgTel').value,
     email: document.getElementById('cfgEmail').value,
+    slug: slug || null,
   }).eq('id', currentNegocio.id);
+  
   currentNegocio.nombre = nombre;
+  currentNegocio.slug = slug;
   document.getElementById('sidebarNegocio').textContent = nombre;
-  document.getElementById('previewNombre').textContent = nombre;
+  document.getElementById('cfgSlug').value = slug;
+  updateSlugPreview();
   hideSaveBar();
   toast('Configuración guardada ✓');
+}
+
+function autoSlug() {
+  const nombre = document.getElementById('cfgNombre').value;
+  if (!currentNegocio.slug && !document.getElementById('cfgSlug').value) {
+    document.getElementById('cfgSlug').value = slugify(nombre);
+    updateSlugPreview();
+  }
+}
+
+function updateSlugPreview() {
+  const slug = document.getElementById('cfgSlug').value.trim().toLowerCase().replace(/[^a-z0-9-]/g, '') || 'mi-negocio';
+  const base = window.location.origin;
+  document.getElementById('slugUrl').textContent = base + '/' + slug;
+}
+
+function copyPublicUrl() {
+  const url = document.getElementById('slugUrl').textContent;
+  navigator.clipboard.writeText(url).then(() => toast('URL copiada ✓'));
 }
 
 // ── ONBOARDING ────────────────────────────────────────

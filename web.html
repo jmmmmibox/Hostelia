@@ -462,14 +462,24 @@
 const SUPA_URL = 'https://rjpjqrsyzkeghofziejy.supabase.co';
 const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJqcGpxcnN5emtlZ2hvZnppZWp5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4NTI1MjYsImV4cCI6MjA5NDQyODUyNn0.httUrRI99cAO1YpiZzfcFcIAj5y41QB817b9pdfjbI4';
 const sb = supabase.createClient(SUPA_URL, SUPA_KEY);
-const NID = new URLSearchParams(location.search).get('negocio');
+const params = new URLSearchParams(location.search);
+let NID = params.get('negocio');
+const SLUG = params.get('slug');
 
 let negocio, webConf, categorias=[], platos=[], mesasData=[], resConfig, envioConf;
 let carrito = [];
 
 // ── INIT ──────────────────────────────────────────────
 window.addEventListener('DOMContentLoaded', async () => {
-  if (!NID) { document.getElementById('loader').innerHTML = '<p style="color:red;">Falta ?negocio=ID</p>'; return; }
+  if (!NID && !SLUG) { document.getElementById('loader').innerHTML = '<p style="color:#777;font-size:14px;">Página no encontrada</p>'; return; }
+  try {
+    // Si viene por slug, buscar el negocio primero
+    if (!NID && SLUG) {
+      const cleanSlug = SLUG.replace(/^\/+|\/+$/g, '').toLowerCase();
+      const { data: negBySlug } = await sb.from('negocios').select('id').eq('slug', cleanSlug).maybeSingle();
+      if (negBySlug) NID = negBySlug.id;
+      else { document.getElementById('loader').innerHTML = '<p style="color:#777;font-size:14px;">Negocio no encontrado</p>'; return; }
+    }
   try {
     const [n, w, c, p, m, rc, ec] = await Promise.all([
       sb.from('negocios').select('*').eq('id', NID).single(),

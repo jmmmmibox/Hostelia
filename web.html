@@ -382,6 +382,7 @@ const params=new URLSearchParams(location.search);
 let NID=params.get('negocio');
 let negocio,webConf,categorias=[],platos=[],mesasData=[],resConfig,envioConf;
 let carrito=[];
+let currentPageIsHero=true;
 
 window.addEventListener('DOMContentLoaded',async()=>{
   if(!NID){document.getElementById('loader').innerHTML='<p style="color:#999;font-size:14px">Página no encontrada</p>';return}
@@ -476,7 +477,7 @@ function render(){
 
   // Scroll effects
   window.addEventListener('scroll',()=>{
-    document.getElementById('mainNav').classList.toggle('solid',window.scrollY>80);
+    if(currentPageIsHero) document.getElementById('mainNav').classList.toggle('solid',window.scrollY>80);
   });
   initReveal();
 }
@@ -489,6 +490,9 @@ function goPage(id){
   const links=document.querySelectorAll('.nav-link');
   links.forEach(l=>{if(l.textContent.toLowerCase().replace(/\s/g,'').includes(id==='inicio'?'inicio':id))l.classList.add('active')});
   window.scrollTo({top:0,behavior:'smooth'});
+  // Nav transparente solo en inicio, sólida en el resto
+  if(id==='inicio'){document.getElementById('mainNav').classList.remove('solid');currentPageIsHero=true}
+  else{document.getElementById('mainNav').classList.add('solid');currentPageIsHero=false}
   if(id==='reservas')checkDispo();
   setTimeout(initReveal,100);
 }

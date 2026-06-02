@@ -2253,15 +2253,18 @@ async function loadDashboard() {
   const badgeR = document.getElementById('dashBadgePendRes');
   if (resPendData.length>0) {
     badgeR.style.display='inline';badgeR.textContent=resPendData.length;
-    document.getElementById('dashPendResList').innerHTML = resPendData.map(r=>`
-      <div class="pendiente-item reserva-p">
+    document.getElementById('dashPendResList').innerHTML = resPendData.map(r=>{
+      const fp=(r.fecha||'').split('-');
+      const fechaFmt=fp.length===3?`${fp[2]}-${fp[1]}-${fp[0].slice(2)}`:r.fecha;
+      return`<div class="pendiente-item reserva-p">
         <div class="pendiente-dot warning"></div>
         <div class="pendiente-info">
           <div class="pendiente-title">${r.nombre_cliente}</div>
-          <div class="pendiente-sub">${(r.hora||'').slice(0,5)}h · ${r.personas} pax · ${r.zona}</div>
+          <div class="pendiente-sub">${fechaFmt} · ${(r.hora||'').slice(0,5)}h · ${r.personas} pax · ${r.zona}${r.notas?` · 📝 ${r.notas}`:''}</div>
         </div>
         <button class="btn-confirm-inline" onclick="confirmarDesdeResumen('${r.id}')">Confirmar</button>
-      </div>`).join('');
+      </div>`;
+    }).join('');
   } else {
     badgeR.style.display='none';
     document.getElementById('dashPendResList').innerHTML='<div class="todo-bien"><div class="check">✅</div>Sin reservas pendientes</div>';

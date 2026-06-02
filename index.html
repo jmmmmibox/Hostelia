@@ -1163,64 +1163,122 @@
       <!-- DASHBOARD -->
       <div class="panel active" id="panel-dashboard">
 
-        <!-- HEADER RESUMEN -->
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:28px;flex-wrap:wrap;gap:12px;">
+        <!-- HEADER -->
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:32px;flex-wrap:wrap;gap:12px;">
           <div>
             <div class="page-title" id="dashGreeting">Buenos días 👋</div>
-            <div class="page-sub" id="dashDate" style="margin-top:2px;"></div>
+            <div class="page-sub" id="dashDate" style="margin-top:3px;"></div>
           </div>
-          <div style="display:flex;align-items:center;gap:12px;">
-            <div id="dashLiveIndicator" style="display:flex;align-items:center;gap:7px;font-size:12px;font-weight:600;color:var(--success);background:rgba(76,175,125,0.1);padding:7px 14px;border-radius:100px;border:1px solid rgba(76,175,125,0.2);">
-              <div style="width:7px;height:7px;border-radius:50%;background:var(--success);animation:pulse 2s infinite;"></div>
-              En directo
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div style="display:flex;align-items:center;gap:7px;font-size:12px;font-weight:600;color:var(--success);background:rgba(76,175,125,0.1);padding:7px 14px;border-radius:100px;border:1px solid rgba(76,175,125,0.15);">
+              <div style="width:7px;height:7px;border-radius:50%;background:var(--success);animation:pulse 2s infinite;"></div>En directo
             </div>
-            <button onclick="loadDashboard()" style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:7px 14px;color:var(--muted);font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--muted)'">↻ Actualizar</button>
+            <button onclick="loadDashboard()" style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:7px 14px;color:var(--muted);font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--muted)'">↻</button>
           </div>
         </div>
 
-        <!-- CARDS ESTADO HOY -->
-        <div id="dashCards" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px;margin-bottom:28px;"></div>
-
-        <!-- BARRA DE OCUPACIÓN (si reservas ON) -->
+        <!-- BARRA OCUPACIÓN -->
         <div id="dashOcupacion" style="display:none;margin-bottom:28px;">
-          <div class="card" style="padding:20px 24px;">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-              <div style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);">Ocupación hoy</div>
-              <div id="dashOcupPct" style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;">0%</div>
+          <div class="card" style="padding:18px 24px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+              <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted);">Ocupación hoy</div>
+              <div style="display:flex;align-items:center;gap:10px;">
+                <div id="dashOcupLabel" style="font-size:12px;color:var(--muted);"></div>
+                <div id="dashOcupPct" style="font-family:'Syne',sans-serif;font-size:22px;font-weight:900;">0%</div>
+              </div>
             </div>
-            <div style="height:8px;background:var(--surface2);border-radius:100px;overflow:hidden;">
-              <div id="dashOcupBar" style="height:100%;border-radius:100px;background:linear-gradient(90deg,var(--accent),var(--accent2));width:0%;transition:width .8s cubic-bezier(0.4,0,0.2,1);"></div>
+            <div style="height:10px;background:var(--surface2);border-radius:100px;overflow:hidden;">
+              <div id="dashOcupBar" style="height:100%;border-radius:100px;width:0%;transition:width 1s cubic-bezier(0.4,0,0.2,1);"></div>
             </div>
-            <div id="dashOcupLabel" style="font-size:12px;color:var(--muted);margin-top:8px;"></div>
           </div>
         </div>
 
-        <!-- DOS COLUMNAS PRINCIPALES -->
+        <!-- DOS BLOQUES PRINCIPALES -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px;">
+
+          <!-- BLOQUE RESERVAS -->
+          <div id="dashColReservas" style="display:none;">
+            <div class="card" style="padding:0;overflow:hidden;">
+              <!-- Cabecera reservas -->
+              <div style="padding:20px 24px 16px;border-bottom:1px solid rgba(255,255,255,0.05);">
+                <div style="display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:4px;">
+                  <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted);">📅 Reservas hoy</div>
+                  <div onclick="showPanel('reservas',document.querySelectorAll('.nav-item')[4])" style="font-size:11px;color:var(--accent);cursor:pointer;font-weight:600;">Ver todas →</div>
+                </div>
+                <div style="display:flex;align-items:baseline;gap:16px;margin-top:8px;">
+                  <div>
+                    <div style="font-family:'Syne',sans-serif;font-size:48px;font-weight:900;line-height:1;" id="dashNumResConf">0</div>
+                    <div style="font-size:12px;color:var(--muted);margin-top:2px;">confirmadas</div>
+                  </div>
+                  <div style="width:1px;height:40px;background:rgba(255,255,255,0.06);"></div>
+                  <div>
+                    <div style="font-family:'Syne',sans-serif;font-size:32px;font-weight:800;line-height:1;color:var(--warning);" id="dashNumResPend">0</div>
+                    <div style="font-size:12px;color:var(--muted);margin-top:2px;">pendientes</div>
+                  </div>
+                </div>
+              </div>
+              <!-- Timeline reservas hoy -->
+              <div style="padding:16px 24px;max-height:220px;overflow-y:auto;" id="dashReservasList"></div>
+            </div>
+          </div>
+
+          <!-- BLOQUE PEDIDOS -->
+          <div id="dashColPedidos" style="display:none;">
+            <div class="card" style="padding:0;overflow:hidden;">
+              <!-- Cabecera pedidos -->
+              <div style="padding:20px 24px 16px;border-bottom:1px solid rgba(255,255,255,0.05);">
+                <div style="display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:4px;">
+                  <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted);">🛵 Pedidos hoy</div>
+                  <div onclick="showPanel('pedidos',document.querySelectorAll('.nav-item')[5])" style="font-size:11px;color:var(--accent);cursor:pointer;font-weight:600;">Ver todos →</div>
+                </div>
+                <div style="display:flex;align-items:baseline;gap:16px;margin-top:8px;">
+                  <div>
+                    <div style="font-family:'Syne',sans-serif;font-size:48px;font-weight:900;line-height:1;" id="dashNumPedTotal">0</div>
+                    <div style="font-size:12px;color:var(--muted);margin-top:2px;">pedidos totales</div>
+                  </div>
+                  <div style="width:1px;height:40px;background:rgba(255,255,255,0.06);"></div>
+                  <div>
+                    <div style="font-family:'Syne',sans-serif;font-size:32px;font-weight:800;line-height:1;color:var(--success);" id="dashNumPedImporte">0€</div>
+                    <div style="font-size:12px;color:var(--muted);margin-top:2px;">facturado hoy</div>
+                  </div>
+                </div>
+                <!-- Mini estado pedidos -->
+                <div style="display:flex;gap:12px;margin-top:14px;" id="dashPedEstados"></div>
+              </div>
+              <!-- Pedidos nuevos sin atender -->
+              <div style="padding:16px 24px;max-height:220px;overflow-y:auto;" id="dashPedidosList"></div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- FILA INFERIOR: PENDIENTES RESERVAS + PENDIENTES PEDIDOS -->
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
 
-          <!-- RESERVAS DE HOY -->
-          <div id="dashColReservas" style="display:none;">
-            <div class="card" style="height:100%;">
-              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;">
-                <div style="font-size:15px;font-weight:700;">📅 Reservas de hoy</div>
-                <div onclick="showPanel('reservas',document.querySelector('.nav-item:nth-child(5)'))" style="font-size:12px;color:var(--accent);cursor:pointer;font-weight:600;">Ver todas →</div>
+          <!-- RESERVAS PENDIENTES DE CONFIRMAR -->
+          <div id="dashPendResWrap">
+            <div class="card" style="padding:0;overflow:hidden;">
+              <div style="padding:16px 20px;border-bottom:1px solid rgba(255,255,255,0.05);display:flex;align-items:center;justify-content:space-between;">
+                <div style="font-size:13px;font-weight:700;">⏳ Reservas por confirmar</div>
+                <div id="dashBadgePendRes" style="display:none;background:var(--warning);color:#fff;font-size:10px;font-weight:700;border-radius:100px;padding:3px 10px;"></div>
               </div>
-              <div id="dashReservasList"></div>
+              <div style="padding:12px 20px;" id="dashPendResList"></div>
             </div>
           </div>
 
-          <!-- PENDIENTES Y ALERTAS -->
-          <div id="dashColPendientes">
-            <div class="card" style="height:100%;">
-              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;">
-                <div style="font-size:15px;font-weight:700;">⚡ Pendientes</div>
-                <div id="dashPendientesBadge" style="display:none;background:var(--danger);color:#fff;font-size:11px;font-weight:700;border-radius:100px;padding:3px 10px;"></div>
+          <!-- PEDIDOS NUEVOS SIN ATENDER -->
+          <div id="dashPendPedWrap" style="display:none;">
+            <div class="card" style="padding:0;overflow:hidden;">
+              <div style="padding:16px 20px;border-bottom:1px solid rgba(255,255,255,0.05);display:flex;align-items:center;justify-content:space-between;">
+                <div style="font-size:13px;font-weight:700;">🔴 Pedidos sin atender</div>
+                <div id="dashBadgePendPed" style="display:none;background:var(--danger);color:#fff;font-size:10px;font-weight:700;border-radius:100px;padding:3px 10px;"></div>
               </div>
-              <div id="dashPendientesList"></div>
+              <div style="padding:12px 20px;" id="dashPendPedList"></div>
             </div>
           </div>
 
         </div>
+
       </div>
 
       <!-- AGENTE -->
@@ -2086,161 +2144,169 @@ async function loadDashboard() {
   const saludo = hora < 12 ? 'Buenos días' : hora < 20 ? 'Buenas tardes' : 'Buenas noches';
   const emoji = hora < 12 ? '☀️' : hora < 20 ? '👋' : '🌙';
   document.getElementById('dashGreeting').textContent = `${saludo}, ${currentNegocio.nombre.split(' ')[0]} ${emoji}`;
-  document.getElementById('dashDate').textContent = ahora.toLocaleDateString('es-ES', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+  document.getElementById('dashDate').textContent = ahora.toLocaleDateString('es-ES', {weekday:'long',day:'numeric',month:'long',year:'numeric'});
 
-  // Cargar agente config para saber qué está activo
-  const { data: ag } = await sb.from('agente_config').select('*').eq('negocio_id', currentNegocio.id).single();
+  // Config agente
+  const {data:ag} = await sb.from('agente_config').select('*').eq('negocio_id',currentNegocio.id).single();
   const resActivo = ag?.activo_reservas !== false;
   const pedActivo = ag?.activo_pedidos === true;
 
-  // Cargar mesas para ocupación
-  const { data: mesas } = await sb.from('mesas').select('*').eq('negocio_id', currentNegocio.id);
-  const totalMesas = (mesas||[]).reduce((s,m) => s + m.cantidad, 0);
+  // Mesas
+  const {data:mesas} = await sb.from('mesas').select('*').eq('negocio_id',currentNegocio.id);
+  const totalMesas = (mesas||[]).reduce((s,m) => s+m.cantidad, 0);
 
-  // Cargar datos de hoy
-  const [resHoy, pedHoy, resPendientes, pedNuevos, pedPrep] = await Promise.all([
-    sb.from('reservas').select('*').eq('negocio_id', currentNegocio.id).eq('fecha', hoy).in('estado', ['confirmada','pendiente']),
-    sb.from('pedidos').select('*').eq('negocio_id', currentNegocio.id).gte('creado_en', hoy + 'T00:00:00'),
-    sb.from('reservas').select('*').eq('negocio_id', currentNegocio.id).eq('fecha', hoy).eq('estado', 'pendiente'),
-    sb.from('pedidos').select('*').eq('negocio_id', currentNegocio.id).eq('estado', 'nuevo').gte('creado_en', hoy + 'T00:00:00'),
-    sb.from('pedidos').select('*').eq('negocio_id', currentNegocio.id).eq('estado', 'preparando').gte('creado_en', hoy + 'T00:00:00')
+  // Datos de hoy
+  const [resHoy, pedHoy, resPend, pedNuevos, pedPrep, pedComp] = await Promise.all([
+    sb.from('reservas').select('*').eq('negocio_id',currentNegocio.id).eq('fecha',hoy).in('estado',['confirmada','pendiente']).order('hora'),
+    sb.from('pedidos').select('*').eq('negocio_id',currentNegocio.id).gte('creado_en',hoy+'T00:00:00').order('creado_en',{ascending:false}),
+    sb.from('reservas').select('*').eq('negocio_id',currentNegocio.id).eq('fecha',hoy).eq('estado','pendiente').order('hora'),
+    sb.from('pedidos').select('*').eq('negocio_id',currentNegocio.id).eq('estado','nuevo').gte('creado_en',hoy+'T00:00:00'),
+    sb.from('pedidos').select('count',{count:'exact',head:true}).eq('negocio_id',currentNegocio.id).eq('estado','preparando').gte('creado_en',hoy+'T00:00:00'),
+    sb.from('pedidos').select('count',{count:'exact',head:true}).eq('negocio_id',currentNegocio.id).in('estado',['listo','enviado']).gte('creado_en',hoy+'T00:00:00')
   ]);
 
-  const resHoyData = resHoy.data || [];
-  const pedHoyData = pedHoy.data || [];
-  const resPendData = resPendientes.data || [];
-  const pedNuevosData = pedNuevos.data || [];
-  const pedPrepData = pedPrep.data || [];
+  const resHoyData  = resHoy.data||[];
+  const pedHoyData  = pedHoy.data||[];
+  const resPendData = resPend.data||[];
+  const pedNuevData = pedNuevos.data||[];
+  const resConf     = resHoyData.filter(r=>r.estado==='confirmada').length;
+  const pedTotal    = pedHoyData.length;
+  const pedImporte  = pedHoyData.reduce((s,p)=>s+parseFloat(p.total||0),0);
+  const ocupPct     = totalMesas>0 ? Math.round((resHoyData.length/totalMesas)*100) : 0;
 
-  const resConfirmadas = resHoyData.filter(r => r.estado === 'confirmada').length;
-  const resPend = resPendData.length;
-  const pedTotal = pedHoyData.length;
-  const pedImporte = pedHoyData.reduce((s, p) => s + parseFloat(p.total || 0), 0);
-  const ocupacion = totalMesas > 0 ? Math.round((resHoyData.length / totalMesas) * 100) : 0;
-
-  // ── CARDS ────────────────────────────────────────────
-  const cards = [];
-  if (resActivo) {
-    cards.push({ icon:'📅', label:'Reservas confirmadas hoy', value: resConfirmadas, sub:'hoy', cls:'accent' });
-    cards.push({ icon:'⏳', label:'Reservas pendientes', value: resPend, sub:'esperando confirmación', cls: resPend > 0 ? 'warning' : 'success' });
-  }
-  if (pedActivo) {
-    cards.push({ icon:'🛵', label:'Pedidos nuevos', value: pedNuevosData.length, sub:'sin atender', cls: pedNuevosData.length > 0 ? 'danger' : 'success' });
-    cards.push({ icon:'👨‍🍳', label:'En preparación', value: pedPrepData.length, sub:'en cocina ahora', cls:'warning' });
-    cards.push({ icon:'💰', label:'Importe del día', value: pedImporte.toFixed(0) + '€', sub: pedTotal + ' pedido' + (pedTotal !== 1 ? 's' : ''), cls:'accent' });
-  }
-
-  document.getElementById('dashCards').innerHTML = cards.map(c => `
-    <div class="dash-card dash-card-${c.cls}">
-      <div class="dash-card-icon">${c.icon}</div>
-      <div class="dash-card-label">${c.label}</div>
-      <div class="dash-card-value">${c.value}</div>
-      <div class="dash-card-sub">${c.sub}</div>
-    </div>`).join('');
-
-  // ── OCUPACIÓN ────────────────────────────────────────
-  if (resActivo && totalMesas > 0) {
-    document.getElementById('dashOcupacion').style.display = 'block';
-    document.getElementById('dashOcupPct').textContent = ocupacion + '%';
-    document.getElementById('dashOcupBar').style.width = Math.min(ocupacion, 100) + '%';
-    document.getElementById('dashOcupBar').style.background = ocupacion >= 90
+  // ── OCUPACIÓN ──
+  if (resActivo && totalMesas>0) {
+    document.getElementById('dashOcupacion').style.display='block';
+    document.getElementById('dashOcupPct').textContent = ocupPct+'%';
+    document.getElementById('dashOcupBar').style.width = Math.min(ocupPct,100)+'%';
+    document.getElementById('dashOcupBar').style.background = ocupPct>=90
       ? 'linear-gradient(90deg,var(--danger),#ff6b6b)'
-      : ocupacion >= 60
-      ? 'linear-gradient(90deg,var(--warning),var(--accent))'
-      : 'linear-gradient(90deg,var(--success),var(--accent2))';
-    document.getElementById('dashOcupLabel').textContent = `${resHoyData.length} de ${totalMesas} mesas reservadas hoy`;
+      : ocupPct>=60 ? 'linear-gradient(90deg,var(--warning),var(--accent))'
+      : 'linear-gradient(90deg,var(--success),#52d99e)';
+    document.getElementById('dashOcupLabel').textContent = `${resHoyData.length} de ${totalMesas} mesas reservadas`;
   }
 
-  // ── RESERVAS DE HOY ──────────────────────────────────
+  // ── BLOQUE RESERVAS ──
   if (resActivo) {
-    document.getElementById('dashColReservas').style.display = 'block';
-    const resOrdenadas = resHoyData.sort((a,b) => (a.hora||'').localeCompare(b.hora||''));
-    const ahoraStr = ahora.toTimeString().slice(0,5);
+    document.getElementById('dashColReservas').style.display='block';
+    document.getElementById('dashNumResConf').textContent = resConf;
+    document.getElementById('dashNumResPend').textContent = resPendData.length;
 
-    document.getElementById('dashReservasList').innerHTML = resOrdenadas.length === 0
-      ? '<div class="empty-state" style="padding:30px 0"><div class="empty-icon">📅</div><div class="empty-title" style="font-size:14px">Sin reservas hoy</div></div>'
-      : resOrdenadas.map(r => {
-          const h = (r.hora||'').slice(0,5);
-          const diff = (parseInt(h.replace(':','')) - parseInt(ahoraStr.replace(':','')));
-          const badgeCls = diff <= 0 ? 'ahora' : diff <= 30 ? 'pronto' : '';
+    const ahoraStr = ahora.toTimeString().slice(0,5);
+    document.getElementById('dashReservasList').innerHTML = resHoyData.length===0
+      ? '<div style="text-align:center;padding:20px 0;color:var(--muted);font-size:13px;">Sin reservas para hoy</div>'
+      : resHoyData.map(r=>{
+          const h=(r.hora||'').slice(0,5);
+          const diff=parseInt(h.replace(':',''))-parseInt(ahoraStr.replace(':',''));
+          const cls=diff<=0?'ahora':diff<=30?'pronto':'';
           return `<div class="res-timeline-item">
-            <div class="res-time-badge ${badgeCls}">${h}h</div>
+            <div class="res-time-badge ${cls}">${h}h</div>
             <div class="res-timeline-info">
               <div class="res-timeline-name">${r.nombre_cliente}</div>
-              <div class="res-timeline-detail">${r.personas} pax · ${r.zona} · <span class="res-status status-${r.estado}" style="font-size:10px;padding:2px 8px;">${r.estado}</span></div>
+              <div class="res-timeline-detail">${r.personas} pax · ${r.zona}</div>
             </div>
             <div class="res-timeline-actions">
-              ${r.estado === 'pendiente' ? `<button class="btn-confirm-inline" onclick="confirmarDesdeResumen('${r.id}')">✓</button>` : ''}
+              ${r.estado==='pendiente'?`<button class="btn-confirm-inline" onclick="confirmarDesdeResumen('${r.id}')">✓</button>`:''}
               <div class="icon-btn danger" onclick="updateReservaEstado('${r.id}','cancelada')" style="width:26px;height:26px;font-size:11px;">✕</div>
             </div>
           </div>`;
         }).join('');
   }
 
-  // ── PENDIENTES ───────────────────────────────────────
-  let pendientesHTML = '';
-  let totalPendientes = 0;
+  // ── BLOQUE PEDIDOS ──
+  if (pedActivo) {
+    document.getElementById('dashColPedidos').style.display='block';
+    document.getElementById('dashPendPedWrap').style.display='block';
+    document.getElementById('dashNumPedTotal').textContent = pedTotal;
+    document.getElementById('dashNumPedImporte').textContent = pedImporte.toFixed(0)+'€';
 
-  resPendData.forEach(r => {
-    totalPendientes++;
-    pendientesHTML += `
+    // Mini estados
+    document.getElementById('dashPedEstados').innerHTML = `
+      <div style="display:flex;align-items:center;gap:5px;font-size:12px;font-weight:600;color:var(--danger);">
+        <div style="width:8px;height:8px;border-radius:50%;background:var(--danger);"></div>${pedNuevData.length} nuevos
+      </div>
+      <div style="display:flex;align-items:center;gap:5px;font-size:12px;font-weight:600;color:var(--warning);">
+        <div style="width:8px;height:8px;border-radius:50%;background:var(--warning);"></div>${pedPrep.count||0} preparando
+      </div>
+      <div style="display:flex;align-items:center;gap:5px;font-size:12px;font-weight:600;color:var(--success);">
+        <div style="width:8px;height:8px;border-radius:50%;background:var(--success);"></div>${pedComp.count||0} completados
+      </div>`;
+
+    // Pedidos recientes
+    document.getElementById('dashPedidosList').innerHTML = pedHoyData.length===0
+      ? '<div style="text-align:center;padding:20px 0;color:var(--muted);font-size:13px;">Sin pedidos hoy</div>'
+      : pedHoyData.slice(0,4).map(p=>{
+          const mins=Math.floor((Date.now()-new Date(p.creado_en))/60000);
+          const colores={nuevo:'var(--danger)',preparando:'var(--warning)',listo:'var(--success)',enviado:'var(--success)'};
+          return `<div class="res-timeline-item">
+            <div style="width:8px;height:8px;border-radius:50%;background:${colores[p.estado]||'var(--muted)'};flex-shrink:0;margin-top:4px;"></div>
+            <div class="res-timeline-info">
+              <div class="res-timeline-name">${p.nombre_cliente}</div>
+              <div class="res-timeline-detail">${parseFloat(p.total||0).toFixed(2)}€ · hace ${mins}min</div>
+            </div>
+            <div class="res-status status-${p.estado==='nuevo'?'pending':p.estado==='preparando'?'pending':'confirmed'}" style="font-size:10px;padding:2px 8px;">${p.estado}</div>
+          </div>`;
+        }).join('');
+  }
+
+  // ── PENDIENTES RESERVAS ──
+  const badgeR = document.getElementById('dashBadgePendRes');
+  if (resPendData.length>0) {
+    badgeR.style.display='inline';badgeR.textContent=resPendData.length;
+    document.getElementById('dashPendResList').innerHTML = resPendData.map(r=>`
       <div class="pendiente-item reserva-p">
         <div class="pendiente-dot warning"></div>
         <div class="pendiente-info">
-          <div class="pendiente-title">📅 Reserva por confirmar</div>
-          <div class="pendiente-sub">${r.nombre_cliente} · ${(r.hora||'').slice(0,5)}h · ${r.personas} pax</div>
+          <div class="pendiente-title">${r.nombre_cliente}</div>
+          <div class="pendiente-sub">${(r.hora||'').slice(0,5)}h · ${r.personas} pax · ${r.zona}</div>
         </div>
         <button class="btn-confirm-inline" onclick="confirmarDesdeResumen('${r.id}')">Confirmar</button>
-      </div>`;
-  });
-
-  pedNuevosData.forEach(p => {
-    totalPendientes++;
-    const mins = Math.floor((Date.now() - new Date(p.creado_en)) / 60000);
-    pendientesHTML += `
-      <div class="pendiente-item pedido-p">
-        <div class="pendiente-dot danger"></div>
-        <div class="pendiente-info">
-          <div class="pendiente-title">🛵 Pedido nuevo sin atender</div>
-          <div class="pendiente-sub">${p.nombre_cliente} · ${parseFloat(p.total||0).toFixed(2)}€ · hace ${mins}min</div>
-        </div>
-        <button class="btn-confirm-inline" style="background:var(--warning);" onclick="moverPedidoDesdeResumen('${p.id}')">Preparar</button>
-      </div>`;
-  });
-
-  if (totalPendientes === 0) {
-    pendientesHTML = `<div class="todo-bien"><div class="check">✅</div>Todo al día — sin pendientes</div>`;
+      </div>`).join('');
+  } else {
+    badgeR.style.display='none';
+    document.getElementById('dashPendResList').innerHTML='<div class="todo-bien"><div class="check">✅</div>Sin reservas pendientes</div>';
   }
 
-  document.getElementById('dashPendientesList').innerHTML = pendientesHTML;
-  const badge = document.getElementById('dashPendientesBadge');
-  if (totalPendientes > 0) {
-    badge.style.display = 'inline';
-    badge.textContent = totalPendientes + ' pendiente' + (totalPendientes > 1 ? 's' : '');
-  } else {
-    badge.style.display = 'none';
+  // ── PENDIENTES PEDIDOS ──
+  if (pedActivo) {
+    const badgeP = document.getElementById('dashBadgePendPed');
+    if (pedNuevData.length>0) {
+      badgeP.style.display='inline';badgeP.textContent=pedNuevData.length;
+      document.getElementById('dashPendPedList').innerHTML = pedNuevData.map(p=>{
+        const mins=Math.floor((Date.now()-new Date(p.creado_en))/60000);
+        return `<div class="pendiente-item pedido-p">
+          <div class="pendiente-dot danger"></div>
+          <div class="pendiente-info">
+            <div class="pendiente-title">${p.nombre_cliente}</div>
+            <div class="pendiente-sub">${parseFloat(p.total||0).toFixed(2)}€ · hace ${mins}min</div>
+          </div>
+          <button class="btn-confirm-inline" style="background:var(--warning);" onclick="moverPedidoDesdeResumen('${p.id}')">Preparar</button>
+        </div>`;
+      }).join('');
+    } else {
+      badgeP.style.display='none';
+      document.getElementById('dashPendPedList').innerHTML='<div class="todo-bien"><div class="check">✅</div>Sin pedidos pendientes</div>';
+    }
   }
 
   // Badges sidebar
-  document.getElementById('badgeReservas').textContent = resPend || 0;
-  document.getElementById('badgePedidos').textContent = pedNuevosData.length || 0;
+  document.getElementById('badgeReservas').textContent = resPendData.length||0;
+  document.getElementById('badgePedidos').textContent = pedNuevData.length||0;
 
-  // Auto-refresco cada 30s
+  // Auto-refresco
   clearTimeout(dashRefreshTimer);
-  dashRefreshTimer = setTimeout(loadDashboard, 30000);
+  dashRefreshTimer = setTimeout(loadDashboard,30000);
 }
 
 async function confirmarDesdeResumen(id) {
-  await sb.from('reservas').update({ estado: 'confirmada' }).eq('id', id);
-  toast('✅ Reserva confirmada');
-  loadDashboard();
+  await sb.from('reservas').update({estado:'confirmada'}).eq('id',id);
+  toast('✅ Reserva confirmada');loadDashboard();
+}
+async function moverPedidoDesdeResumen(id) {
+  await sb.from('pedidos').update({estado:'preparando'}).eq('id',id);
+  toast('👨‍🍳 Pedido en preparación');loadDashboard();
 }
 
-async function moverPedidoDesdeResumen(id) {
-  await sb.from('pedidos').update({ estado: 'preparando' }).eq('id', id);
-  toast('👨‍🍳 Pedido en preparación');
-  loadDashboard();
-}
 
 
 

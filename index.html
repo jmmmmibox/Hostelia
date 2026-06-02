@@ -3177,6 +3177,7 @@ function showPanel(name, el) {
   const titles = { dashboard:'Resumen', agente:'Mi Agente IA', conocimiento:'Base de Conocimiento', carta:'Carta', reservas:'Reservas', pedidos:'Pedidos en Tiempo Real', web:'Mi Web', metricas:'Métricas', config:'Configuración' };
   document.getElementById('topbarTitle').textContent = titles[name] || name;
   hideSaveBar();
+  if (name === 'dashboard') loadDashboard();
   if (name === 'carta') loadCategorias();
   if (name === 'reservas') { loadMesas(); loadReservas(); loadReservasConfig(); }
   if (name === 'pedidos') loadPedidos();

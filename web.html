@@ -181,6 +181,19 @@
   .page{display:none;opacity:0}
   .page.active{display:block;animation:fadeUp .5s var(--transition) forwards}
 
+  /* TICKET */
+  .ticket{background:var(--bg2);border-radius:14px;padding:20px;margin:16px 0;text-align:left}
+  .ticket-header{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:12px;padding-bottom:10px;border-bottom:2px dashed var(--border)}
+  .ticket-item{display:flex;justify-content:space-between;align-items:center;font-size:14px;padding:6px 0;border-bottom:1px solid rgba(0,0,0,0.04)}
+  .ticket-item:last-of-type{border-bottom:none}
+  .ticket-item-left{display:flex;align-items:center;gap:8px;color:var(--text2)}
+  .ticket-qty{background:var(--p);color:#fff;border-radius:100px;font-size:11px;font-weight:700;padding:2px 7px}
+  .ticket-item-price{font-weight:600;color:var(--text)}
+  .ticket-divider{border:none;border-top:2px dashed var(--border);margin:12px 0}
+  .ticket-row{display:flex;justify-content:space-between;font-size:13px;color:var(--muted);margin-bottom:6px}
+  .ticket-total{display:flex;justify-content:space-between;font-size:20px;font-weight:900;color:var(--p);margin-top:8px}
+  .ticket-meta{font-size:12px;color:var(--muted);margin-top:12px;padding-top:12px;border-top:1px solid var(--border);line-height:2}
+
   /* TOAST */
   .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--text);color:#fff;padding:13px 28px;border-radius:100px;font-size:14px;font-weight:500;z-index:999;opacity:0;transition:all .4s var(--transition);box-shadow:var(--shadow-lg)}
   .toast.show{transform:translateX(-50%) translateY(0);opacity:1}
@@ -571,11 +584,40 @@ async function submitPedido(){
   const sub=carrito.reduce((s,c)=>s+c.precio*c.qty,0);const ec=envioConf||{};let envio=parseFloat(ec.coste_envio)||3;
   if(ec.envio_gratis_siempre||(!ec.cobrar_envio_siempre&&sub>=(parseFloat(ec.pedido_minimo_envio_gratis)||25)))envio=0;
   const totalFinal = (sub+envio).toFixed(2);
-  await sb.from('pedidos').insert({negocio_id:NID,nombre_cliente:nombre,telefono_cliente:tel,direccion_entrega:dir,items:carrito.map(c=>({nombre:c.nombre,precio:c.precio,qty:c.qty})),total:sub+envio,forma_pago:document.getElementById('pedPago').value,notas:document.getElementById('pedNotas').value.trim(),estado:'nuevo'});
+  const pedidoItems = [...carrito]; // guardar antes de limpiar
+
+  await sb.from('pedidos').insert({negocio_id:NID,nombre_cliente:nombre,telefono_cliente:tel,direccion_entrega:dir,items:pedidoItems.map(c=>({nombre:c.nombre,precio:c.precio,qty:c.qty})),total:sub+envio,forma_pago:document.getElementById('pedPago').value,notas:document.getElementById('pedNotas').value.trim(),estado:'nuevo'});
+
+  const formaPago = document.getElementById('pedPago').value;
+  const notas = document.getElementById('pedNotas').value.trim();
+
+  // Construir ticket
+  const itemsHTML = pedidoItems.map(c=>`
+    <div class="ticket-item">
+      <div class="ticket-item-left"><span class="ticket-qty">${c.qty}</span> ${c.nombre}</div>
+      <div class="ticket-item-price">${(c.precio*c.qty).toFixed(2)}€</div>
+    </div>`).join('');
+
+  const ticketHTML = `
+    <div class="ticket">
+      <div class="ticket-header">🧾 Resumen del pedido</div>
+      ${itemsHTML}
+      <div class="ticket-divider"></div>
+      <div class="ticket-row"><span>Subtotal</span><span>${sub.toFixed(2)}€</span></div>
+      <div class="ticket-row"><span>Envío</span><span>${envio===0?'Gratis':envio.toFixed(2)+'€'}</span></div>
+      <div class="ticket-total"><span>Total</span><span>${totalFinal}€</span></div>
+      <div class="ticket-meta">
+        👤 ${nombre} · 📞 ${tel}<br>
+        📍 ${dir}<br>
+        💳 ${formaPago}
+        ${notas?`<br>📝 ${notas}`:''}
+      </div>
+    </div>`;
+
   carrito=[];renderCart();
   document.getElementById('pedidoContent').style.display='none';
   document.getElementById('pedidoConfirm').style.display='block';
-  document.getElementById('pedidoConfirmText').textContent=`${nombre}, tu pedido de ${totalFinal}€ ha sido enviado. Te confirmaremos por SMS en breve.`;
+  document.getElementById('pedidoConfirmText').innerHTML=`<p>${nombre}, tu pedido está en camino. Te confirmaremos por SMS.</p>${ticketHTML}`;
   ['pedNombre','pedTel','pedDir','pedNotas'].forEach(id=>document.getElementById(id).value='');
 }
 

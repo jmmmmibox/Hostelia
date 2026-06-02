@@ -1197,13 +1197,16 @@
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px;">
 
           <!-- BLOQUE RESERVAS -->
-          <div id="dashColReservas" style="display:none;">
+          <div id="dashColReservas">
             <div class="card" style="padding:0;overflow:hidden;">
               <!-- Cabecera reservas -->
               <div style="padding:20px 24px 16px;border-bottom:1px solid rgba(255,255,255,0.05);">
-                <div style="display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:4px;">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
                   <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted);">🪑 Mesas reservadas hoy</div>
-                  <div onclick="showPanel('reservas',document.querySelectorAll('.nav-item')[4])" style="font-size:11px;color:var(--accent);cursor:pointer;font-weight:600;">Ver todas →</div>
+                  <div style="display:flex;align-items:center;gap:8px;">
+                    <button onclick="loadDashboard()" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:4px 10px;color:var(--muted);font-family:'DM Sans',sans-serif;font-size:11px;font-weight:600;cursor:pointer;transition:all .2s;" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--muted)'">↻</button>
+                    <div onclick="showPanel('reservas',document.querySelectorAll('.nav-item')[4])" style="font-size:11px;color:var(--accent);cursor:pointer;font-weight:600;">Ver todas →</div>
+                  </div>
                 </div>
                 <div style="display:flex;align-items:baseline;gap:16px;margin-top:8px;">
                   <div>
@@ -2186,11 +2189,9 @@ async function loadDashboard() {
     document.getElementById('dashOcupLabel').textContent = `${resHoyData.length} de ${totalMesas} mesas reservadas`;
   }
 
-  // ── BLOQUE RESERVAS ──
-  if (resActivo) {
-    document.getElementById('dashColReservas').style.display='block';
-    document.getElementById('dashNumResConf').textContent = resConf;
-    document.getElementById('dashNumResPend').textContent = resPendData.length;
+  // ── BLOQUE RESERVAS — siempre visible ──
+  document.getElementById('dashNumResConf').textContent = resConf;
+  document.getElementById('dashNumResPend').textContent = resPendData.length;
 
     const ahoraStr = ahora.toTimeString().slice(0,5);
     document.getElementById('dashReservasList').innerHTML = resHoyData.length===0
@@ -2211,7 +2212,6 @@ async function loadDashboard() {
             </div>
           </div>`;
         }).join('');
-  }
 
   // ── BLOQUE PEDIDOS ──
   if (pedActivo) {

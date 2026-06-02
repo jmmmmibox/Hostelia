@@ -468,6 +468,13 @@
   .todo-bien { text-align:center; padding:40px 20px; color:var(--success); font-size:14px; font-weight:600; }
   .todo-bien .check { font-size:36px; margin-bottom:8px; }
 
+  /* PANEL DASHBOARD FULL SCREEN */
+  #panel-dashboard.active {
+    display: flex !important;
+    flex-direction: column;
+    min-height: calc(100vh - 128px);
+  }
+
   /* MODAL OVERLAY */
   .modal-overlay {
     position:fixed; inset:0;
@@ -1161,7 +1168,7 @@
     <div class="content">
 
       <!-- DASHBOARD -->
-      <div class="panel active" id="panel-dashboard" style="display:flex;flex-direction:column;min-height:calc(100vh - 64px);">
+      <div class="panel active" id="panel-dashboard" style="flex-direction:column;min-height:calc(100vh - 128px);">
 
         <!-- HEADER -->
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px;">

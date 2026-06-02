@@ -280,7 +280,7 @@
 <nav class="nav" id="mainNav" style="display:none;">
   <div class="nav-logo" id="navLogo"><span id="navLogoImg"></span><span id="navName">...</span></div>
   <div class="nav-links" id="navLinks"></div>
-  <button class="nav-cta" id="navCta" style="display:none;" onclick="goPage('reservas')">Reservar</button>
+  
   <button class="nav-mobile" onclick="toggleMenu()">☰</button>
 </nav>
 
@@ -544,7 +544,7 @@ function render(){
   document.getElementById('navLinks').innerHTML=pages.map(p=>`<div class="nav-link${p.id==='inicio'?' active':''}" onclick="goPage('${p.id}')">${p.label}</div>`).join('');
   document.getElementById('mobileMenuItems').innerHTML=pages.map(p=>`<div class="mobile-menu-item" onclick="goPage('${p.id}');toggleMenu()">${p.label}</div>`).join('');
 
-  if(wc.btn_reservas!==false&&wc.seccion_reservas!==false){document.getElementById('navCta').style.display='block';document.getElementById('floatCta').style.display=''}
+  if(wc.btn_reservas!==false&&wc.seccion_reservas!==false){document.getElementById('floatCta').style.display=''}
 
   // Hero
   if(wc.hero_imagen_url)document.getElementById('heroBg').style.backgroundImage=`url(${wc.hero_imagen_url})`;

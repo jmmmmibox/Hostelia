@@ -2258,18 +2258,6 @@ async function loadDashboard() {
   const pedImporte  = pedHoyData.reduce((s,p)=>s+parseFloat(p.total||0),0);
   const ocupPct     = totalMesas>0 ? Math.round((resHoyData.length/totalMesas)*100) : 0;
 
-  // ── OCUPACIÓN ──
-  if (resActivo && totalMesas>0) {
-    document.getElementById('dashOcupacion').style.display='block';
-    document.getElementById('dashOcupPct').textContent = ocupPct+'%';
-    document.getElementById('dashOcupBar').style.width = Math.min(ocupPct,100)+'%';
-    document.getElementById('dashOcupBar').style.background = ocupPct>=90
-      ? 'linear-gradient(90deg,var(--danger),#ff6b6b)'
-      : ocupPct>=60 ? 'linear-gradient(90deg,var(--warning),var(--accent))'
-      : 'linear-gradient(90deg,var(--success),#52d99e)';
-    document.getElementById('dashOcupLabel').textContent = `${resHoyData.length} de ${totalMesas} mesas reservadas`;
-  }
-
   // ── STATS BAR ──
   document.getElementById('dashNumResConf').textContent = resConf;
   document.getElementById('dashNumResPend').textContent = resPendData.length;

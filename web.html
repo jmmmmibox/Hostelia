@@ -256,9 +256,6 @@
   .toast.show{transform:translateX(-50%) translateY(0);opacity:1}
 
   /* FLOATING CTA */
-  .float-cta{position:fixed;bottom:24px;right:24px;z-index:90;display:none}
-  .float-cta button{padding:14px 24px;border-radius:100px;background:var(--p);color:#fff;font-size:14px;font-weight:700;border:none;box-shadow:0 4px 24px rgba(255,107,53,.35);transition:all .3s;animation:float 3s ease infinite}
-  .float-cta button:hover{transform:translateY(-3px);box-shadow:0 8px 32px rgba(255,107,53,.45)}
 
   /* RESPONSIVE */
   @media(max-width:768px){
@@ -268,9 +265,7 @@
     .section{padding:64px 20px}.hero-title{letter-spacing:-1px}
     .field-row{flex-direction:column;gap:0}
     .menu-grid{grid-template-columns:repeat(auto-fill,minmax(240px,1fr))}
-    .float-cta{display:block}
   }
-  @media(min-width:769px){.float-cta{display:none !important}}
 </style>
 </head>
 <body>
@@ -289,7 +284,7 @@
   <div id="mobileMenuItems"></div>
 </div>
 
-<div class="float-cta" id="floatCta"><button onclick="goPage('reservas')">📅 Reservar mesa</button></div>
+
 
 <div class="page active" id="page-inicio">
   <div class="hero" id="heroSection">
@@ -544,7 +539,7 @@ function render(){
   document.getElementById('navLinks').innerHTML=pages.map(p=>`<div class="nav-link${p.id==='inicio'?' active':''}" onclick="goPage('${p.id}')">${p.label}</div>`).join('');
   document.getElementById('mobileMenuItems').innerHTML=pages.map(p=>`<div class="mobile-menu-item" onclick="goPage('${p.id}');toggleMenu()">${p.label}</div>`).join('');
 
-  if(wc.btn_reservas!==false&&wc.seccion_reservas!==false){document.getElementById('floatCta').style.display=''}
+  
 
   // Hero
   if(wc.hero_imagen_url)document.getElementById('heroBg').style.backgroundImage=`url(${wc.hero_imagen_url})`;

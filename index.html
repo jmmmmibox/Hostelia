@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Hostelia — Panel de Control</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
@@ -1951,37 +1952,74 @@
 
       <!-- MÉTRICAS -->
       <div class="panel" id="panel-metricas">
-        <div class="page-header">
-          <div class="page-title">Métricas</div>
-          <div class="page-sub">Rendimiento de tu agente en los últimos 30 días.</div>
+        <div class="page-header" style="display:flex;align-items:center;justify-content:space-between;">
+          <div>
+            <div class="page-title">Métricas</div>
+            <div class="page-sub">Análisis real de tu negocio.</div>
+          </div>
+          <div style="display:flex;gap:8px;">
+            <button id="metBtn7" class="topbar-btn accent" onclick="setMetPeriodo(7)">7 días</button>
+            <button id="metBtn30" class="topbar-btn" onclick="setMetPeriodo(30)">30 días</button>
+          </div>
         </div>
-        <div class="stats-grid">
-          <div class="stat-card"><div class="stat-label">Conversaciones</div><div class="stat-value" id="mConv">—</div><div class="stat-icon">💬</div></div>
-          <div class="stat-card"><div class="stat-label">Reservas via agente</div><div class="stat-value" id="mRes">—</div><div class="stat-icon">📅</div></div>
-          <div class="stat-card"><div class="stat-label">Pedidos</div><div class="stat-value" id="mPed">—</div><div class="stat-icon">🛵</div></div>
-          <div class="stat-card"><div class="stat-label">Elementos conocimiento</div><div class="stat-value" id="mKb">—</div><div class="stat-icon">📚</div></div>
-        </div>
-        <div class="metrics-grid">
-          <div class="metric-card">
-            <div class="metric-title">Actividad semanal</div>
-            <div class="bar-chart">
-              <div class="bar-item"><div class="bar-fill" style="height:40%"></div><div class="bar-label">L</div></div>
-              <div class="bar-item"><div class="bar-fill" style="height:60%"></div><div class="bar-label">M</div></div>
-              <div class="bar-item"><div class="bar-fill" style="height:45%"></div><div class="bar-label">X</div></div>
-              <div class="bar-item"><div class="bar-fill" style="height:80%"></div><div class="bar-label">J</div></div>
-              <div class="bar-item"><div class="bar-fill" style="height:100%"></div><div class="bar-label">V</div></div>
-              <div class="bar-item"><div class="bar-fill" style="height:90%"></div><div class="bar-label">S</div></div>
-              <div class="bar-item"><div class="bar-fill" style="height:70%"></div><div class="bar-label">D</div></div>
+
+        <!-- FILA 1: TOTALES DEL MES -->
+        <div id="metTotales" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:24px;"></div>
+
+        <!-- FILA 2: GRÁFICAS -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px;">
+
+          <!-- Gráfica reservas -->
+          <div id="metGraficaResWrap" style="display:none;">
+            <div class="card" style="padding:20px 24px;">
+              <div style="font-size:13px;font-weight:700;margin-bottom:4px;">📅 Reservas</div>
+              <div style="font-size:11px;color:var(--muted);margin-bottom:16px;" id="metResSubtitle"></div>
+              <div style="position:relative;height:160px;">
+                <canvas id="chartReservas"></canvas>
+              </div>
             </div>
           </div>
-          <div class="metric-card">
-            <div class="metric-title">Preguntas más frecuentes</div>
-            <div class="top-questions">
-              <div><div class="question-text-row">¿Cuál es el horario?</div><div class="question-row"><div class="question-bar-wrap"><div class="question-bar-fill" style="width:82%"></div></div><div class="question-pct">82%</div></div></div>
-              <div><div class="question-text-row">¿Cómo puedo reservar?</div><div class="question-row"><div class="question-bar-wrap"><div class="question-bar-fill" style="width:64%"></div></div><div class="question-pct">64%</div></div></div>
-              <div><div class="question-text-row">¿Tenéis menú del día?</div><div class="question-row"><div class="question-bar-wrap"><div class="question-bar-fill" style="width:51%"></div></div><div class="question-pct">51%</div></div></div>
+
+          <!-- Gráfica pedidos -->
+          <div id="metGraficaPedWrap" style="display:none;">
+            <div class="card" style="padding:20px 24px;">
+              <div style="font-size:13px;font-weight:700;margin-bottom:4px;">🛵 Pedidos e importe</div>
+              <div style="font-size:11px;color:var(--muted);margin-bottom:16px;" id="metPedSubtitle"></div>
+              <div style="position:relative;height:160px;">
+                <canvas id="chartPedidos"></canvas>
+              </div>
             </div>
           </div>
+
+        </div>
+
+        <!-- FILA 3: ANÁLISIS DE PICOS -->
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;">
+
+          <!-- Días de la semana más activos -->
+          <div id="metDiasSemWrap">
+            <div class="card" style="padding:20px 24px;height:100%;">
+              <div style="font-size:13px;font-weight:700;margin-bottom:16px;">📆 Días más activos</div>
+              <div id="metDiasSem"></div>
+            </div>
+          </div>
+
+          <!-- Franjas horarias -->
+          <div id="metHorasWrap" style="display:none;">
+            <div class="card" style="padding:20px 24px;height:100%;">
+              <div style="font-size:13px;font-weight:700;margin-bottom:16px;">🕐 Horas más demandadas</div>
+              <div id="metHoras"></div>
+            </div>
+          </div>
+
+          <!-- Top platos -->
+          <div id="metPlatosWrap" style="display:none;">
+            <div class="card" style="padding:20px 24px;height:100%;">
+              <div style="font-size:13px;font-weight:700;margin-bottom:16px;">🏆 Top platos pedidos</div>
+              <div id="metPlatos"></div>
+            </div>
+          </div>
+
         </div>
       </div>
 
@@ -2902,7 +2940,235 @@ async function finishOnboarding() {
 }
 
 // ── HELPERS ───────────────────────────────────────────
-function showPanel(name, el) {
+// ── MÉTRICAS ──────────────────────────────────────────
+let metPeriodo = 7;
+let chartRes = null, chartPed = null;
+
+function setMetPeriodo(dias) {
+  metPeriodo = dias;
+  document.getElementById('metBtn7').className = dias===7 ? 'topbar-btn accent' : 'topbar-btn';
+  document.getElementById('metBtn30').className = dias===30 ? 'topbar-btn accent' : 'topbar-btn';
+  loadMetricas();
+}
+
+async function loadMetricas() {
+  const hoy = new Date();
+  const inicioMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1).toISOString().split('T')[0];
+  const mesAnteriorInicio = new Date(hoy.getFullYear(), hoy.getMonth()-1, 1).toISOString().split('T')[0];
+  const mesAnteriorFin = new Date(hoy.getFullYear(), hoy.getMonth(), 0).toISOString().split('T')[0];
+  const inicioPeriodo = new Date(hoy - metPeriodo*86400000).toISOString().split('T')[0];
+
+  // Config agente
+  const {data:ag} = await sb.from('agente_config').select('activo_reservas,activo_pedidos').eq('negocio_id',currentNegocio.id).maybeSingle();
+  const resActivo = ag?.activo_reservas !== false;
+  const pedActivo = ag?.activo_pedidos === true;
+
+  // Cargar datos
+  const queries = [
+    sb.from('reservas').select('fecha,hora,estado').eq('negocio_id',currentNegocio.id).gte('fecha',inicioMes),
+    sb.from('reservas').select('fecha').eq('negocio_id',currentNegocio.id).gte('fecha',mesAnteriorInicio).lte('fecha',mesAnteriorFin),
+    sb.from('reservas').select('fecha,hora').eq('negocio_id',currentNegocio.id).gte('fecha',inicioPeriodo),
+    pedActivo ? sb.from('pedidos').select('creado_en,total,items').eq('negocio_id',currentNegocio.id).gte('creado_en',inicioMes+'T00:00:00') : Promise.resolve({data:[]}),
+    pedActivo ? sb.from('pedidos').select('creado_en').eq('negocio_id',currentNegocio.id).gte('creado_en',mesAnteriorInicio+'T00:00:00').lte('creado_en',mesAnteriorFin+'T23:59:59') : Promise.resolve({data:[]}),
+    pedActivo ? sb.from('pedidos').select('creado_en,total,items').eq('negocio_id',currentNegocio.id).gte('creado_en',inicioPeriodo+'T00:00:00') : Promise.resolve({data:[]}),
+  ];
+  const [rMes, rMesAnt, rPeriodo, pMes, pMesAnt, pPeriodo] = await Promise.all(queries);
+
+  const resMesData  = rMes.data||[];
+  const resMesAntN  = (rMesAnt.data||[]).length;
+  const resPeriData = rPeriodo.data||[];
+  const pedMesData  = pMes.data||[];
+  const pedMesAntN  = (pMesAnt.data||[]).length;
+  const pedPeriData = pPeriodo.data||[];
+
+  const resMesN  = resMesData.length;
+  const pedMesN  = pedMesData.length;
+  const impMes   = pedMesData.reduce((s,p)=>s+parseFloat(p.total||0),0);
+  const impMesAnt= pedActivo ? (pMesAnt.data||[]).reduce ? 0 : 0 : 0;
+
+  // ── TOTALES DEL MES ──
+  const resChange = resMesAntN>0 ? Math.round(((resMesN-resMesAntN)/resMesAntN)*100) : null;
+  const pedChange = pedMesAntN>0 ? Math.round(((pedMesN-pedMesAntN)/pedMesAntN)*100) : null;
+
+  let totalesHTML = '';
+  if(resActivo) {
+    totalesHTML += metTotalCard('📅','Reservas este mes', resMesN, resChange, 'accent');
+  }
+  if(pedActivo) {
+    totalesHTML += metTotalCard('🛵','Pedidos este mes', pedMesN, pedChange, 'blue');
+    totalesHTML += metTotalCard('💰','Facturado este mes', impMes.toFixed(0)+'€', null, 'success');
+  }
+  if(!resActivo && !pedActivo) {
+    totalesHTML = '<div style="color:var(--muted);font-size:13px;padding:20px 0;">Activa reservas o pedidos en la configuración del agente para ver métricas.</div>';
+  }
+  document.getElementById('metTotales').innerHTML = totalesHTML;
+
+  // ── GRÁFICAS ──
+  const labels = [];
+  for(let i=metPeriodo-1;i>=0;i--){
+    const d=new Date(hoy - i*86400000);
+    labels.push(d.toLocaleDateString('es-ES',{weekday:'short',day:'numeric'}));
+  }
+
+  if(resActivo) {
+    document.getElementById('metGraficaResWrap').style.display='block';
+    document.getElementById('metResSubtitle').textContent=`Últimos ${metPeriodo} días`;
+    const resData = labels.map((_,i)=>{
+      const d=new Date(hoy-(metPeriodo-1-i)*86400000).toISOString().split('T')[0];
+      return resPeriData.filter(r=>r.fecha===d).length;
+    });
+    renderChart('chartReservas', chartRes, labels, resData, '#ff6b35', 'Reservas');
+  }
+
+  if(pedActivo) {
+    document.getElementById('metGraficaPedWrap').style.display='block';
+    document.getElementById('metPedSubtitle').textContent=`Últimos ${metPeriodo} días`;
+    const pedData = labels.map((_,i)=>{
+      const d=new Date(hoy-(metPeriodo-1-i)*86400000).toISOString().split('T')[0];
+      return pedPeriData.filter(p=>p.creado_en?.startsWith(d)).length;
+    });
+    const impData = labels.map((_,i)=>{
+      const d=new Date(hoy-(metPeriodo-1-i)*86400000).toISOString().split('T')[0];
+      return pedPeriData.filter(p=>p.creado_en?.startsWith(d)).reduce((s,p)=>s+parseFloat(p.total||0),0);
+    });
+    renderChartDual('chartPedidos', labels, pedData, impData);
+  }
+
+  // ── DÍAS DE LA SEMANA ──
+  const diasSem = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
+  const cuentasDias = [0,0,0,0,0,0,0];
+  const allRes = [...resPeriData];
+  allRes.forEach(r=>{
+    if(!r.fecha)return;
+    const dow=(new Date(r.fecha+'T12:00:00').getDay()+6)%7;
+    cuentasDias[dow]++;
+  });
+  if(pedActivo) pedPeriData.forEach(p=>{
+    if(!p.creado_en)return;
+    const dow=(new Date(p.creado_en).getDay()+6)%7;
+    cuentasDias[dow]++;
+  });
+  const maxDia = Math.max(...cuentasDias,1);
+  document.getElementById('metDiasSem').innerHTML = diasSem.map((d,i)=>`
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+      <div style="width:28px;font-size:12px;font-weight:600;color:var(--muted);">${d}</div>
+      <div style="flex:1;height:8px;background:var(--surface2);border-radius:100px;overflow:hidden;">
+        <div style="height:100%;width:${Math.round((cuentasDias[i]/maxDia)*100)}%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:100px;transition:width .8s;"></div>
+      </div>
+      <div style="width:24px;text-align:right;font-size:12px;font-weight:700;">${cuentasDias[i]}</div>
+    </div>`).join('');
+
+  // ── HORAS MÁS DEMANDADAS ──
+  if(resActivo) {
+    document.getElementById('metHorasWrap').style.display='block';
+    const horasCount = {};
+    resPeriData.forEach(r=>{
+      const h=(r.hora||'').slice(0,5);
+      if(h)horasCount[h]=(horasCount[h]||0)+1;
+    });
+    const horasSorted = Object.entries(horasCount).sort((a,b)=>b[1]-a[1]).slice(0,6);
+    const maxH = Math.max(...horasSorted.map(x=>x[1]),1);
+    document.getElementById('metHoras').innerHTML = horasSorted.length===0
+      ? '<div style="color:var(--muted);font-size:13px;">Sin datos aún</div>'
+      : horasSorted.map(([h,n])=>`
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+          <div style="width:36px;font-size:12px;font-weight:700;color:var(--accent);">${h}h</div>
+          <div style="flex:1;height:8px;background:var(--surface2);border-radius:100px;overflow:hidden;">
+            <div style="height:100%;width:${Math.round((n/maxH)*100)}%;background:linear-gradient(90deg,var(--success),#52d99e);border-radius:100px;"></div>
+          </div>
+          <div style="width:24px;text-align:right;font-size:12px;font-weight:700;">${n}</div>
+        </div>`).join('');
+  }
+
+  // ── TOP PLATOS ──
+  if(pedActivo) {
+    document.getElementById('metPlatosWrap').style.display='block';
+    const platosCount = {};
+    pedPeriData.forEach(p=>{
+      (p.items||[]).forEach(item=>{
+        platosCount[item.nombre]=(platosCount[item.nombre]||0)+(item.qty||1);
+      });
+    });
+    const platosSorted = Object.entries(platosCount).sort((a,b)=>b[1]-a[1]).slice(0,5);
+    const maxP = Math.max(...platosSorted.map(x=>x[1]),1);
+    document.getElementById('metPlatos').innerHTML = platosSorted.length===0
+      ? '<div style="color:var(--muted);font-size:13px;">Sin datos aún</div>'
+      : platosSorted.map(([n,c],i)=>`
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+          <div style="width:18px;font-size:12px;color:var(--muted);">${i+1}</div>
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${n}</div>
+            <div style="height:5px;background:var(--surface2);border-radius:100px;overflow:hidden;margin-top:4px;">
+              <div style="height:100%;width:${Math.round((c/maxP)*100)}%;background:linear-gradient(90deg,#2196f3,#64b5f6);border-radius:100px;"></div>
+            </div>
+          </div>
+          <div style="font-size:12px;font-weight:700;color:var(--muted);">×${c}</div>
+        </div>`).join('');
+  }
+}
+
+function metTotalCard(icon, label, value, change, color) {
+  const colors = { accent:'rgba(255,107,53,0.12)', blue:'rgba(33,150,243,0.12)', success:'rgba(76,175,125,0.12)' };
+  const textColors = { accent:'var(--accent)', blue:'#2196f3', success:'var(--success)' };
+  const borders = { accent:'rgba(255,107,53,0.2)', blue:'rgba(33,150,243,0.2)', success:'rgba(76,175,125,0.2)' };
+  const changeStr = change === null ? '' : `<div style="font-size:11px;font-weight:600;color:${change>=0?'var(--success)':'var(--danger)'};">
+    ${change>=0?'↑':'↓'} ${Math.abs(change)}% vs mes ant.
+  </div>`;
+  return `<div style="background:${colors[color]};border:1px solid ${borders[color]};border-radius:16px;padding:20px;">
+    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:${textColors[color]};margin-bottom:8px;">${icon} ${label}</div>
+    <div style="font-family:'Syne',sans-serif;font-size:38px;font-weight:900;line-height:1;margin-bottom:4px;">${value}</div>
+    ${changeStr}
+  </div>`;
+}
+
+function renderChart(canvasId, existingChart, labels, data, color, label) {
+  if(existingChart) existingChart.destroy();
+  const ctx = document.getElementById(canvasId).getContext('2d');
+  const chart = new Chart(ctx, {
+    data: {
+      labels,
+      datasets: [
+        { type:'bar', label, data, backgroundColor: color+'33', borderColor: color, borderWidth:2, borderRadius:6 },
+        { type:'line', label:'Tendencia', data, borderColor: color, borderWidth:2, pointRadius:0, tension:.4, fill:false }
+      ]
+    },
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ display:false } },
+      scales:{
+        x:{ grid:{color:'rgba(255,255,255,0.04)'}, ticks:{color:'#666',font:{size:10}} },
+        y:{ grid:{color:'rgba(255,255,255,0.04)'}, ticks:{color:'#666',font:{size:10}}, beginAtZero:true }
+      }
+    }
+  });
+  if(canvasId==='chartReservas') chartRes=chart; else chartPed=chart;
+}
+
+function renderChartDual(canvasId, labels, pedData, impData) {
+  if(chartPed) chartPed.destroy();
+  const ctx = document.getElementById(canvasId).getContext('2d');
+  chartPed = new Chart(ctx, {
+    data: {
+      labels,
+      datasets: [
+        { type:'bar', label:'Pedidos', data:pedData, backgroundColor:'rgba(33,150,243,0.25)', borderColor:'#2196f3', borderWidth:2, borderRadius:6, yAxisID:'y' },
+        { type:'line', label:'Importe €', data:impData, borderColor:'var(--success)', borderWidth:2, pointRadius:3, tension:.4, fill:false, yAxisID:'y2' }
+      ]
+    },
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ display:true, labels:{color:'#888',boxWidth:12,font:{size:11}} } },
+      scales:{
+        x:{ grid:{color:'rgba(255,255,255,0.04)'}, ticks:{color:'#666',font:{size:10}} },
+        y:{ grid:{color:'rgba(255,255,255,0.04)'}, ticks:{color:'#666',font:{size:10}}, beginAtZero:true, position:'left' },
+        y2:{ ticks:{color:'#888',font:{size:10},callback:v=>v+'€'}, beginAtZero:true, position:'right', grid:{display:false} }
+      }
+    }
+  });
+}
+
+// ── FIN MÉTRICAS ──────────────────────────────────────
+
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   document.getElementById('panel-' + name).classList.add('active');
@@ -2914,7 +3180,7 @@ function showPanel(name, el) {
   if (name === 'reservas') { loadMesas(); loadReservas(); loadReservasConfig(); }
   if (name === 'pedidos') loadPedidos();
   if (name === 'agente') loadCuestionario();
-  if (name === 'web') loadWebConfig();
+  if (name === 'metricas') loadMetricas();
 }
 
 function switchAgTab(tab, el) {

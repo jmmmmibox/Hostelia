@@ -299,6 +299,7 @@
           <div class="confirm-icon">🎉</div>
           <div class="confirm-title">¡Reserva enviada!</div>
           <div class="confirm-detail" id="confirmText"></div>
+          <button class="btn-submit" style="margin-top:24px;max-width:200px;margin-left:auto;margin-right:auto;" onclick="document.getElementById('reservaConfirm').style.display='none';document.getElementById('reservaForm').style.display='block';goPage('inicio')">OK ✓</button>
         </div>
       </div>
     </div>
@@ -313,6 +314,7 @@
       <h2 class="section-title">Pide desde casa</h2>
       <p class="section-sub">Elige tus platos y te los llevamos.</p>
     </div>
+    <div id="pedidoContent">
     <div class="pedido-layout">
       <div>
         <div class="filter-bar" id="pedidoFilter"></div>
@@ -336,6 +338,15 @@
           <div class="field"><label>Forma de pago</label><select id="pedPago"><option>Efectivo</option><option>Datáfono a la entrega</option><option>Pago online (próximamente)</option></select></div>
           <button class="btn-submit" onclick="submitPedido()">Confirmar pedido →</button>
         </div>
+      </div>
+    </div>
+    </div>
+    <div id="pedidoConfirm" style="display:none">
+      <div class="confirm-card" style="max-width:500px;margin:0 auto;">
+        <div class="confirm-icon">🎉</div>
+        <div class="confirm-title">¡Pedido enviado!</div>
+        <div class="confirm-detail" id="pedidoConfirmText"></div>
+        <button class="btn-submit" style="margin-top:24px;max-width:200px;margin-left:auto;margin-right:auto;" onclick="document.getElementById('pedidoConfirm').style.display='none';document.getElementById('pedidoContent').style.display='block';goPage('inicio')">OK ✓</button>
       </div>
     </div>
   </div>
@@ -559,8 +570,12 @@ async function submitPedido(){
   if(!nombre||!tel||!dir){showToast('Rellena nombre, teléfono y dirección');return}
   const sub=carrito.reduce((s,c)=>s+c.precio*c.qty,0);const ec=envioConf||{};let envio=parseFloat(ec.coste_envio)||3;
   if(ec.envio_gratis_siempre||(!ec.cobrar_envio_siempre&&sub>=(parseFloat(ec.pedido_minimo_envio_gratis)||25)))envio=0;
+  const totalFinal = (sub+envio).toFixed(2);
   await sb.from('pedidos').insert({negocio_id:NID,nombre_cliente:nombre,telefono_cliente:tel,direccion_entrega:dir,items:carrito.map(c=>({nombre:c.nombre,precio:c.precio,qty:c.qty})),total:sub+envio,forma_pago:document.getElementById('pedPago').value,notas:document.getElementById('pedNotas').value.trim(),estado:'nuevo'});
-  carrito=[];renderCart();showToast('¡Pedido enviado! Confirmamos por SMS.');
+  carrito=[];renderCart();
+  document.getElementById('pedidoContent').style.display='none';
+  document.getElementById('pedidoConfirm').style.display='block';
+  document.getElementById('pedidoConfirmText').textContent=`${nombre}, tu pedido de ${totalFinal}€ ha sido enviado. Te confirmaremos por SMS en breve.`;
   ['pedNombre','pedTel','pedDir','pedNotas'].forEach(id=>document.getElementById(id).value='');
 }
 

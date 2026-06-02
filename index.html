@@ -3169,6 +3169,7 @@ function renderChartDual(canvasId, labels, pedData, impData) {
 
 // ── FIN MÉTRICAS ──────────────────────────────────────
 
+function showPanel(name, el) {
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   document.getElementById('panel-' + name).classList.add('active');

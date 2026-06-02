@@ -566,11 +566,8 @@ function render(){
   renderMenu('cartaFilter','cartaGrid',false);
   renderMenu('pedidoFilter','pedidoGrid',true);
 
-  // Reservas
-  const hoy=new Date().toISOString().split('T')[0];
-  document.getElementById('pubResFecha').value=hoy;
-  document.getElementById('pubResFecha').min=hoy;
-  if(resConfig?.antelacion_max_dias){const max=new Date();max.setDate(max.getDate()+resConfig.antelacion_max_dias);document.getElementById('pubResFecha').max=max.toISOString().split('T')[0]}
+  // Reservas — inicializa cuando el usuario navegue a esa sección
+
 
   // Contacto
   if(wc.contacto_direccion){document.getElementById('cDir').style.display='flex';document.getElementById('cDirVal').textContent=wc.contacto_direccion}

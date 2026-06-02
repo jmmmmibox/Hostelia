@@ -1202,7 +1202,7 @@
               <!-- Cabecera reservas -->
               <div style="padding:20px 24px 16px;border-bottom:1px solid rgba(255,255,255,0.05);">
                 <div style="display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:4px;">
-                  <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted);">📅 Reservas hoy</div>
+                  <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted);">🪑 Mesas reservadas hoy</div>
                   <div onclick="showPanel('reservas',document.querySelectorAll('.nav-item')[4])" style="font-size:11px;color:var(--accent);cursor:pointer;font-weight:600;">Ver todas →</div>
                 </div>
                 <div style="display:flex;align-items:baseline;gap:16px;margin-top:8px;">
@@ -1218,7 +1218,7 @@
                 </div>
               </div>
               <!-- Timeline reservas hoy -->
-              <div style="padding:16px 24px;max-height:220px;overflow-y:auto;" id="dashReservasList"></div>
+              <div style="padding:16px 24px;max-height:360px;overflow-y:auto;" id="dashReservasList"></div>
             </div>
           </div>
 
@@ -2159,7 +2159,7 @@ async function loadDashboard() {
   const [resHoy, pedHoy, resPend, pedNuevos, pedPrep, pedComp] = await Promise.all([
     sb.from('reservas').select('*').eq('negocio_id',currentNegocio.id).eq('fecha',hoy).in('estado',['confirmada','pendiente']).order('hora'),
     sb.from('pedidos').select('*').eq('negocio_id',currentNegocio.id).gte('creado_en',hoy+'T00:00:00').order('creado_en',{ascending:false}),
-    sb.from('reservas').select('*').eq('negocio_id',currentNegocio.id).eq('fecha',hoy).eq('estado','pendiente').order('hora'),
+    sb.from('reservas').select('*').eq('negocio_id',currentNegocio.id).eq('estado','pendiente').gte('fecha',hoy).order('fecha').order('hora'),
     sb.from('pedidos').select('*').eq('negocio_id',currentNegocio.id).eq('estado','nuevo').gte('creado_en',hoy+'T00:00:00'),
     sb.from('pedidos').select('count',{count:'exact',head:true}).eq('negocio_id',currentNegocio.id).eq('estado','preparando').gte('creado_en',hoy+'T00:00:00'),
     sb.from('pedidos').select('count',{count:'exact',head:true}).eq('negocio_id',currentNegocio.id).in('estado',['listo','enviado']).gte('creado_en',hoy+'T00:00:00')
@@ -2203,7 +2203,7 @@ async function loadDashboard() {
             <div class="res-time-badge ${cls}">${h}h</div>
             <div class="res-timeline-info">
               <div class="res-timeline-name">${r.nombre_cliente}</div>
-              <div class="res-timeline-detail">${r.personas} pax · ${r.zona}</div>
+              <div class="res-timeline-detail">${r.personas} pax · ${r.zona} · 📞 ${r.telefono_cliente}${r.notas?` · 📝 ${r.notas}`:''}</div>
             </div>
             <div class="res-timeline-actions">
               ${r.estado==='pendiente'?`<button class="btn-confirm-inline" onclick="confirmarDesdeResumen('${r.id}')">✓</button>`:''}

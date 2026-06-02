@@ -827,7 +827,8 @@ async function submitReserva(){
   if(!nombre||!tel){showToast('Rellena tu nombre y teléfono');return}
   if(!calSelectedDate||!calSelectedHora){showToast('Selecciona fecha y hora primero');return}
   const btn=document.getElementById('pubResBtn');btn.disabled=true;btn.textContent='Reservando...';
-  const autoConfirm = resConfig?.confirmacion_automatica === true;
+  const autoConfirm = resConfig?.confirmacion_automatica === true || resConfig?.confirmacion_automatica === 'true';
+  const estadoReserva = autoConfirm ? 'confirmada' : 'pendiente';
   await sb.from('reservas').insert({
     negocio_id:NID,
     nombre_cliente:nombre,
@@ -835,7 +836,7 @@ async function submitReserva(){
     fecha:calSelectedDate,
     hora:calSelectedHora,
     personas,zona,
-    estado: autoConfirm ? 'confirmada' : 'pendiente'
+    estado: estadoReserva
   });
   // Mostrar confirmación visual
   const d=new Date(calSelectedDate+'T12:00:00');
@@ -843,6 +844,8 @@ async function submitReserva(){
   document.getElementById('stepForm').style.display='none';
   document.getElementById('resSteps').style.display='none';
   document.getElementById('reservaConfirm').style.display='block';
+  document.querySelector('#reservaConfirm .confirm-check').textContent = autoConfirm ? '✓' : '📨';
+  document.querySelector('#reservaConfirm .confirm-title-premium').textContent = autoConfirm ? '¡Reserva confirmada!' : '¡Solicitud enviada!';
   document.getElementById('confirmTicket').innerHTML=`
     <div class="confirm-ticket-row"><div class="confirm-ticket-icon">👤</div><div><div class="confirm-ticket-label">Nombre</div><div class="confirm-ticket-value">${nombre}</div></div></div>
     <div class="confirm-ticket-row"><div class="confirm-ticket-icon">📞</div><div><div class="confirm-ticket-label">Teléfono</div><div class="confirm-ticket-value">${tel}</div></div></div>

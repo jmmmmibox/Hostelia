@@ -2493,20 +2493,23 @@ async function loadReservasConfig() {
 }
 
 async function saveReservasConfig() {
+  const autoConfirm = document.getElementById('cfgAutoConfirm').classList.contains('on');
   const payload = {
     negocio_id: currentNegocio.id,
     max_reservas_dia: parseInt(document.getElementById('cfgMaxRes').value),
     antelacion_max_dias: parseInt(document.getElementById('cfgMaxDias').value),
     antelacion_min_horas: parseInt(document.getElementById('cfgMinHoras').value),
-    confirmacion_automatica: document.getElementById('cfgAutoConfirm').classList.contains('on'),
+    confirmacion_automatica: autoConfirm,
   };
-  const { data: existing } = await sb.from('reservas_config').select('id').eq('negocio_id', currentNegocio.id).single();
+  const { data: existing } = await sb.from('reservas_config').select('id').eq('negocio_id', currentNegocio.id).limit(1).maybeSingle();
   if (existing) {
-    await sb.from('reservas_config').update(payload).eq('negocio_id', currentNegocio.id);
+    const { error } = await sb.from('reservas_config').update(payload).eq('id', existing.id);
+    if (error) { toast('Error al guardar: ' + error.message, true); return; }
   } else {
-    await sb.from('reservas_config').insert(payload);
+    const { error } = await sb.from('reservas_config').insert(payload);
+    if (error) { toast('Error al guardar: ' + error.message, true); return; }
   }
-  toast('Configuración guardada ✓');
+  toast(autoConfirm ? '✅ Confirmación automática activada' : '✅ Configuración guardada');
 }
 
 async function loadReservas(filtro = 'hoy') {

@@ -1635,10 +1635,6 @@
         <div class="kb-content" id="res-configres">
           <div class="config-reservas">
             <div class="config-card">
-              <div class="config-card-label">Máx. reservas / día</div>
-              <input type="number" id="cfgMaxRes" value="20" onchange="saveReservasConfig()">
-            </div>
-            <div class="config-card">
               <div class="config-card-label">Antelación máx. (días)</div>
               <input type="number" id="cfgMaxDias" value="30" onchange="saveReservasConfig()">
             </div>
@@ -1647,11 +1643,56 @@
               <input type="number" id="cfgMinHoras" value="2" onchange="saveReservasConfig()">
             </div>
           </div>
+
+          <!-- TURNOS -->
+          <div style="margin-top:20px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+              <div>
+                <div class="section-title" style="font-size:15px;margin-bottom:2px;">Turnos de servicio</div>
+                <div style="font-size:12px;color:var(--muted);">Define cada turno con su horario y máximo de reservas.</div>
+              </div>
+              <button class="topbar-btn accent" onclick="showAddTurno()">+ Añadir turno</button>
+            </div>
+
+            <div id="turnosList" style="display:flex;flex-direction:column;gap:10px;margin-bottom:16px;">
+              <div class="loading-row">Cargando turnos...</div>
+            </div>
+
+            <!-- Modal añadir/editar turno -->
+            <div id="modalTurno" style="display:none;">
+              <div class="card">
+                <div class="card-title" id="modalTurnoTitle">Nuevo turno</div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+                  <div>
+                    <div class="setting-label">Nombre del turno</div>
+                    <input class="setting-input" id="turnoNombre" type="text" placeholder="Ej: Mediodía, Cena...">
+                  </div>
+                  <div>
+                    <div class="setting-label">Máx. reservas en este turno</div>
+                    <input class="setting-input" id="turnoMax" type="number" min="1" value="15" placeholder="15">
+                  </div>
+                  <div>
+                    <div class="setting-label">Hora inicio</div>
+                    <input class="setting-input" id="turnoInicio" type="time" value="13:00">
+                  </div>
+                  <div>
+                    <div class="setting-label">Hora fin</div>
+                    <input class="setting-input" id="turnoFin" type="time" value="16:00">
+                  </div>
+                </div>
+                <div style="display:flex;gap:10px;">
+                  <button class="btn-primary" style="flex:1;" onclick="saveTurno()">Guardar turno</button>
+                  <button class="btn-secondary" style="padding:10px 20px;" onclick="hideModalTurno()">Cancelar</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <div class="card" style="margin-top:16px;">
             <div class="toggle-row">
               <div class="toggle-info">
                 <div class="toggle-title">Confirmación automática de reservas</div>
-                <div class="toggle-sub">Al activarlo, las reservas de clientes se confirman al instante y recibirán un SMS automático. Si está desactivado, tú confirmas manualmente cada reserva.</div>
+                <div class="toggle-sub">Las reservas se confirman al instante. Si está desactivado, confirmas manualmente.</div>
               </div>
               <div class="toggle" id="cfgAutoConfirm" onclick="this.classList.toggle('on');saveReservasConfig()"></div>
             </div>
@@ -2484,19 +2525,18 @@ async function loadUrlGuardada() {
 async function loadReservasConfig() {
   const { data } = await sb.from('reservas_config').select('*').eq('negocio_id', currentNegocio.id).single();
   if (data) {
-    document.getElementById('cfgMaxRes').value = data.max_reservas_dia;
-    document.getElementById('cfgMaxDias').value = data.antelacion_max_dias;
-    document.getElementById('cfgMinHoras').value = data.antelacion_min_horas;
+    document.getElementById('cfgMaxDias').value = data.antelacion_max_dias || 30;
+    document.getElementById('cfgMinHoras').value = data.antelacion_min_horas || 2;
     if (data.confirmacion_automatica) document.getElementById('cfgAutoConfirm').classList.add('on');
     else document.getElementById('cfgAutoConfirm').classList.remove('on');
   }
+  await loadTurnos();
 }
 
 async function saveReservasConfig() {
   const autoConfirm = document.getElementById('cfgAutoConfirm').classList.contains('on');
   const payload = {
     negocio_id: currentNegocio.id,
-    max_reservas_dia: parseInt(document.getElementById('cfgMaxRes').value),
     antelacion_max_dias: parseInt(document.getElementById('cfgMaxDias').value),
     antelacion_min_horas: parseInt(document.getElementById('cfgMinHoras').value),
     confirmacion_automatica: autoConfirm,
@@ -2510,6 +2550,109 @@ async function saveReservasConfig() {
     if (error) { toast('Error al guardar: ' + error.message, true); return; }
   }
   toast(autoConfirm ? '✅ Confirmación automática activada' : '✅ Configuración guardada');
+}
+
+// ── TURNOS ────────────────────────────────────────────
+let turnosData = [];
+let editandoTurnoId = null;
+
+async function loadTurnos() {
+  const { data } = await sb.from('turnos').select('*')
+    .eq('negocio_id', currentNegocio.id).order('hora_inicio');
+  turnosData = data || [];
+  renderTurnos();
+}
+
+function renderTurnos() {
+  const el = document.getElementById('turnosList');
+  if (!el) return;
+  if (turnosData.length === 0) {
+    el.innerHTML = `<div class="empty-state" style="padding:30px 0;">
+      <div class="empty-icon">🕐</div>
+      <div class="empty-title">Sin turnos configurados</div>
+      <div class="empty-sub">Añade al menos un turno para gestionar la disponibilidad de reservas.</div>
+    </div>`;
+    return;
+  }
+  el.innerHTML = turnosData.map(t => `
+    <div class="card" style="padding:16px 20px;display:flex;align-items:center;gap:14px;">
+      <div style="flex:1;">
+        <div style="font-size:14px;font-weight:700;">${t.nombre}</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:2px;">
+          🕐 ${t.hora_inicio.slice(0,5)} – ${t.hora_fin.slice(0,5)}
+          &nbsp;·&nbsp; 🪑 Máx. ${t.max_reservas} reservas
+        </div>
+      </div>
+      <div class="toggle ${t.activo?'on':''}" onclick="toggleTurno('${t.id}',${t.activo})" title="${t.activo?'Desactivar':'Activar'}"></div>
+      <div class="icon-btn" onclick="editTurno('${t.id}')" title="Editar">✏️</div>
+      <div class="icon-btn danger" onclick="deleteTurno('${t.id}')" title="Eliminar">🗑️</div>
+    </div>`).join('');
+}
+
+function showAddTurno() {
+  editandoTurnoId = null;
+  document.getElementById('modalTurnoTitle').textContent = 'Nuevo turno';
+  document.getElementById('turnoNombre').value = '';
+  document.getElementById('turnoInicio').value = '13:00';
+  document.getElementById('turnoFin').value = '16:00';
+  document.getElementById('turnoMax').value = '15';
+  document.getElementById('modalTurno').style.display = 'block';
+  document.getElementById('turnoNombre').focus();
+}
+
+function editTurno(id) {
+  const t = turnosData.find(x => x.id === id);
+  if (!t) return;
+  editandoTurnoId = id;
+  document.getElementById('modalTurnoTitle').textContent = 'Editar turno';
+  document.getElementById('turnoNombre').value = t.nombre;
+  document.getElementById('turnoInicio').value = t.hora_inicio.slice(0,5);
+  document.getElementById('turnoFin').value = t.hora_fin.slice(0,5);
+  document.getElementById('turnoMax').value = t.max_reservas;
+  document.getElementById('modalTurno').style.display = 'block';
+}
+
+function hideModalTurno() {
+  document.getElementById('modalTurno').style.display = 'none';
+  editandoTurnoId = null;
+}
+
+async function saveTurno() {
+  const nombre = document.getElementById('turnoNombre').value.trim();
+  const inicio = document.getElementById('turnoInicio').value;
+  const fin = document.getElementById('turnoFin').value;
+  const max = parseInt(document.getElementById('turnoMax').value);
+
+  if (!nombre) { toast('Escribe un nombre para el turno', true); return; }
+  if (!inicio || !fin) { toast('Define la hora de inicio y fin', true); return; }
+  if (isNaN(max) || max < 1) { toast('Define un máximo de reservas válido', true); return; }
+
+  const payload = {
+    negocio_id: currentNegocio.id,
+    nombre, hora_inicio: inicio, hora_fin: fin, max_reservas: max
+  };
+
+  if (editandoTurnoId) {
+    await sb.from('turnos').update(payload).eq('id', editandoTurnoId);
+    toast('Turno actualizado ✓');
+  } else {
+    await sb.from('turnos').insert({ ...payload, orden: turnosData.length });
+    toast('Turno añadido ✓');
+  }
+  hideModalTurno();
+  await loadTurnos();
+}
+
+async function deleteTurno(id) {
+  if (!confirm('¿Eliminar este turno?')) return;
+  await sb.from('turnos').delete().eq('id', id);
+  toast('Turno eliminado');
+  await loadTurnos();
+}
+
+async function toggleTurno(id, activo) {
+  await sb.from('turnos').update({ activo: !activo }).eq('id', id);
+  await loadTurnos();
 }
 
 async function loadReservas(filtro = 'hoy') {

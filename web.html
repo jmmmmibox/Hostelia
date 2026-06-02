@@ -709,12 +709,13 @@ async function submitPedido(){
 }
 
 // RESERVAS — CALENDARIO
-let calYear, calMonth, calReservas=[], calSelectedDate=null, calSelectedHora=null;
-const HORAS=['13:00','13:30','14:00','14:30','15:00','20:00','20:30','21:00','21:30','22:00','22:30'];
+let calYear, calMonth, calReservas=[], calSelectedDate=null, calSelectedHora=null, calTurnos=[];
 const MESES=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 
 async function initCalendar(){
   const hoy=new Date();calYear=hoy.getFullYear();calMonth=hoy.getMonth();
+  const {data:t}=await sb.from('turnos').select('*').eq('negocio_id',NID).eq('activo',true).order('hora_inicio');
+  calTurnos=t||[];
   await loadCalReservas();renderCalendar();
 }
 
@@ -730,8 +731,6 @@ function renderCalendar(){
   const title=document.getElementById('calMonthTitle');
   if(!title)return;
   title.textContent=MESES[calMonth]+' '+calYear;
-  const totalMesas=mesasData.reduce((s,m)=>s+m.cantidad,0)||10;
-  const maxRes=resConfig?.max_reservas_dia||totalMesas;
   const hoy=new Date();hoy.setHours(0,0,0,0);
   const primerDia=new Date(calYear,calMonth,1);
   let startDow=primerDia.getDay();startDow=startDow===0?6:startDow-1;
@@ -745,10 +744,16 @@ function renderCalendar(){
     const fecha=new Date(calYear,calMonth,d);
     const isPast=fecha<hoy;
     const isToday=fecha.getTime()===hoy.getTime();
-    const resCount=calReservas.filter(r=>r.fecha===dateStr).length;
-    const pct=maxRes>0?resCount/maxRes:0;
     let cls=isPast?'past':'available';
-    if(!isPast){if(pct>=1)cls='full';else if(pct>=0.6)cls='partial';}
+    if(!isPast && calTurnos.length>0){
+      const resDelDia=calReservas.filter(r=>r.fecha===dateStr);
+      const turnosFull=calTurnos.filter(t=>{
+        const count=resDelDia.filter(r=>r.hora>=t.hora_inicio.slice(0,5)&&r.hora<t.hora_fin.slice(0,5)).length;
+        return count>=t.max_reservas;
+      });
+      if(turnosFull.length===calTurnos.length)cls='full';
+      else if(turnosFull.length>0)cls='partial';
+    }
     const isSelected=calSelectedDate===dateStr;
     html+=`<div class="cal-day ${cls}${isSelected?' selected':''}${isToday?' today':''}" onclick="selectDay('${dateStr}')">
       <span class="cal-day-num">${d}</span>
@@ -778,17 +783,37 @@ function selectDay(dateStr){
 }
 
 function renderHoras(dateStr){
-  const totalMesas=mesasData.reduce((s,m)=>s+m.cantidad,0)||10;
   const grid=document.getElementById('horasGrid');
-  grid.innerHTML=HORAS.map(hora=>{
-    const horaNum=parseInt(hora.replace(':',''));
-    const resEnHora=calReservas.filter(r=>{const rh=parseInt((r.hora||'').replace(':',''));return Math.abs(rh-horaNum)<130});
-    const libres=Math.max(0,totalMesas-resEnHora.length);
-    const llena=libres<=0;
-    return`<div class="hora-btn${llena?' llena':''}" onclick="${llena?'':` selectHora('${hora}')`}">
-      ${hora}<div class="hora-dispo">${llena?'Completo':libres<=3?`${libres} mesa${libres>1?'s':''}`:'Disponible'}</div>
+  if(calTurnos.length===0){
+    grid.innerHTML=`<div style="color:var(--muted);font-size:13px;padding:16px 0;">No hay turnos configurados. Contacta con el negocio.</div>`;
+    return;
+  }
+  const resDelDia=calReservas.filter(r=>r.fecha===dateStr);
+  let html='';
+  calTurnos.forEach(t=>{
+    const inicio=t.hora_inicio.slice(0,5);
+    const fin=t.hora_fin.slice(0,5);
+    const resEnTurno=resDelDia.filter(r=>r.hora>=inicio&&r.hora<fin).length;
+    const libres=Math.max(0,t.max_reservas-resEnTurno);
+    const turnoLleno=libres<=0;
+    const horas=[];
+    let [h,m]=inicio.split(':').map(Number);
+    const [hf,mf]=fin.split(':').map(Number);
+    while(h*60+m<hf*60+mf){
+      horas.push(`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`);
+      m+=30;if(m>=60){m=0;h++;}
+    }
+    html+=`<div style="margin-bottom:20px;">
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;">
+        <span>${t.nombre}</span>
+        <span style="color:${turnoLleno?'var(--p)':'var(--success)'}">${turnoLleno?'Completo':libres+' mesa'+(libres!==1?'s':'')+' libres'}</span>
+      </div>
+      <div class="horas-grid">
+        ${horas.map(hora=>`<div class="hora-btn${turnoLleno?' llena':''}" onclick="${turnoLleno?'':` selectHora('${hora}')`}">${hora}<div class="hora-dispo">${turnoLleno?'Completo':libres<=3?libres+' libre'+(libres!==1?'s':''):'Libre'}</div></div>`).join('')}
+      </div>
     </div>`;
-  }).join('');
+  });
+  grid.innerHTML=html;
 }
 
 function selectHora(hora){

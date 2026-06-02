@@ -1602,7 +1602,8 @@
                 <div id="webLogoPreview" style="width:60px;height:60px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;overflow:hidden;cursor:pointer;font-size:24px;" onclick="document.getElementById('webLogoInput').click()">🍽️</div>
                 <div>
                   <input type="file" id="webLogoInput" accept="image/*" style="display:none;" onchange="previewWebImg(this,'webLogoPreview','logo')">
-                  <button class="btn-secondary" style="padding:6px 14px;font-size:12px;" onclick="document.getElementById('webLogoInput').click()">Subir logo</button>
+                  <button class="btn-secondary" style="padding:6px 14px;font-size:12px;margin-bottom:6px;" onclick="document.getElementById('webLogoInput').click()">Subir logo</button>
+                  <button class="btn-secondary" id="btnQuitarLogo" style="padding:6px 14px;font-size:12px;display:none;color:var(--danger);border-color:var(--danger);" onclick="removeWebImg('logo')">✕ Quitar</button>
                 </div>
               </div>
             </div>
@@ -1614,10 +1615,14 @@
         <div class="kb-content" id="web-portada">
           <div class="card" style="margin-bottom:16px;">
             <div class="card-title">Imagen de fondo</div>
-            <div id="webHeroPreview" style="width:100%;height:200px;background:var(--surface2);border:2px dashed var(--border);border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;cursor:pointer;overflow:hidden;margin-bottom:12px;" onclick="document.getElementById('webHeroInput').click()">
+            <div id="webHeroPreview" style="width:100%;height:200px;background:var(--surface2);border:2px dashed var(--border);border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;cursor:pointer;overflow:hidden;margin-bottom:12px;position:relative;" onclick="document.getElementById('webHeroInput').click()">
               <span style="color:var(--muted);font-size:13px;">📸 Haz clic para subir imagen de portada</span>
             </div>
-            <input type="file" id="webHeroInput" accept="image/*" style="display:none;" onchange="previewWebImg(this,'webHeroPreview','hero')">
+            <div style="display:flex;gap:8px;margin-bottom:12px;">
+              <input type="file" id="webHeroInput" accept="image/*" style="display:none;" onchange="previewWebImg(this,'webHeroPreview','hero')">
+              <button class="btn-secondary" style="padding:8px 16px;font-size:12px;" onclick="document.getElementById('webHeroInput').click()">📸 Cambiar imagen</button>
+              <button class="btn-secondary" id="btnQuitarHero" style="padding:8px 16px;font-size:12px;display:none;color:var(--danger);border-color:var(--danger);" onclick="removeWebImg('hero')">✕ Quitar imagen</button>
+            </div>
           </div>
           <div class="settings-grid">
             <div class="setting-group">
@@ -1660,7 +1665,11 @@
             <div id="webSobrePreview" style="width:100%;height:180px;background:var(--surface2);border:2px dashed var(--border);border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;cursor:pointer;overflow:hidden;margin-bottom:12px;" onclick="document.getElementById('webSobreInput').click()">
               <span style="color:var(--muted);font-size:13px;">📸 Haz clic para subir imagen</span>
             </div>
-            <input type="file" id="webSobreInput" accept="image/*" style="display:none;" onchange="previewWebImg(this,'webSobrePreview','sobre')">
+            <div style="display:flex;gap:8px;">
+              <input type="file" id="webSobreInput" accept="image/*" style="display:none;" onchange="previewWebImg(this,'webSobrePreview','sobre')">
+              <button class="btn-secondary" style="padding:8px 16px;font-size:12px;" onclick="document.getElementById('webSobreInput').click()">📸 Cambiar imagen</button>
+              <button class="btn-secondary" id="btnQuitarSobre" style="padding:8px 16px;font-size:12px;display:none;color:var(--danger);border-color:var(--danger);" onclick="removeWebImg('sobre')">✕ Quitar imagen</button>
+            </div>
           </div>
           <button class="btn-primary" style="max-width:220px;margin-top:16px;" onclick="saveWebConfig()">Guardar</button>
         </div>
@@ -2540,6 +2549,7 @@ let toastTimer;
 // ── WEB CONFIG ─────────────────────────────────────────
 let webConfigData = null;
 let webImgFiles = { logo: null, hero: null, sobre: null };
+let webImgDelete = { logo: false, hero: false, sobre: false };
 
 function switchWebTab(tab, el) {
   const panel = document.getElementById('panel-web');
@@ -2564,6 +2574,7 @@ async function loadWebConfig() {
   document.getElementById('webFont').value = data.tipografia || 'Outfit';
   if (data.logo_url) {
     document.getElementById('webLogoPreview').innerHTML = `<img src="${data.logo_url}" style="width:100%;height:100%;object-fit:contain;">`;
+    showQuitarBtn('logo', true);
   }
 
   // Portada
@@ -2571,6 +2582,7 @@ async function loadWebConfig() {
   document.getElementById('webHeroSub').value = data.hero_subtitulo || '';
   if (data.hero_imagen_url) {
     document.getElementById('webHeroPreview').innerHTML = `<img src="${data.hero_imagen_url}" style="width:100%;height:100%;object-fit:cover;">`;
+    showQuitarBtn('hero', true);
   }
   if (data.btn_reservas) document.getElementById('webBtnReservas').classList.add('on');
   else document.getElementById('webBtnReservas').classList.remove('on');
@@ -2581,6 +2593,7 @@ async function loadWebConfig() {
   document.getElementById('webSobreTexto').value = data.sobre_nosotros_texto || '';
   if (data.sobre_nosotros_imagen_url) {
     document.getElementById('webSobrePreview').innerHTML = `<img src="${data.sobre_nosotros_imagen_url}" style="width:100%;height:100%;object-fit:cover;">`;
+    showQuitarBtn('sobre', true);
   }
 
   // Contacto
@@ -2608,9 +2621,10 @@ async function loadWebConfig() {
 
 async function saveWebConfig() {
   // Subir imágenes si hay nuevas
-  let logo_url = webConfigData?.logo_url || null;
-  let hero_imagen_url = webConfigData?.hero_imagen_url || null;
-  let sobre_nosotros_imagen_url = webConfigData?.sobre_nosotros_imagen_url || null;
+  let logo_url = webImgDelete.logo ? null : (webConfigData?.logo_url || null);
+  let hero_imagen_url = webImgDelete.hero ? null : (webConfigData?.hero_imagen_url || null);
+  let sobre_nosotros_imagen_url = webImgDelete.sobre ? null : (webConfigData?.sobre_nosotros_imagen_url || null);
+  webImgDelete = { logo: false, hero: false, sobre: false };
 
   if (webImgFiles.logo) {
     logo_url = await uploadWebImg(webImgFiles.logo, 'logo');
@@ -2681,9 +2695,31 @@ function previewWebImg(input, previewId, tipo) {
   reader.onload = function(e) {
     const style = tipo === 'logo' ? 'width:100%;height:100%;object-fit:contain;' : 'width:100%;height:100%;object-fit:cover;';
     document.getElementById(previewId).innerHTML = `<img src="${e.target.result}" style="${style}">`;
+    showQuitarBtn(tipo, true);
   };
   reader.readAsDataURL(webImgFiles[tipo]);
   showSaveBar('web');
+}
+
+function removeWebImg(tipo) {
+  const previews = { logo: 'webLogoPreview', hero: 'webHeroPreview', sobre: 'webSobrePreview' };
+  const placeholders = {
+    logo: '🍽️',
+    hero: '<span style="color:var(--muted);font-size:13px;">📸 Haz clic para subir imagen de portada</span>',
+    sobre: '<span style="color:var(--muted);font-size:13px;">📸 Haz clic para subir imagen</span>'
+  };
+  document.getElementById(previews[tipo]).innerHTML = placeholders[tipo];
+  webImgFiles[tipo] = null;
+  webImgDelete[tipo] = true; // marcar para eliminar al guardar
+  showQuitarBtn(tipo, false);
+  showSaveBar('web');
+  toast('Imagen eliminada — recuerda guardar');
+}
+
+function showQuitarBtn(tipo, show) {
+  const btns = { logo: 'btnQuitarLogo', hero: 'btnQuitarHero', sobre: 'btnQuitarSobre' };
+  const btn = document.getElementById(btns[tipo]);
+  if (btn) btn.style.display = show ? 'inline-block' : 'none';
 }
 
 async function uploadWebImg(file, tipo) {

@@ -1161,10 +1161,10 @@
     <div class="content">
 
       <!-- DASHBOARD -->
-      <div class="panel active" id="panel-dashboard">
+      <div class="panel active" id="panel-dashboard" style="display:flex;flex-direction:column;min-height:calc(100vh - 64px);">
 
         <!-- HEADER -->
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:32px;flex-wrap:wrap;gap:12px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px;">
           <div>
             <div class="page-title" id="dashGreeting">Buenos días 👋</div>
             <div class="page-sub" id="dashDate" style="margin-top:3px;"></div>
@@ -1173,111 +1173,97 @@
             <div style="display:flex;align-items:center;gap:7px;font-size:12px;font-weight:600;color:var(--success);background:rgba(76,175,125,0.1);padding:7px 14px;border-radius:100px;border:1px solid rgba(76,175,125,0.15);">
               <div style="width:7px;height:7px;border-radius:50%;background:var(--success);animation:pulse 2s infinite;"></div>En directo
             </div>
-            <button onclick="loadDashboard()" style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:7px 14px;color:var(--muted);font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--muted)'">↻</button>
+            <button onclick="loadDashboard()" title="Actualizar" style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:8px 16px;color:var(--muted);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--muted)'">↻ Actualizar</button>
           </div>
         </div>
 
-        <!-- BARRA OCUPACIÓN -->
-        <div id="dashOcupacion" style="display:none;margin-bottom:28px;">
-          <div class="card" style="padding:18px 24px;">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-              <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted);">Ocupación hoy</div>
-              <div style="display:flex;align-items:center;gap:10px;">
-                <div id="dashOcupLabel" style="font-size:12px;color:var(--muted);"></div>
-                <div id="dashOcupPct" style="font-family:'Syne',sans-serif;font-size:22px;font-weight:900;">0%</div>
-              </div>
+        <!-- BARRA STATS -->
+        <div id="dashStatsBar" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:20px;">
+          <!-- Reservas confirmadas -->
+          <div style="background:linear-gradient(135deg,rgba(255,107,53,0.12),rgba(255,107,53,0.04));border:1px solid rgba(255,107,53,0.2);border-radius:16px;padding:18px 20px;">
+            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--accent);margin-bottom:6px;">Confirmadas hoy</div>
+            <div style="font-family:'Syne',sans-serif;font-size:40px;font-weight:900;line-height:1;" id="dashNumResConf">—</div>
+          </div>
+          <!-- Reservas pendientes -->
+          <div style="background:linear-gradient(135deg,rgba(240,165,0,0.12),rgba(240,165,0,0.04));border:1px solid rgba(240,165,0,0.2);border-radius:16px;padding:18px 20px;">
+            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--warning);margin-bottom:6px;">Por confirmar</div>
+            <div style="font-family:'Syne',sans-serif;font-size:40px;font-weight:900;line-height:1;color:var(--warning);" id="dashNumResPend">—</div>
+          </div>
+          <!-- Ocupación -->
+          <div id="dashOcupCard" style="background:linear-gradient(135deg,rgba(76,175,125,0.12),rgba(76,175,125,0.04));border:1px solid rgba(76,175,125,0.2);border-radius:16px;padding:18px 20px;display:none;">
+            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--success);margin-bottom:6px;">Ocupación hoy</div>
+            <div style="font-family:'Syne',sans-serif;font-size:40px;font-weight:900;line-height:1;color:var(--success);" id="dashOcupPct">0%</div>
+            <div style="height:4px;background:rgba(76,175,125,0.2);border-radius:100px;margin-top:8px;overflow:hidden;">
+              <div id="dashOcupBar" style="height:100%;border-radius:100px;transition:width 1s cubic-bezier(0.4,0,0.2,1);"></div>
             </div>
-            <div style="height:10px;background:var(--surface2);border-radius:100px;overflow:hidden;">
-              <div id="dashOcupBar" style="height:100%;border-radius:100px;width:0%;transition:width 1s cubic-bezier(0.4,0,0.2,1);"></div>
-            </div>
+            <div style="font-size:11px;color:var(--muted);margin-top:4px;" id="dashOcupLabel"></div>
+          </div>
+          <!-- Pedidos hoy -->
+          <div id="dashPedCard" style="background:linear-gradient(135deg,rgba(33,150,243,0.12),rgba(33,150,243,0.04));border:1px solid rgba(33,150,243,0.2);border-radius:16px;padding:18px 20px;display:none;">
+            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#2196f3;margin-bottom:6px;">Pedidos hoy</div>
+            <div style="font-family:'Syne',sans-serif;font-size:40px;font-weight:900;line-height:1;color:#2196f3;" id="dashNumPedTotal">—</div>
+          </div>
+          <!-- Importe -->
+          <div id="dashImpCard" style="background:linear-gradient(135deg,rgba(76,175,125,0.12),rgba(76,175,125,0.04));border:1px solid rgba(76,175,125,0.2);border-radius:16px;padding:18px 20px;display:none;">
+            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--success);margin-bottom:6px;">Facturado hoy</div>
+            <div style="font-family:'Syne',sans-serif;font-size:40px;font-weight:900;line-height:1;color:var(--success);" id="dashNumPedImporte">—</div>
           </div>
         </div>
 
-        <!-- DOS BLOQUES PRINCIPALES -->
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px;">
+        <!-- TRES COLUMNAS PRINCIPALES -->
+        <div style="display:grid;grid-template-columns:2fr 1.5fr 1.5fr;gap:16px;flex:1;">
 
-          <!-- BLOQUE RESERVAS -->
-          <div id="dashColReservas">
-            <div class="card" style="padding:0;overflow:hidden;">
-              <!-- Cabecera reservas -->
-              <div style="padding:20px 24px 16px;border-bottom:1px solid rgba(255,255,255,0.05);">
-                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
-                  <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted);">🪑 Mesas reservadas hoy</div>
-                  <div style="display:flex;align-items:center;gap:8px;">
-                    <button onclick="loadDashboard()" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:4px 10px;color:var(--muted);font-family:'DM Sans',sans-serif;font-size:11px;font-weight:600;cursor:pointer;transition:all .2s;" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--muted)'">↻</button>
-                    <div onclick="showPanel('reservas',document.querySelectorAll('.nav-item')[4])" style="font-size:11px;color:var(--accent);cursor:pointer;font-weight:600;">Ver todas →</div>
-                  </div>
-                </div>
-                <div style="display:flex;align-items:baseline;gap:16px;margin-top:8px;">
-                  <div>
-                    <div style="font-family:'Syne',sans-serif;font-size:48px;font-weight:900;line-height:1;" id="dashNumResConf">0</div>
-                    <div style="font-size:12px;color:var(--muted);margin-top:2px;">confirmadas</div>
-                  </div>
-                  <div style="width:1px;height:40px;background:rgba(255,255,255,0.06);"></div>
-                  <div>
-                    <div style="font-family:'Syne',sans-serif;font-size:32px;font-weight:800;line-height:1;color:var(--warning);" id="dashNumResPend">0</div>
-                    <div style="font-size:12px;color:var(--muted);margin-top:2px;">pendientes</div>
-                  </div>
+          <!-- COL 1: MESAS DE HOY -->
+          <div style="display:flex;flex-direction:column;min-height:0;">
+            <div class="card" style="padding:0;overflow:hidden;flex:1;display:flex;flex-direction:column;">
+              <div style="padding:18px 22px 14px;border-bottom:1px solid rgba(255,255,255,0.05);flex-shrink:0;">
+                <div style="display:flex;align-items:center;justify-content:space-between;">
+                  <div style="font-size:14px;font-weight:700;">🪑 Mesas reservadas hoy</div>
+                  <div onclick="showPanel('reservas',document.querySelectorAll('.nav-item')[4])" style="font-size:11px;color:var(--accent);cursor:pointer;font-weight:600;">Ver todas →</div>
                 </div>
               </div>
-              <!-- Timeline reservas hoy -->
-              <div style="padding:16px 24px;max-height:360px;overflow-y:auto;" id="dashReservasList"></div>
+              <div style="overflow-y:auto;flex:1;padding:12px 22px;" id="dashReservasList">
+                <div class="loading-row">Cargando...</div>
+              </div>
             </div>
           </div>
 
-          <!-- BLOQUE PEDIDOS -->
-          <div id="dashColPedidos" style="display:none;">
-            <div class="card" style="padding:0;overflow:hidden;">
-              <!-- Cabecera pedidos -->
-              <div style="padding:20px 24px 16px;border-bottom:1px solid rgba(255,255,255,0.05);">
-                <div style="display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:4px;">
-                  <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted);">🛵 Pedidos hoy</div>
-                  <div onclick="showPanel('pedidos',document.querySelectorAll('.nav-item')[5])" style="font-size:11px;color:var(--accent);cursor:pointer;font-weight:600;">Ver todos →</div>
-                </div>
-                <div style="display:flex;align-items:baseline;gap:16px;margin-top:8px;">
-                  <div>
-                    <div style="font-family:'Syne',sans-serif;font-size:48px;font-weight:900;line-height:1;" id="dashNumPedTotal">0</div>
-                    <div style="font-size:12px;color:var(--muted);margin-top:2px;">pedidos totales</div>
-                  </div>
-                  <div style="width:1px;height:40px;background:rgba(255,255,255,0.06);"></div>
-                  <div>
-                    <div style="font-family:'Syne',sans-serif;font-size:32px;font-weight:800;line-height:1;color:var(--success);" id="dashNumPedImporte">0€</div>
-                    <div style="font-size:12px;color:var(--muted);margin-top:2px;">facturado hoy</div>
-                  </div>
-                </div>
-                <!-- Mini estado pedidos -->
-                <div style="display:flex;gap:12px;margin-top:14px;" id="dashPedEstados"></div>
-              </div>
-              <!-- Pedidos nuevos sin atender -->
-              <div style="padding:16px 24px;max-height:220px;overflow-y:auto;" id="dashPedidosList"></div>
-            </div>
-          </div>
-
-        </div>
-
-        <!-- FILA INFERIOR: PENDIENTES RESERVAS + PENDIENTES PEDIDOS -->
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
-
-          <!-- RESERVAS PENDIENTES DE CONFIRMAR -->
-          <div id="dashPendResWrap">
-            <div class="card" style="padding:0;overflow:hidden;">
-              <div style="padding:16px 20px;border-bottom:1px solid rgba(255,255,255,0.05);display:flex;align-items:center;justify-content:space-between;">
-                <div style="font-size:13px;font-weight:700;">⏳ Reservas por confirmar</div>
+          <!-- COL 2: POR CONFIRMAR -->
+          <div style="display:flex;flex-direction:column;min-height:0;">
+            <div class="card" style="padding:0;overflow:hidden;flex:1;display:flex;flex-direction:column;">
+              <div style="padding:18px 22px 14px;border-bottom:1px solid rgba(255,255,255,0.05);flex-shrink:0;display:flex;align-items:center;justify-content:space-between;">
+                <div style="font-size:14px;font-weight:700;">⏳ Por confirmar</div>
                 <div id="dashBadgePendRes" style="display:none;background:var(--warning);color:#fff;font-size:10px;font-weight:700;border-radius:100px;padding:3px 10px;"></div>
               </div>
-              <div style="padding:12px 20px;" id="dashPendResList"></div>
+              <div style="overflow-y:auto;flex:1;padding:12px 22px;" id="dashPendResList">
+                <div class="loading-row">Cargando...</div>
+              </div>
             </div>
           </div>
 
-          <!-- PEDIDOS NUEVOS SIN ATENDER -->
-          <div id="dashPendPedWrap" style="display:none;">
-            <div class="card" style="padding:0;overflow:hidden;">
-              <div style="padding:16px 20px;border-bottom:1px solid rgba(255,255,255,0.05);display:flex;align-items:center;justify-content:space-between;">
-                <div style="font-size:13px;font-weight:700;">🔴 Pedidos sin atender</div>
-                <div id="dashBadgePendPed" style="display:none;background:var(--danger);color:#fff;font-size:10px;font-weight:700;border-radius:100px;padding:3px 10px;"></div>
+          <!-- COL 3: PEDIDOS SIN ATENDER + ESTADOS -->
+          <div style="display:flex;flex-direction:column;gap:16px;min-height:0;">
+
+            <!-- Sin atender -->
+            <div id="dashPendPedWrap" style="display:none;flex:1;flex-direction:column;min-height:0;">
+              <div class="card" style="padding:0;overflow:hidden;flex:1;display:flex;flex-direction:column;">
+                <div style="padding:18px 22px 14px;border-bottom:1px solid rgba(255,255,255,0.05);flex-shrink:0;display:flex;align-items:center;justify-content:space-between;">
+                  <div style="font-size:14px;font-weight:700;">🔴 Sin atender</div>
+                  <div id="dashBadgePendPed" style="display:none;background:var(--danger);color:#fff;font-size:10px;font-weight:700;border-radius:100px;padding:3px 10px;"></div>
+                </div>
+                <div style="overflow-y:auto;flex:1;padding:12px 22px;" id="dashPendPedList"></div>
               </div>
-              <div style="padding:12px 20px;" id="dashPendPedList"></div>
             </div>
+
+            <!-- Estado pedidos -->
+            <div id="dashColPedidos" style="display:none;">
+              <div class="card" style="padding:18px 22px;">
+                <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:14px;">🛵 Estado pedidos</div>
+                <div id="dashPedEstados" style="display:flex;flex-direction:column;gap:10px;"></div>
+                <div style="padding:8px 0;overflow-y:auto;max-height:160px;margin-top:8px;" id="dashPedidosList"></div>
+              </div>
+            </div>
+
           </div>
 
         </div>
@@ -2189,9 +2175,23 @@ async function loadDashboard() {
     document.getElementById('dashOcupLabel').textContent = `${resHoyData.length} de ${totalMesas} mesas reservadas`;
   }
 
-  // ── BLOQUE RESERVAS — siempre visible ──
+  // ── STATS BAR ──
   document.getElementById('dashNumResConf').textContent = resConf;
   document.getElementById('dashNumResPend').textContent = resPendData.length;
+
+  if(totalMesas>0){
+    document.getElementById('dashOcupCard').style.display='block';
+    document.getElementById('dashOcupPct').textContent=ocupPct+'%';
+    document.getElementById('dashOcupBar').style.width=Math.min(ocupPct,100)+'%';
+    document.getElementById('dashOcupBar').style.background=ocupPct>=90?'linear-gradient(90deg,var(--danger),#ff6b6b)':ocupPct>=60?'linear-gradient(90deg,var(--warning),var(--accent))':'linear-gradient(90deg,var(--success),#52d99e)';
+    document.getElementById('dashOcupLabel').textContent=`${resHoyData.length} de ${totalMesas} mesas`;
+  }
+  if(pedActivo){
+    document.getElementById('dashPedCard').style.display='block';
+    document.getElementById('dashImpCard').style.display='block';
+    document.getElementById('dashNumPedTotal').textContent=pedTotal;
+    document.getElementById('dashNumPedImporte').textContent=pedImporte.toFixed(0)+'€';
+  }
 
     const ahoraStr = ahora.toTimeString().slice(0,5);
     document.getElementById('dashReservasList').innerHTML = resHoyData.length===0
@@ -2216,20 +2216,20 @@ async function loadDashboard() {
   // ── BLOQUE PEDIDOS ──
   if (pedActivo) {
     document.getElementById('dashColPedidos').style.display='block';
-    document.getElementById('dashPendPedWrap').style.display='block';
-    document.getElementById('dashNumPedTotal').textContent = pedTotal;
-    document.getElementById('dashNumPedImporte').textContent = pedImporte.toFixed(0)+'€';
+    document.getElementById('dashPendPedWrap').style.display='flex';
 
-    // Mini estados
     document.getElementById('dashPedEstados').innerHTML = `
-      <div style="display:flex;align-items:center;gap:5px;font-size:12px;font-weight:600;color:var(--danger);">
-        <div style="width:8px;height:8px;border-radius:50%;background:var(--danger);"></div>${pedNuevData.length} nuevos
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
+        <span style="font-size:13px;color:var(--muted);">Nuevos</span>
+        <span style="font-family:'Syne',sans-serif;font-weight:800;color:var(--danger);">${pedNuevData.length}</span>
       </div>
-      <div style="display:flex;align-items:center;gap:5px;font-size:12px;font-weight:600;color:var(--warning);">
-        <div style="width:8px;height:8px;border-radius:50%;background:var(--warning);"></div>${pedPrep.count||0} preparando
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
+        <span style="font-size:13px;color:var(--muted);">Preparando</span>
+        <span style="font-family:'Syne',sans-serif;font-weight:800;color:var(--warning);">${pedPrep.count||0}</span>
       </div>
-      <div style="display:flex;align-items:center;gap:5px;font-size:12px;font-weight:600;color:var(--success);">
-        <div style="width:8px;height:8px;border-radius:50%;background:var(--success);"></div>${pedComp.count||0} completados
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;">
+        <span style="font-size:13px;color:var(--muted);">Completados</span>
+        <span style="font-family:'Syne',sans-serif;font-weight:800;color:var(--success);">${pedComp.count||0}</span>
       </div>`;
 
     // Pedidos recientes

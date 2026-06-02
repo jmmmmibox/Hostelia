@@ -194,6 +194,63 @@
   .ticket-total{display:flex;justify-content:space-between;font-size:20px;font-weight:900;color:var(--p);margin-top:8px}
   .ticket-meta{font-size:12px;color:var(--muted);margin-top:12px;padding-top:12px;border-top:1px solid var(--border);line-height:2}
 
+  /* RESERVAS CALENDARIO */
+  .res-steps{display:flex;align-items:center;justify-content:center;gap:0;margin-bottom:40px;max-width:400px;margin-left:auto;margin-right:auto}
+  .res-step{display:flex;flex-direction:column;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--muted);transition:all .3s}
+  .res-step span{width:32px;height:32px;border-radius:50%;background:var(--border);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;transition:all .3s}
+  .res-step.active{color:var(--p)}.res-step.active span{background:var(--p);color:#fff;box-shadow:0 4px 12px rgba(255,107,53,.3)}
+  .res-step.done{color:var(--success)}.res-step.done span{background:var(--success);color:#fff}
+  .res-step-line{flex:1;height:2px;background:var(--border);margin:0 8px;margin-bottom:18px;transition:background .3s}
+  .res-step-line.done{background:var(--success)}
+  .res-step-content{animation:fadeUp .4s ease}
+  .cal-card{background:var(--surface);border-radius:24px;padding:clamp(20px,4vw,36px);box-shadow:0 4px 32px rgba(0,0,0,.06);max-width:560px;margin:0 auto;border:1px solid rgba(0,0,0,.04)}
+  .cal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px}
+  .cal-nav{width:40px;height:40px;border-radius:50%;border:1px solid var(--border);background:var(--bg);font-size:20px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .25s;color:var(--text)}
+  .cal-nav:hover{border-color:var(--p);color:var(--p);background:var(--p-glow)}
+  .cal-month-title{font-size:18px;font-weight:700;letter-spacing:-.3px}
+  .cal-weekdays{display:grid;grid-template-columns:repeat(7,1fr);text-align:center;margin-bottom:8px}
+  .cal-weekdays span{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;padding:6px 0}
+  .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:20px}
+  .cal-day{aspect-ratio:1;border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;transition:all .25s;position:relative;gap:3px}
+  .cal-day:hover{transform:scale(1.08)}
+  .cal-day .cal-day-num{font-size:15px;font-weight:600;line-height:1}
+  .cal-day .cal-day-dot{width:5px;height:5px;border-radius:50%}
+  .cal-day.empty{pointer-events:none}
+  .cal-day.past{opacity:.3;pointer-events:none}
+  .cal-day.today{font-weight:800}
+  .cal-day.available{background:rgba(52,168,83,.08)}.cal-day.available:hover{background:rgba(52,168,83,.18)}
+  .cal-day.available .cal-day-dot{background:var(--success)}
+  .cal-day.partial{background:rgba(255,107,53,.08)}.cal-day.partial:hover{background:rgba(255,107,53,.18)}
+  .cal-day.partial .cal-day-dot{background:var(--p)}
+  .cal-day.full{opacity:.5;pointer-events:none;background:rgba(220,53,69,.06)}
+  .cal-day.full .cal-day-dot{background:#dc3545}
+  .cal-day.selected{background:var(--p) !important;color:#fff !important;box-shadow:0 4px 16px rgba(255,107,53,.3);transform:scale(1.1)}
+  .cal-day.selected .cal-day-dot{background:rgba(255,255,255,.6)}
+  .cal-legend{display:flex;gap:16px;justify-content:center;flex-wrap:wrap}
+  .cal-legend-item{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)}
+  .cal-dot{width:8px;height:8px;border-radius:50%}
+  .cal-dot.green{background:var(--success)}.cal-dot.orange{background:var(--p)}.cal-dot.red{background:#dc3545}
+  /* HORAS */
+  .horas-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:10px}
+  .hora-btn{padding:14px 10px;border-radius:14px;border:1px solid var(--border);background:var(--bg);font-family:var(--font);font-size:15px;font-weight:700;cursor:pointer;transition:all .25s;text-align:center}
+  .hora-btn:hover{border-color:var(--p);color:var(--p);background:var(--p-glow);transform:translateY(-2px)}
+  .hora-btn.llena{opacity:.35;pointer-events:none;text-decoration:line-through}
+  .hora-btn .hora-dispo{font-size:10px;font-weight:500;color:var(--muted);margin-top:2px}
+  .hora-btn:hover .hora-dispo{color:var(--p)}
+  /* SELECTED SUMMARY */
+  .selected-summary{background:var(--p-glow);border:1px solid rgba(255,107,53,.2);border-radius:14px;padding:14px 18px;margin-bottom:20px;display:flex;align-items:center;gap:10px;font-size:14px;font-weight:600;color:var(--p)}
+  /* CONFIRM PREMIUM */
+  .confirm-card-premium{background:var(--surface);border-radius:28px;padding:clamp(28px,5vw,52px);text-align:center;box-shadow:0 8px 48px rgba(0,0,0,.08);max-width:480px;margin:0 auto;border:1px solid rgba(0,0,0,.04);animation:scaleIn .5s cubic-bezier(0.34,1.56,0.64,1)}
+  .confirm-check{width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,var(--p),var(--p2));color:#fff;font-size:32px;font-weight:700;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;box-shadow:0 8px 24px rgba(255,107,53,.3);animation:popIn .6s cubic-bezier(0.34,1.56,0.64,1)}
+  @keyframes popIn{0%{transform:scale(0)}100%{transform:scale(1)}}
+  .confirm-title-premium{font-size:24px;font-weight:800;margin-bottom:20px;letter-spacing:-.5px}
+  .confirm-ticket{background:var(--bg2);border-radius:16px;padding:20px;text-align:left;margin-bottom:24px}
+  .confirm-ticket-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(0,0,0,.05);font-size:14px}
+  .confirm-ticket-row:last-child{border-bottom:none}
+  .confirm-ticket-icon{width:32px;height:32px;border-radius:8px;background:var(--p-glow);display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+  .confirm-ticket-label{font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+  .confirm-ticket-value{font-weight:600}
+
   /* TOAST */
   .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--text);color:#fff;padding:13px 28px;border-radius:100px;font-size:14px;font-weight:500;z-index:999;opacity:0;transition:all .4s var(--transition);box-shadow:var(--shadow-lg)}
   .toast.show{transform:translateX(-50%) translateY(0);opacity:1}
@@ -281,41 +338,79 @@
     <div class="section-header reveal" style="text-align:center;display:flex;flex-direction:column;align-items:center;">
       <div class="section-tag">Reservas</div>
       <h2 class="section-title">Reserva tu mesa</h2>
-      <p class="section-sub" style="text-align:center;">Selecciona fecha, hora y comensales. Confirmamos en breve.</p>
+      <p class="section-sub" style="text-align:center;">Elige día, hora y listo.</p>
     </div>
-    <div class="reserva-wrap">
-      <div id="dispoBanner" style="display:none"></div>
-      <div id="reservaForm">
-        <div class="reserva-card reveal">
-          <div class="field-row">
-            <div class="field"><label>Nombre</label><input id="pubResNombre" type="text" placeholder="Tu nombre completo"></div>
-            <div class="field"><label>Teléfono</label><input id="pubResTel" type="tel" placeholder="+34 600..."></div>
-          </div>
-          <div class="field-row">
-            <div class="field"><label>Fecha</label><input id="pubResFecha" type="date" onchange="checkDispo()"></div>
-            <div class="field"><label>Hora</label>
-              <select id="pubResHora" onchange="checkDispo()">
-                <option>13:00</option><option>13:30</option><option>14:00</option><option>14:30</option><option>15:00</option>
-                <option>20:00</option><option>20:30</option><option selected>21:00</option><option>21:30</option><option>22:00</option><option>22:30</option>
-              </select>
-            </div>
-          </div>
-          <div class="field-row">
-            <div class="field"><label>Comensales</label><input id="pubResPers" type="number" min="1" value="2"></div>
-            <div class="field"><label>Zona</label><select id="pubResZona"><option>Interior</option><option>Terraza</option></select></div>
-          </div>
-          <button class="btn-submit" id="pubResBtn" onclick="submitReserva()">Reservar mesa →</button>
+
+    <!-- PASOS -->
+    <div class="res-steps reveal" id="resSteps">
+      <div class="res-step active" id="stepDot1"><span>1</span>Elige día</div>
+      <div class="res-step-line"></div>
+      <div class="res-step" id="stepDot2"><span>2</span>Elige hora</div>
+      <div class="res-step-line"></div>
+      <div class="res-step" id="stepDot3"><span>3</span>Tus datos</div>
+    </div>
+
+    <!-- PASO 1: CALENDARIO -->
+    <div id="stepCalendar" class="res-step-content reveal">
+      <div class="cal-card">
+        <div class="cal-header">
+          <button class="cal-nav" onclick="calNav(-1)">‹</button>
+          <span class="cal-month-title" id="calMonthTitle"></span>
+          <button class="cal-nav" onclick="calNav(1)">›</button>
         </div>
-      </div>
-      <div id="reservaConfirm" style="display:none">
-        <div class="confirm-card">
-          <div class="confirm-icon">🎉</div>
-          <div class="confirm-title">¡Reserva enviada!</div>
-          <div class="confirm-detail" id="confirmText"></div>
-          <button class="btn-submit" style="margin-top:24px;max-width:200px;margin-left:auto;margin-right:auto;" onclick="document.getElementById('reservaConfirm').style.display='none';document.getElementById('reservaForm').style.display='block';goPage('inicio')">OK ✓</button>
+        <div class="cal-weekdays">
+          <span>Lun</span><span>Mar</span><span>Mié</span><span>Jue</span><span>Vie</span><span>Sáb</span><span>Dom</span>
+        </div>
+        <div class="cal-grid" id="calGrid"></div>
+        <div class="cal-legend">
+          <div class="cal-legend-item"><div class="cal-dot green"></div>Disponible</div>
+          <div class="cal-legend-item"><div class="cal-dot orange"></div>Pocas mesas</div>
+          <div class="cal-legend-item"><div class="cal-dot red"></div>Completo</div>
         </div>
       </div>
     </div>
+
+    <!-- PASO 2: HORAS -->
+    <div id="stepHoras" class="res-step-content" style="display:none">
+      <div class="cal-card">
+        <div class="cal-header" style="justify-content:flex-start;gap:12px;">
+          <button class="cal-nav" onclick="backToCalendar()">‹</button>
+          <span class="cal-month-title" id="selectedDateLabel"></span>
+        </div>
+        <p style="font-size:13px;color:var(--muted);margin-bottom:20px;">Selecciona la hora que prefieres</p>
+        <div class="horas-grid" id="horasGrid"></div>
+      </div>
+    </div>
+
+    <!-- PASO 3: FORMULARIO -->
+    <div id="stepForm" class="res-step-content" style="display:none">
+      <div class="reserva-card reveal">
+        <div class="selected-summary" id="selectedSummary"></div>
+        <div class="field-row">
+          <div class="field"><label>Tu nombre</label><input id="pubResNombre" type="text" placeholder="Nombre completo"></div>
+          <div class="field"><label>Teléfono</label><input id="pubResTel" type="tel" placeholder="+34 600..."></div>
+        </div>
+        <div class="field-row">
+          <div class="field"><label>Comensales</label><input id="pubResPers" type="number" min="1" max="20" value="2"></div>
+          <div class="field"><label>Zona</label><select id="pubResZona"><option>Interior</option><option>Terraza</option></select></div>
+        </div>
+        <div style="display:flex;gap:10px;">
+          <button class="btn-submit" style="background:var(--bg2);color:var(--text2);box-shadow:none;flex:0 0 auto;width:auto;padding:15px 20px;" onclick="backToHoras()">‹</button>
+          <button class="btn-submit" id="pubResBtn" onclick="submitReserva()" style="flex:1">Confirmar reserva →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- CONFIRMACIÓN -->
+    <div id="reservaConfirm" style="display:none">
+      <div class="confirm-card-premium">
+        <div class="confirm-check">✓</div>
+        <h3 class="confirm-title-premium">¡Reserva confirmada!</h3>
+        <div class="confirm-ticket" id="confirmTicket"></div>
+        <button class="btn-submit" style="max-width:220px;margin:0 auto;" onclick="resetReserva()">Volver al inicio</button>
+      </div>
+    </div>
+
   </div>
 </div>
 
@@ -517,7 +612,7 @@ function goPage(id){
   // Nav transparente solo en inicio, sólida en el resto
   if(id==='inicio'){document.getElementById('mainNav').classList.remove('solid');currentPageIsHero=true}
   else{document.getElementById('mainNav').classList.add('solid');currentPageIsHero=false}
-  if(id==='reservas')checkDispo();
+  if(id==='reservas'){initCalendar();}
   setTimeout(initReveal,100);
 }
 function toggleMenu(){document.getElementById('mobileMenu').classList.toggle('open')}
@@ -621,29 +716,156 @@ async function submitPedido(){
   ['pedNombre','pedTel','pedDir','pedNotas'].forEach(id=>document.getElementById(id).value='');
 }
 
-// RESERVAS
-async function checkDispo(){
-  const fecha=document.getElementById('pubResFecha').value;if(!fecha||mesasData.length===0)return;
-  const totalMesas=mesasData.reduce((s,m)=>s+m.cantidad,0);const hora=document.getElementById('pubResHora').value;
-  const horaNum=parseInt(hora.replace(':',''));
-  const{data:reservas}=await sb.from('reservas').select('*').eq('negocio_id',NID).eq('fecha',fecha).in('estado',['confirmada','pendiente']);
-  const enHora=(reservas||[]).filter(r=>{const rh=parseInt((r.hora||'').replace(':',''));return Math.abs(rh-horaNum)<130});
-  const libres=Math.max(0,totalMesas-enHora.length);
-  const b=document.getElementById('dispoBanner');
-  if(libres<=0){b.style.display='block';b.className='dispo-banner dispo-red';b.textContent='⚠️ No quedan mesas para esta franja.';document.getElementById('pubResBtn').disabled=true}
-  else if(libres<=3){b.style.display='block';b.className='dispo-banner dispo-orange';b.textContent=`🔥 ¡Solo ${libres} mesa${libres>1?'s':''} disponible${libres>1?'s':''}! Reserva ya.`;document.getElementById('pubResBtn').disabled=false}
-  else{b.style.display='block';b.className='dispo-banner dispo-green';b.textContent=`✅ ${libres} mesas disponibles.`;document.getElementById('pubResBtn').disabled=false}
+// RESERVAS — CALENDARIO
+let calYear, calMonth, calReservas=[], calSelectedDate=null, calSelectedHora=null;
+const HORAS=['13:00','13:30','14:00','14:30','15:00','20:00','20:30','21:00','21:30','22:00','22:30'];
+const MESES=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+
+async function initCalendar(){
+  const hoy=new Date();calYear=hoy.getFullYear();calMonth=hoy.getMonth();
+  await loadCalReservas();renderCalendar();
 }
+
+async function loadCalReservas(){
+  const from=`${calYear}-${String(calMonth+1).padStart(2,'0')}-01`;
+  const lastDay=new Date(calYear,calMonth+1,0).getDate();
+  const to=`${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(lastDay).padStart(2,'0')}`;
+  const{data}=await sb.from('reservas').select('fecha,hora,estado').eq('negocio_id',NID).gte('fecha',from).lte('fecha',to).in('estado',['confirmada','pendiente']);
+  calReservas=data||[];
+}
+
+function renderCalendar(){
+  const title=document.getElementById('calMonthTitle');
+  if(!title)return;
+  title.textContent=MESES[calMonth]+' '+calYear;
+  const totalMesas=mesasData.reduce((s,m)=>s+m.cantidad,0)||10;
+  const maxRes=resConfig?.max_reservas_dia||totalMesas;
+  const hoy=new Date();hoy.setHours(0,0,0,0);
+  const primerDia=new Date(calYear,calMonth,1);
+  let startDow=primerDia.getDay();startDow=startDow===0?6:startDow-1;
+  const diasMes=new Date(calYear,calMonth+1,0).getDate();
+  const grid=document.getElementById('calGrid');
+  if(!grid)return;
+  let html='';
+  for(let i=0;i<startDow;i++)html+=`<div class="cal-day empty"></div>`;
+  for(let d=1;d<=diasMes;d++){
+    const dateStr=`${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const fecha=new Date(calYear,calMonth,d);
+    const isPast=fecha<hoy;
+    const isToday=fecha.getTime()===hoy.getTime();
+    const resCount=calReservas.filter(r=>r.fecha===dateStr).length;
+    const pct=maxRes>0?resCount/maxRes:0;
+    let cls=isPast?'past':'available';
+    if(!isPast){if(pct>=1)cls='full';else if(pct>=0.6)cls='partial';}
+    const isSelected=calSelectedDate===dateStr;
+    html+=`<div class="cal-day ${cls}${isSelected?' selected':''}${isToday?' today':''}" onclick="selectDay('${dateStr}')">
+      <span class="cal-day-num">${d}</span>
+      <div class="cal-day-dot"></div>
+    </div>`;
+  }
+  grid.innerHTML=html;
+}
+
+async function calNav(dir){
+  calMonth+=dir;
+  if(calMonth>11){calMonth=0;calYear++}
+  if(calMonth<0){calMonth=11;calYear--}
+  await loadCalReservas();renderCalendar();
+}
+
+function selectDay(dateStr){
+  calSelectedDate=dateStr;
+  renderCalendar();
+  // Ir a paso 2
+  showResStep(2);
+  // Mostrar horas
+  const label=document.getElementById('selectedDateLabel');
+  const d=new Date(dateStr+'T12:00:00');
+  label.textContent=d.toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long'});
+  renderHoras(dateStr);
+}
+
+function renderHoras(dateStr){
+  const totalMesas=mesasData.reduce((s,m)=>s+m.cantidad,0)||10;
+  const grid=document.getElementById('horasGrid');
+  grid.innerHTML=HORAS.map(hora=>{
+    const horaNum=parseInt(hora.replace(':',''));
+    const resEnHora=calReservas.filter(r=>{const rh=parseInt((r.hora||'').replace(':',''));return Math.abs(rh-horaNum)<130});
+    const libres=Math.max(0,totalMesas-resEnHora.length);
+    const llena=libres<=0;
+    return`<div class="hora-btn${llena?' llena':''}" onclick="${llena?'':` selectHora('${hora}')`}">
+      ${hora}<div class="hora-dispo">${llena?'Completo':libres<=3?`${libres} mesa${libres>1?'s':''}`:'Disponible'}</div>
+    </div>`;
+  }).join('');
+}
+
+function selectHora(hora){
+  calSelectedHora=hora;
+  showResStep(3);
+  // Summary
+  const d=new Date(calSelectedDate+'T12:00:00');
+  const dateLabel=d.toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long'});
+  document.getElementById('selectedSummary').innerHTML=`📅 ${dateLabel} · 🕐 ${hora}h`;
+}
+
+function backToCalendar(){calSelectedDate=null;renderCalendar();showResStep(1)}
+function backToHoras(){showResStep(2)}
+
+function showResStep(n){
+  document.getElementById('stepCalendar').style.display=n===1?'block':'none';
+  document.getElementById('stepHoras').style.display=n===2?'block':'none';
+  document.getElementById('stepForm').style.display=n===3?'block':'none';
+  [1,2,3].forEach(i=>{
+    const dot=document.getElementById('stepDot'+i);
+    dot.classList.remove('active','done');
+    if(i===n)dot.classList.add('active');
+    else if(i<n)dot.classList.add('done');
+  });
+  const lines=document.querySelectorAll('.res-step-line');
+  if(lines[0])lines[0].classList.toggle('done',n>1);
+  if(lines[1])lines[1].classList.toggle('done',n>2);
+  window.scrollTo({top:document.getElementById('page-reservas').offsetTop,behavior:'smooth'});
+}
+
 async function submitReserva(){
-  const nombre=document.getElementById('pubResNombre').value.trim(),tel=document.getElementById('pubResTel').value.trim();
-  const fecha=document.getElementById('pubResFecha').value,hora=document.getElementById('pubResHora').value;
-  const personas=parseInt(document.getElementById('pubResPers').value),zona=document.getElementById('pubResZona').value;
-  if(!nombre||!tel){showToast('Rellena nombre y teléfono');return}
-  await sb.from('reservas').insert({negocio_id:NID,nombre_cliente:nombre,telefono_cliente:tel,fecha,hora,personas,zona,estado:'pendiente'});
-  document.getElementById('reservaForm').style.display='none';
+  const nombre=document.getElementById('pubResNombre').value.trim();
+  const tel=document.getElementById('pubResTel').value.trim();
+  const personas=parseInt(document.getElementById('pubResPers').value);
+  const zona=document.getElementById('pubResZona').value;
+  if(!nombre||!tel){showToast('Rellena tu nombre y teléfono');return}
+  if(!calSelectedDate||!calSelectedHora){showToast('Selecciona fecha y hora primero');return}
+  const btn=document.getElementById('pubResBtn');btn.disabled=true;btn.textContent='Reservando...';
+  await sb.from('reservas').insert({negocio_id:NID,nombre_cliente:nombre,telefono_cliente:tel,fecha:calSelectedDate,hora:calSelectedHora,personas,zona,estado:'pendiente'});
+  // Mostrar confirmación visual
+  const d=new Date(calSelectedDate+'T12:00:00');
+  const dateLabel=d.toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  document.getElementById('stepForm').style.display='none';
+  document.getElementById('resSteps').style.display='none';
   document.getElementById('reservaConfirm').style.display='block';
-  document.getElementById('confirmText').textContent=`${nombre}, tu reserva para ${personas} persona${personas>1?'s':''} el ${fecha} a las ${hora} ha sido enviada. Te confirmaremos por SMS en breve.`;
+  document.getElementById('confirmTicket').innerHTML=`
+    <div class="confirm-ticket-row"><div class="confirm-ticket-icon">👤</div><div><div class="confirm-ticket-label">Nombre</div><div class="confirm-ticket-value">${nombre}</div></div></div>
+    <div class="confirm-ticket-row"><div class="confirm-ticket-icon">📞</div><div><div class="confirm-ticket-label">Teléfono</div><div class="confirm-ticket-value">${tel}</div></div></div>
+    <div class="confirm-ticket-row"><div class="confirm-ticket-icon">📅</div><div><div class="confirm-ticket-label">Fecha</div><div class="confirm-ticket-value">${dateLabel}</div></div></div>
+    <div class="confirm-ticket-row"><div class="confirm-ticket-icon">🕐</div><div><div class="confirm-ticket-label">Hora</div><div class="confirm-ticket-value">${calSelectedHora}h</div></div></div>
+    <div class="confirm-ticket-row"><div class="confirm-ticket-icon">👥</div><div><div class="confirm-ticket-label">Comensales</div><div class="confirm-ticket-value">${personas} persona${personas>1?'s':''}</div></div></div>
+    <div class="confirm-ticket-row"><div class="confirm-ticket-icon">📍</div><div><div class="confirm-ticket-label">Zona</div><div class="confirm-ticket-value">${zona}</div></div></div>`;
+  btn.disabled=false;btn.textContent='Confirmar reserva →';
 }
+
+function resetReserva(){
+  document.getElementById('reservaConfirm').style.display='none';
+  document.getElementById('resSteps').style.display='flex';
+  document.getElementById('pubResNombre').value='';
+  document.getElementById('pubResTel').value='';
+  document.getElementById('pubResPers').value='2';
+  calSelectedDate=null;calSelectedHora=null;
+  showResStep(1);renderCalendar();
+  goPage('inicio');
+}
+
+// Mantener compatibilidad — ya no se usan pero no romper nada
+function checkDispo(){}
+async function loadCalendar(){await initCalendar()}
 
 // HELPERS
 function hexToGlow(hex){try{const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);return`rgba(${r},${g},${b},0.12)`}catch(e){return'rgba(255,107,53,0.12)'}}

@@ -1647,6 +1647,15 @@
               <input type="number" id="cfgMinHoras" value="2" onchange="saveReservasConfig()">
             </div>
           </div>
+          <div class="card" style="margin-top:16px;">
+            <div class="toggle-row">
+              <div class="toggle-info">
+                <div class="toggle-title">Confirmación automática de reservas</div>
+                <div class="toggle-sub">Al activarlo, las reservas de clientes se confirman al instante y recibirán un SMS automático. Si está desactivado, tú confirmas manualmente cada reserva.</div>
+              </div>
+              <div class="toggle" id="cfgAutoConfirm" onclick="this.classList.toggle('on');saveReservasConfig()"></div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -2478,6 +2487,8 @@ async function loadReservasConfig() {
     document.getElementById('cfgMaxRes').value = data.max_reservas_dia;
     document.getElementById('cfgMaxDias').value = data.antelacion_max_dias;
     document.getElementById('cfgMinHoras').value = data.antelacion_min_horas;
+    if (data.confirmacion_automatica) document.getElementById('cfgAutoConfirm').classList.add('on');
+    else document.getElementById('cfgAutoConfirm').classList.remove('on');
   }
 }
 
@@ -2487,6 +2498,7 @@ async function saveReservasConfig() {
     max_reservas_dia: parseInt(document.getElementById('cfgMaxRes').value),
     antelacion_max_dias: parseInt(document.getElementById('cfgMaxDias').value),
     antelacion_min_horas: parseInt(document.getElementById('cfgMinHoras').value),
+    confirmacion_automatica: document.getElementById('cfgAutoConfirm').classList.contains('on'),
   };
   const { data: existing } = await sb.from('reservas_config').select('id').eq('negocio_id', currentNegocio.id).single();
   if (existing) {

@@ -827,7 +827,16 @@ async function submitReserva(){
   if(!nombre||!tel){showToast('Rellena tu nombre y teléfono');return}
   if(!calSelectedDate||!calSelectedHora){showToast('Selecciona fecha y hora primero');return}
   const btn=document.getElementById('pubResBtn');btn.disabled=true;btn.textContent='Reservando...';
-  await sb.from('reservas').insert({negocio_id:NID,nombre_cliente:nombre,telefono_cliente:tel,fecha:calSelectedDate,hora:calSelectedHora,personas,zona,estado:'pendiente'});
+  const autoConfirm = resConfig?.confirmacion_automatica === true;
+  await sb.from('reservas').insert({
+    negocio_id:NID,
+    nombre_cliente:nombre,
+    telefono_cliente:tel,
+    fecha:calSelectedDate,
+    hora:calSelectedHora,
+    personas,zona,
+    estado: autoConfirm ? 'confirmada' : 'pendiente'
+  });
   // Mostrar confirmación visual
   const d=new Date(calSelectedDate+'T12:00:00');
   const dateLabel=d.toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long',year:'numeric'});

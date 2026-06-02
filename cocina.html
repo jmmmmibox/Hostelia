@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cocina</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f4f5f7;
+    --surface: #ffffff;
+    --border: #e2e4e9;
+    --text: #1a1d23;
+    --muted: #6b7280;
+    --nuevo: #ef4444;
+    --nuevo-bg: #fef2f2;
+    --nuevo-border: #fecaca;
+    --prep: #f59e0b;
+    --prep-bg: #fffbeb;
+    --prep-border: #fde68a;
+    --listo: #10b981;
+    --listo-bg: #f0fdf4;
+    --listo-border: #a7f3d0;
+    --r: 14px;
+    --shadow: 0 2px 8px rgba(0,0,0,0.06);
+    --shadow-lg: 0 4px 20px rgba(0,0,0,0.1);
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family: 'Outfit', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* HEADER */
+  .header {
+    background: var(--surface);
+    border-bottom: 2px solid var(--border);
+    padding: 0 24px;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    box-shadow: var(--shadow);
+  }
+  .header-left { display: flex; align-items: center; gap: 16px; }
+  .header-title { font-size: 20px; font-weight: 800; letter-spacing: -0.5px; }
+  .header-negocio { font-size: 13px; color: var(--muted); font-weight: 500; }
+  .header-right { display: flex; align-items: center; gap: 12px; }
+  .btn-refresh {
+    padding: 8px 18px; border-radius: 100px;
+    background: var(--bg); border: 1px solid var(--border);
+    font-family: 'Outfit', sans-serif; font-size: 13px; font-weight: 600;
+    cursor: pointer; transition: all .2s; color: var(--text);
+    display: flex; align-items: center; gap: 6px;
+  }
+  .btn-refresh:hover { background: var(--border); }
+  .live-indicator {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 12px; font-weight: 600; color: var(--listo);
+  }
+  .live-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--listo); animation: pulse 2s infinite;
+  }
+  @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.6;transform:scale(.8)} }
+  .clock {
+    font-size: 18px; font-weight: 700; letter-spacing: -0.5px;
+    color: var(--text); font-variant-numeric: tabular-nums;
+  }
+
+  /* STATS BAR */
+  .stats-bar {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 10px 24px;
+    display: flex;
+    gap: 24px;
+    align-items: center;
+  }
+  .stat-pill {
+    display: flex; align-items: center; gap: 8px;
+    padding: 6px 14px; border-radius: 100px;
+    font-size: 13px; font-weight: 600;
+  }
+  .stat-pill.nuevo { background: var(--nuevo-bg); color: var(--nuevo); border: 1px solid var(--nuevo-border); }
+  .stat-pill.prep  { background: var(--prep-bg);  color: var(--prep);  border: 1px solid var(--prep-border); }
+  .stat-pill.listo { background: var(--listo-bg); color: var(--listo); border: 1px solid var(--listo-border); }
+  .stat-num { font-size: 18px; font-weight: 900; }
+
+  /* KANBAN */
+  .kanban {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    padding: 20px 24px;
+    min-height: calc(100vh - 130px);
+  }
+  .col {
+    background: var(--surface);
+    border-radius: 18px;
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .col-header {
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 2px solid;
+  }
+  .col-header.nuevo  { border-color: var(--nuevo-border); background: var(--nuevo-bg); }
+  .col-header.prep   { border-color: var(--prep-border);  background: var(--prep-bg); }
+  .col-header.listo  { border-color: var(--listo-border); background: var(--listo-bg); }
+  .col-title {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 14px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;
+  }
+  .col-title .dot { width: 10px; height: 10px; border-radius: 50%; }
+  .dot-nuevo { background: var(--nuevo); }
+  .dot-prep  { background: var(--prep); }
+  .dot-listo { background: var(--listo); }
+  .col-count {
+    font-size: 13px; font-weight: 700; padding: 3px 10px;
+    border-radius: 100px; background: rgba(0,0,0,0.06);
+  }
+  .col-body {
+    flex: 1; padding: 14px; overflow-y: auto;
+    display: flex; flex-direction: column; gap: 12px;
+  }
+  .col-body::-webkit-scrollbar { width: 4px; }
+  .col-body::-webkit-scrollbar-track { background: transparent; }
+  .col-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  /* ORDER CARD */
+  .order-card {
+    background: var(--bg);
+    border-radius: var(--r);
+    border: 1px solid var(--border);
+    padding: 16px;
+    transition: all .25s;
+    animation: slideIn .3s ease;
+  }
+  @keyframes slideIn { from{opacity:0;transform:translateY(-8px)} to{opacity:1;transform:translateY(0)} }
+  .order-card:hover {
+    box-shadow: var(--shadow-lg);
+    transform: translateY(-2px);
+    border-color: #d1d5db;
+  }
+  .order-card.nuevo-card  { border-left: 4px solid var(--nuevo); }
+  .order-card.prep-card   { border-left: 4px solid var(--prep); }
+  .order-card.listo-card  { border-left: 4px solid var(--listo); opacity: .65; }
+  .order-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 10px;
+  }
+  .order-num { font-size: 16px; font-weight: 800; letter-spacing: -0.3px; }
+  .order-time {
+    font-size: 11px; font-weight: 600; padding: 3px 8px;
+    border-radius: 100px; background: rgba(0,0,0,0.06); color: var(--muted);
+  }
+  .order-time.urgent { background: var(--nuevo-bg); color: var(--nuevo); }
+  .order-client { font-size: 13px; font-weight: 600; margin-bottom: 10px; color: var(--muted); }
+  .order-items { margin-bottom: 12px; }
+  .order-item {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 14px; padding: 5px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .order-item:last-child { border-bottom: none; }
+  .order-item-qty {
+    min-width: 26px; height: 26px; border-radius: 8px;
+    background: var(--text); color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700; flex-shrink: 0;
+  }
+  .order-item-name { flex: 1; font-weight: 500; }
+  .order-footer {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-top: 4px;
+  }
+  .order-total { font-size: 16px; font-weight: 800; }
+  .order-pago {
+    font-size: 11px; padding: 3px 8px; border-radius: 100px;
+    background: rgba(0,0,0,0.06); color: var(--muted); font-weight: 600;
+  }
+  .order-notas {
+    font-size: 12px; color: var(--prep); font-weight: 500;
+    background: var(--prep-bg); border-radius: 8px; padding: 6px 10px;
+    margin-bottom: 10px; border: 1px solid var(--prep-border);
+  }
+  .btn-mover {
+    width: 100%; margin-top: 12px; padding: 10px;
+    border-radius: 10px; border: none; font-family: 'Outfit', sans-serif;
+    font-size: 13px; font-weight: 700; cursor: pointer; transition: all .25s;
+  }
+  .btn-nuevo { background: var(--prep); color: #fff; }
+  .btn-nuevo:hover { background: #d97706; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(245,158,11,.3); }
+  .btn-prep  { background: var(--listo); color: #fff; }
+  .btn-prep:hover  { background: #059669; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(16,185,129,.3); }
+
+  /* EMPTY */
+  .col-empty {
+    text-align: center; padding: 40px 20px;
+    color: var(--muted); font-size: 13px;
+  }
+  .col-empty .empty-icon { font-size: 32px; margin-bottom: 8px; opacity: .4; }
+
+  /* LOADER */
+  .loader {
+    position: fixed; inset: 0; background: var(--bg);
+    display: flex; flex-direction: column; align-items: center;
+    justify-content: center; gap: 16px; z-index: 999;
+  }
+  .loader-ring {
+    width: 40px; height: 40px;
+    border: 3px solid var(--border); border-top-color: var(--text);
+    border-radius: 50%; animation: spin .7s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* SOUND ALERT */
+  .new-alert {
+    position: fixed; top: 80px; right: 20px; z-index: 100;
+    background: var(--nuevo); color: #fff; border-radius: 14px;
+    padding: 14px 20px; font-size: 14px; font-weight: 700;
+    box-shadow: 0 4px 20px rgba(239,68,68,.4);
+    animation: alertIn .4s cubic-bezier(0.34,1.56,0.64,1);
+    display: none;
+  }
+  @keyframes alertIn { from{opacity:0;transform:translateX(100%)} to{opacity:1;transform:translateX(0)} }
+
+  /* RESPONSIVE */
+  @media(max-width:900px) {
+    .kanban { grid-template-columns:1fr; }
+    .stats-bar { gap: 12px; overflow-x: auto; }
+  }
+</style>
+</head>
+<body>
+
+<div class="loader" id="loader">
+  <div class="loader-ring"></div>
+  <div style="font-size:14px;color:var(--muted);">Cargando pantalla de cocina...</div>
+</div>
+
+<div class="new-alert" id="newAlert">🔔 ¡Nuevo pedido!</div>
+
+<header class="header">
+  <div class="header-left">
+    <div>
+      <div class="header-title">🍳 Pantalla de Cocina</div>
+      <div class="header-negocio" id="headerNegocio">Cargando...</div>
+    </div>
+  </div>
+  <div class="header-right">
+    <div class="live-indicator"><div class="live-dot"></div>En directo</div>
+    <div class="clock" id="clock">00:00:00</div>
+    <button class="btn-refresh" onclick="loadPedidos()">↻ Actualizar</button>
+  </div>
+</header>
+
+<div class="stats-bar">
+  <div class="stat-pill nuevo"><span class="stat-num" id="countNuevo">0</span> Nuevos</div>
+  <div class="stat-pill prep"><span class="stat-num" id="countPrep">0</span> En preparación</div>
+  <div class="stat-pill listo"><span class="stat-num" id="countListo">0</span> Listos / Enviados</div>
+</div>
+
+<div class="kanban">
+  <div class="col">
+    <div class="col-header nuevo">
+      <div class="col-title"><div class="dot dot-nuevo"></div>Nuevos</div>
+      <div class="col-count" id="colCountNuevo">0</div>
+    </div>
+    <div class="col-body" id="colNuevo"></div>
+  </div>
+  <div class="col">
+    <div class="col-header prep">
+      <div class="col-title"><div class="dot dot-prep"></div>En preparación</div>
+      <div class="col-count" id="colCountPrep">0</div>
+    </div>
+    <div class="col-body" id="colPrep"></div>
+  </div>
+  <div class="col">
+    <div class="col-header listo">
+      <div class="col-title"><div class="dot dot-listo"></div>Listos / Enviados</div>
+      <div class="col-count" id="colCountListo">0</div>
+    </div>
+    <div class="col-body" id="colListo"></div>
+  </div>
+</div>
+
+<script>
+const SUPA_URL='https://rjpjqrsyzkeghofziejy.supabase.co';
+const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJqcGpxcnN5emtlZ2hvZnppZWp5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4NTI1MjYsImV4cCI6MjA5NDQyODUyNn0.httUrRI99cAO1YpiZzfcFcIAj5y41QB817b9pdfjbI4';
+const sb=supabase.createClient(SUPA_URL,SUPA_KEY);
+const NID=new URLSearchParams(location.search).get('negocio');
+let pedidosAnteriores=new Set();
+let primeraVez=true;
+
+// RELOJ
+setInterval(()=>{
+  const now=new Date();
+  document.getElementById('clock').textContent=now.toLocaleTimeString('es-ES');
+},1000);
+
+// INIT
+window.addEventListener('DOMContentLoaded',async()=>{
+  if(!NID){document.getElementById('loader').innerHTML='<p style="color:#999">Falta ?negocio=ID en la URL</p>';return}
+  const{data:neg}=await sb.from('negocios').select('nombre').eq('id',NID).single();
+  if(neg)document.getElementById('headerNegocio').textContent=neg.nombre;
+  document.title='Cocina — '+(neg?.nombre||'');
+  await loadPedidos();
+  document.getElementById('loader').style.display='none';
+  // Auto-refresh cada 30 segundos
+  setInterval(loadPedidos,30000);
+});
+
+async function loadPedidos(){
+  const hoy=new Date().toISOString().split('T')[0];
+  const{data}=await sb.from('pedidos').select('*')
+    .eq('negocio_id',NID)
+    .gte('creado_en',hoy+'T00:00:00')
+    .order('creado_en',{ascending:true});
+
+  const pedidos=data||[];
+
+  // Detectar nuevos pedidos
+  if(!primeraVez){
+    const nuevosIds=pedidos.filter(p=>p.estado==='nuevo'&&!pedidosAnteriores.has(p.id));
+    if(nuevosIds.length>0)showAlert();
+  }
+  pedidosAnteriores=new Set(pedidos.map(p=>p.id));
+  primeraVez=false;
+
+  const cols={nuevo:[],preparando:[],listo:[]};
+  pedidos.forEach(p=>{
+    if(p.estado==='nuevo')cols.nuevo.push(p);
+    else if(p.estado==='preparando')cols.preparando.push(p);
+    else cols.listo.push(p);
+  });
+
+  renderCol('colNuevo','colCountNuevo','countNuevo',cols.nuevo,'nuevo');
+  renderCol('colPrep','colCountPrep','countPrep',cols.preparando,'prep');
+  renderCol('colListo','colCountListo','countListo',cols.listo,'listo');
+}
+
+function renderCol(colId,countId,statId,items,tipo){
+  document.getElementById(countId).textContent=items.length;
+  document.getElementById(statId).textContent=items.length;
+  const col=document.getElementById(colId);
+  if(items.length===0){
+    col.innerHTML=`<div class="col-empty"><div class="empty-icon">${tipo==='nuevo'?'🛵':tipo==='prep'?'👨‍🍳':'✅'}</div>${tipo==='nuevo'?'Sin pedidos nuevos':tipo==='prep'?'Nada en preparación':'Sin pedidos listos'}</div>`;
+    return;
+  }
+  col.innerHTML=items.map(p=>{
+    const mins=Math.floor((Date.now()-new Date(p.creado_en))/60000);
+    const urgent=mins>=15&&tipo!=='listo';
+    const items_html=(p.items||[]).map(i=>`
+      <div class="order-item">
+        <div class="order-item-qty">${i.qty}</div>
+        <div class="order-item-name">${i.nombre}</div>
+      </div>`).join('');
+    const btnHtml=tipo==='nuevo'
+      ?`<button class="btn-mover btn-nuevo" onclick="mover('${p.id}','preparando')">→ Iniciar preparación</button>`
+      :tipo==='prep'
+      ?`<button class="btn-mover btn-prep" onclick="mover('${p.id}','listo')">✓ Marcar como listo</button>`
+      :'';
+    return`<div class="order-card ${tipo}-card">
+      <div class="order-header">
+        <div class="order-num">#${p.numero_pedido||p.id.slice(0,6)}</div>
+        <div class="order-time${urgent?' urgent':''}">${mins===0?'Ahora':mins+'min'}</div>
+      </div>
+      <div class="order-client">👤 ${p.nombre_cliente} · 📞 ${p.telefono_cliente}</div>
+      ${p.notas?`<div class="order-notas">📝 ${p.notas}</div>`:''}
+      <div class="order-items">${items_html}</div>
+      <div class="order-footer">
+        <div class="order-total">${parseFloat(p.total||0).toFixed(2)}€</div>
+        <div class="order-pago">${p.forma_pago||'Efectivo'}</div>
+      </div>
+      ${btnHtml}
+    </div>`;
+  }).join('');
+}
+
+async function mover(id,estado){
+  await sb.from('pedidos').update({estado}).eq('id',id);
+  await loadPedidos();
+}
+
+function showAlert(){
+  const a=document.getElementById('newAlert');
+  a.style.display='block';
+  setTimeout(()=>a.style.display='none',4000);
+}
+</script>
+</body>
+</html>

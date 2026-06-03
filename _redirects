@@ -1,5 +1,4 @@
 /index.html     /index.html     200
 /web.html       /web.html       200
 /cocina.html    /cocina.html    200
-/sql/*          /sql/:splat     200
-/:slug          /web.html       200
+/*              /web.html       200

@@ -2199,6 +2199,8 @@ async function doRegister() {
 
   // Si Supabase requiere confirmación de email
   if (!data.session) {
+    // Guardar datos del negocio para crearlos tras confirmar
+    localStorage.setItem('hostelia_pending_negocio', JSON.stringify({ nombre, tipo }));
     err.style.background = 'rgba(76,175,125,0.1)';
     err.style.borderColor = 'rgba(76,175,125,0.3)';
     err.style.color = 'var(--success)';
@@ -2226,17 +2228,19 @@ async function doLogout() {
 async function loadNegocio() {
   const { data } = await sb.from('negocios').select('*').eq('user_id', currentUser.id).single();
   if (!data) {
-    // Sin negocio — crear uno vacío y entrar al panel
-    const email = currentUser.email;
-    const nombre = email.split('@')[0] || 'Mi negocio';
+    // Primer login tras confirmación — recuperar datos del registro
+    const pending = localStorage.getItem('hostelia_pending_negocio');
+    const { nombre, tipo } = pending ? JSON.parse(pending) : { nombre: 'Mi negocio', tipo: 'Restaurante' };
+    localStorage.removeItem('hostelia_pending_negocio');
     const { data: neg } = await sb.from('negocios').insert({
-      user_id: currentUser.id, nombre, tipo: 'Restaurante'
+      user_id: currentUser.id, nombre, tipo
     }).select().single();
     currentNegocio = neg;
+    await loadApp(true); // isNewUser = true → muestra banner bienvenida
   } else {
     currentNegocio = data;
+    await loadApp();
   }
-  await loadApp();
 }
 
 async function loadApp(isNewUser = false) {

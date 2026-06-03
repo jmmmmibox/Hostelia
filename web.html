@@ -494,13 +494,21 @@ const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJ
 const sb=supabase.createClient(SUPA_URL,SUPA_KEY);
 const params=new URLSearchParams(location.search);
 let NID=params.get('negocio');
+const pathSlug=location.pathname.replace(/^\/+/,'').split('/')[0].toLowerCase();
+const isSlug=pathSlug&&pathSlug!==''&&pathSlug!=='web.html'&&pathSlug!=='index.html'&&pathSlug!=='cocina.html';
 let negocio,webConf,categorias=[],platos=[],mesasData=[],resConfig,envioConf;
 let carrito=[];
 let currentPageIsHero=true;
 
 window.addEventListener('DOMContentLoaded',async()=>{
-  if(!NID){document.getElementById('loader').innerHTML='<p style="color:#999;font-size:14px">Página no encontrada</p>';return}
   try{
+    // Resolver slug a UUID si viene por ruta limpia
+    if(!NID&&isSlug){
+      const{data:negBySlug}=await sb.from('negocios').select('id').eq('slug',pathSlug).maybeSingle();
+      if(negBySlug) NID=negBySlug.id;
+      else{document.getElementById('loader').innerHTML='<p style="color:#999;font-size:14px">Página no encontrada</p>';return;}
+    }
+    if(!NID){document.getElementById('loader').innerHTML='<p style="color:#999;font-size:14px">Página no encontrada</p>';return;}
     const[n,w,c,p,m,rc,ec]=await Promise.all([
       sb.from('negocios').select('*').eq('id',NID).single(),
       sb.from('web_config').select('*').eq('negocio_id',NID).order('creado_en',{ascending:false}).limit(1).maybeSingle(),

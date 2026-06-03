@@ -2068,10 +2068,25 @@
         </div>
         <div class="card" style="margin-bottom:20px;">
           <div class="card-title">Copia de seguridad</div>
-          <p style="font-size:13px;color:var(--muted);margin-bottom:16px;">Descarga todos los datos de tu negocio en un archivo JSON. Incluye carta, reservas, pedidos, configuración y web.</p>
-          <div style="display:flex;gap:10px;flex-wrap:wrap;">
+          <p style="font-size:13px;color:var(--muted);margin-bottom:16px;">Descarga todos los datos de tu negocio en un archivo JSON. Puedes restaurar una copia anterior en cualquier momento.</p>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;">
             <button class="btn-primary" style="max-width:220px;" onclick="descargarBackup()" id="btnBackup">⬇️ Descargar copia</button>
-            <div id="backupStatus" style="display:none;font-size:13px;color:var(--success);align-self:center;font-weight:600;"></div>
+            <button class="btn-secondary" style="max-width:220px;" onclick="document.getElementById('inputRestaurar').click()">⬆️ Restaurar copia</button>
+            <input type="file" id="inputRestaurar" accept=".json" style="display:none;" onchange="previewRestaurar(this)">
+          </div>
+          <div id="backupStatus" style="display:none;font-size:13px;color:var(--success);font-weight:600;margin-bottom:8px;"></div>
+
+          <!-- Preview restauración -->
+          <div id="restaurarPreview" style="display:none;">
+            <div class="card" style="background:rgba(240,165,0,0.06);border:1px solid rgba(240,165,0,0.2);padding:16px;">
+              <div style="font-size:13px;font-weight:700;margin-bottom:10px;">📦 Copia encontrada</div>
+              <div id="restaurarInfo" style="font-size:12px;color:var(--muted);line-height:2;margin-bottom:14px;"></div>
+              <p style="font-size:12px;color:var(--warning);margin-bottom:14px;">⚠️ Se restaurarán carta, mesas, turnos, configuración, agente y web. Las reservas y pedidos no se modifican.</p>
+              <div style="display:flex;gap:8px;">
+                <button class="btn-primary" id="btnConfirmarRestaura" onclick="confirmarRestaurar()">✅ Confirmar restauración</button>
+                <button class="btn-secondary" onclick="cancelarRestaurar()">Cancelar</button>
+              </div>
+            </div>
           </div>
         </div>
         <div class="card" style="margin-bottom:20px;">
@@ -3215,7 +3230,6 @@ async function descargarBackup() {
   const status = document.getElementById('backupStatus');
   btn.disabled = true; btn.textContent = '⏳ Preparando...';
   status.style.display = 'none';
-
   try {
     const nid = currentNegocio.id;
     const [neg, wc, cats, carta, mesas, resConfig, turnos, agente, conocimiento, reservas, pedidos] = await Promise.all([
@@ -3231,23 +3245,15 @@ async function descargarBackup() {
       sb.from('reservas').select('*').eq('negocio_id', nid).order('fecha', { ascending: false }).limit(500),
       sb.from('pedidos').select('*').eq('negocio_id', nid).order('creado_en', { ascending: false }).limit(500),
     ]);
-
     const backup = {
-      version: '1.0',
-      fecha: new Date().toISOString(),
-      negocio: neg.data,
-      web_config: wc.data,
-      categorias: cats.data || [],
-      carta: carta.data || [],
-      mesas: mesas.data || [],
-      reservas_config: resConfig.data,
-      turnos: turnos.data || [],
-      agente_config: agente.data,
-      conocimiento: conocimiento.data || [],
-      reservas: reservas.data || [],
-      pedidos: pedidos.data || [],
+      version: '1.0', fecha: new Date().toISOString(),
+      negocio: neg.data, web_config: wc.data,
+      categorias: cats.data||[], carta: carta.data||[],
+      mesas: mesas.data||[], reservas_config: resConfig.data,
+      turnos: turnos.data||[], agente_config: agente.data,
+      conocimiento: conocimiento.data||[],
+      reservas: reservas.data||[], pedidos: pedidos.data||[],
     };
-
     const json = JSON.stringify(backup, null, 2);
     const blob = new Blob([json], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
@@ -3257,15 +3263,107 @@ async function descargarBackup() {
     a.download = `hostelia-backup-${currentNegocio.nombre.replace(/\s+/g,'-').toLowerCase()}-${fecha}.json`;
     a.click();
     URL.revokeObjectURL(url);
-
-    status.style.display = 'inline';
+    status.style.display = 'block';
     status.textContent = `✅ Backup descargado (${(json.length/1024).toFixed(0)} KB)`;
     toast('✅ Copia de seguridad descargada');
-  } catch(e) {
-    toast('Error al generar backup: ' + e.message, true);
-  }
-
+  } catch(e) { toast('Error al generar backup: ' + e.message, true); }
   btn.disabled = false; btn.textContent = '⬇️ Descargar copia';
+}
+
+let backupData = null;
+
+function previewRestaurar(input) {
+  if (!input.files || !input.files[0]) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      backupData = JSON.parse(e.target.result);
+      if (!backupData.version || !backupData.negocio) {
+        toast('Archivo no válido — no es una copia de Hostelia', true); return;
+      }
+      const fecha = new Date(backupData.fecha).toLocaleString('es-ES');
+      document.getElementById('restaurarInfo').innerHTML = `
+        📅 Fecha de la copia: <strong>${fecha}</strong><br>
+        🏪 Negocio: <strong>${backupData.negocio?.nombre || '—'}</strong><br>
+        🍽️ Platos en carta: <strong>${backupData.carta?.length || 0}</strong><br>
+        🪑 Grupos de mesas: <strong>${backupData.mesas?.length || 0}</strong><br>
+        🕐 Turnos: <strong>${backupData.turnos?.length || 0}</strong><br>
+        📚 Base de conocimiento: <strong>${backupData.conocimiento?.length || 0} entradas</strong>
+      `;
+      document.getElementById('restaurarPreview').style.display = 'block';
+    } catch(err) { toast('Error al leer el archivo JSON', true); }
+  };
+  reader.readAsText(input.files[0]);
+  input.value = '';
+}
+
+async function confirmarRestaurar() {
+  if (!backupData) return;
+  const btn = document.getElementById('btnConfirmarRestaura');
+  btn.disabled = true; btn.textContent = '⏳ Restaurando...';
+  const nid = currentNegocio.id;
+  try {
+    // Restaurar categorías
+    if (backupData.categorias?.length) {
+      await sb.from('categorias').delete().eq('negocio_id', nid);
+      await sb.from('categorias').insert(backupData.categorias.map(c => ({ ...c, id: c.id, negocio_id: nid })));
+    }
+    // Restaurar carta
+    if (backupData.carta?.length) {
+      await sb.from('carta').delete().eq('negocio_id', nid);
+      await sb.from('carta').insert(backupData.carta.map(p => ({ ...p, negocio_id: nid })));
+    }
+    // Restaurar mesas
+    if (backupData.mesas?.length) {
+      await sb.from('mesas').delete().eq('negocio_id', nid);
+      await sb.from('mesas').insert(backupData.mesas.map(m => ({ ...m, negocio_id: nid })));
+    }
+    // Restaurar turnos
+    if (backupData.turnos?.length) {
+      await sb.from('turnos').delete().eq('negocio_id', nid);
+      await sb.from('turnos').insert(backupData.turnos.map(t => ({ ...t, negocio_id: nid })));
+    }
+    // Restaurar conocimiento
+    if (backupData.conocimiento?.length) {
+      await sb.from('conocimiento').delete().eq('negocio_id', nid);
+      await sb.from('conocimiento').insert(backupData.conocimiento.map(k => ({ ...k, negocio_id: nid })));
+    }
+    // Restaurar reservas_config
+    if (backupData.reservas_config) {
+      const rc = { ...backupData.reservas_config, negocio_id: nid };
+      const { data: ex } = await sb.from('reservas_config').select('id').eq('negocio_id', nid).limit(1).maybeSingle();
+      if (ex) await sb.from('reservas_config').update(rc).eq('id', ex.id);
+      else await sb.from('reservas_config').insert(rc);
+    }
+    // Restaurar agente_config
+    if (backupData.agente_config) {
+      const ac = { ...backupData.agente_config, negocio_id: nid };
+      const { data: ex } = await sb.from('agente_config').select('id').eq('negocio_id', nid).limit(1).maybeSingle();
+      if (ex) await sb.from('agente_config').update(ac).eq('id', ex.id);
+      else await sb.from('agente_config').insert(ac);
+    }
+    // Restaurar web_config
+    if (backupData.web_config) {
+      const wc = { ...backupData.web_config, negocio_id: nid };
+      const { data: ex } = await sb.from('web_config').select('id').eq('negocio_id', nid).limit(1).maybeSingle();
+      if (ex) await sb.from('web_config').update(wc).eq('id', ex.id);
+      else await sb.from('web_config').insert(wc);
+    }
+    cancelarRestaurar();
+    toast('✅ Copia restaurada correctamente');
+    document.getElementById('backupStatus').style.display = 'block';
+    document.getElementById('backupStatus').textContent = '✅ Datos restaurados correctamente';
+    // Recargar datos del panel
+    await Promise.all([loadAgenteConfig(), loadReservasConfig()]);
+  } catch(err) {
+    toast('Error al restaurar: ' + err.message, true);
+    btn.disabled = false; btn.textContent = '✅ Confirmar restauración';
+  }
+}
+
+function cancelarRestaurar() {
+  backupData = null;
+  document.getElementById('restaurarPreview').style.display = 'none';
 }
 
 function showPanel(name, el) {

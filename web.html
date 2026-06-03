@@ -1039,10 +1039,14 @@ async function sendChat() {
     });
     const data = await res.json();
     document.getElementById('chatTyping')?.remove();
-    addChatMessage('assistant', data.reply || 'Lo siento, no pude procesar tu mensaje.');
-  } catch {
+    if (data.error) {
+      addChatMessage('assistant', `⚠️ Error: ${data.error}`);
+    } else {
+      addChatMessage('assistant', data.reply || 'Respuesta vacía del servidor.');
+    }
+  } catch(err) {
     document.getElementById('chatTyping')?.remove();
-    addChatMessage('assistant', 'Ha ocurrido un error. Por favor inténtalo de nuevo.');
+    addChatMessage('assistant', `⚠️ Error de conexión: ${err.message}. La función puede no estar desplegada.`);
   }
   input.disabled = false;
   input.focus();

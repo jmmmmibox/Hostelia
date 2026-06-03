@@ -1741,9 +1741,37 @@
             <div id="colListo"></div>
           </div>
         </div>
-      </div>
 
-      <!-- WEB -->
+        <!-- CONFIGURACIÓN DE ENVÍO -->
+        <div class="card" style="margin-top:20px;">
+          <div class="card-title">⚙️ Configuración de envío</div>
+          <div class="settings-grid" style="margin-bottom:16px;">
+            <div class="setting-group">
+              <div class="setting-label">Coste de envío (€)</div>
+              <input class="setting-input" id="cfgCosteEnvio" type="number" min="0" step="0.5" value="3" placeholder="3.00" oninput="showSaveBar('pedidos')">
+            </div>
+            <div class="setting-group">
+              <div class="setting-label">Pedido mínimo para envío gratis (€)</div>
+              <input class="setting-input" id="cfgMinEnvioGratis" type="number" min="0" step="1" value="25" placeholder="25" oninput="showSaveBar('pedidos')">
+            </div>
+          </div>
+          <div class="toggle-row" style="margin-bottom:10px;">
+            <div class="toggle-info">
+              <div class="toggle-title">Envío siempre gratis</div>
+              <div class="toggle-sub">Actívalo para no cobrar nunca el envío, independientemente del importe.</div>
+            </div>
+            <div class="toggle" id="cfgEnvioGratisSimepre" onclick="this.classList.toggle('on');showSaveBar('pedidos')"></div>
+          </div>
+          <div class="toggle-row">
+            <div class="toggle-info">
+              <div class="toggle-title">Cobrar envío siempre</div>
+              <div class="toggle-sub">Actívalo para cobrar siempre el envío aunque supere el mínimo.</div>
+            </div>
+            <div class="toggle" id="cfgCobrarEnvioSiempre" onclick="this.classList.toggle('on');showSaveBar('pedidos')"></div>
+          </div>
+          <button class="btn-primary" style="max-width:200px;margin-top:16px;" onclick="saveEnvioConfig()">Guardar configuración</button>
+        </div>
+      </div>
       <div class="panel" id="panel-web">
         <div class="page-header">
           <div class="page-title">Mi Web</div>
@@ -2814,6 +2842,17 @@ function editReserva(id) {
 
 // ── PEDIDOS ───────────────────────────────────────────
 async function loadPedidos() {
+  // Cargar config de envío
+  const { data: ec } = await sb.from('envio_config').select('*').eq('negocio_id', currentNegocio.id).limit(1).maybeSingle();
+  if (ec) {
+    document.getElementById('cfgCosteEnvio').value = ec.coste_envio || 3;
+    document.getElementById('cfgMinEnvioGratis').value = ec.pedido_minimo_envio_gratis || 25;
+    if (ec.envio_gratis_siempre) document.getElementById('cfgEnvioGratisSimepre').classList.add('on');
+    else document.getElementById('cfgEnvioGratisSimepre').classList.remove('on');
+    if (ec.cobrar_envio_siempre) document.getElementById('cfgCobrarEnvioSiempre').classList.add('on');
+    else document.getElementById('cfgCobrarEnvioSiempre').classList.remove('on');
+  }
+
   const { data } = await sb.from('pedidos').select('*').eq('negocio_id', currentNegocio.id).order('creado_en', { ascending: false });
   const cols = { nuevo: [], preparando: [], listo: [], enviado: [] };
   (data || []).forEach(p => { if (cols[p.estado]) cols[p.estado].push(p); });
@@ -2836,6 +2875,21 @@ async function loadPedidos() {
   document.getElementById('countNuevos').textContent = cols.nuevo.length;
   document.getElementById('countPrep').textContent = cols.preparando.length;
   document.getElementById('countListo').textContent = cols.listo.length + cols.enviado.length;
+}
+
+async function saveEnvioConfig() {
+  const payload = {
+    negocio_id: currentNegocio.id,
+    coste_envio: parseFloat(document.getElementById('cfgCosteEnvio').value) || 3,
+    pedido_minimo_envio_gratis: parseFloat(document.getElementById('cfgMinEnvioGratis').value) || 25,
+    envio_gratis_siempre: document.getElementById('cfgEnvioGratisSimepre').classList.contains('on'),
+    cobrar_envio_siempre: document.getElementById('cfgCobrarEnvioSiempre').classList.contains('on'),
+  };
+  const { data: ex } = await sb.from('envio_config').select('id').eq('negocio_id', currentNegocio.id).limit(1).maybeSingle();
+  if (ex) await sb.from('envio_config').update(payload).eq('id', ex.id);
+  else await sb.from('envio_config').insert(payload);
+  hideSaveBar();
+  toast('✅ Configuración de envío guardada');
 }
 
 async function movePedido(id, estado) {

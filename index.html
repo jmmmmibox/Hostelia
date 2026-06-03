@@ -943,12 +943,23 @@
       <div class="logo-icon">🍽️</div>
       <div class="logo-text">Hostelia</div>
     </div>
-    <div class="auth-title">Crea tu cuenta</div>
-    <div class="auth-subtitle">Configura tu agente IA en menos de 10 minutos.</div>
+    <div class="auth-title">Crea tu cuenta gratis</div>
+    <div class="auth-subtitle">En menos de un minuto. Sin tarjeta de crédito.</div>
     <div class="auth-error" id="registerError"></div>
     <div class="form-group">
-      <label class="form-label">Nombre del negocio</label>
+      <label class="form-label">Nombre de tu negocio</label>
       <input class="form-input" id="regNegocio" type="text" placeholder="Restaurante La Plaza">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Tipo de negocio</label>
+      <select class="form-input" id="regTipo" style="cursor:pointer;">
+        <option>Restaurante</option>
+        <option>Bar / Tapas</option>
+        <option>Cafetería</option>
+        <option>Pub / Disco</option>
+        <option>Fast food</option>
+        <option>Otro</option>
+      </select>
     </div>
     <div class="form-group">
       <label class="form-label">Email</label>
@@ -1170,6 +1181,18 @@
 
       <!-- DASHBOARD -->
       <div class="panel active" id="panel-dashboard" style="flex-direction:column;min-height:calc(100vh - 128px);">
+
+        <!-- BANNER BIENVENIDA (se oculta tras configurar) -->
+        <div id="dashWelcomeBanner" style="display:none;background:linear-gradient(135deg,rgba(255,107,53,0.12),rgba(255,179,71,0.06));border:1px solid rgba(255,107,53,0.2);border-radius:16px;padding:20px 24px;margin-bottom:24px;display:flex;align-items:center;justify-content:space-between;gap:16px;">
+          <div>
+            <div style="font-size:15px;font-weight:700;margin-bottom:4px;">🎉 ¡Bienvenido a Hostelia!</div>
+            <div style="font-size:13px;color:var(--muted);">Tu cuenta está lista. Empieza configurando tu negocio — tarda menos de 5 minutos.</div>
+          </div>
+          <div style="display:flex;gap:8px;flex-shrink:0;">
+            <button class="btn-primary" style="padding:9px 18px;font-size:13px;" onclick="showPanel('config',document.querySelectorAll('.nav-item')[8])">⚙️ Configurar</button>
+            <button onclick="document.getElementById('dashWelcomeBanner').style.display='none'" style="background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;padding:4px;">✕</button>
+          </div>
+        </div>
 
         <!-- HEADER -->
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px;">
@@ -2147,6 +2170,7 @@ async function doLogin() {
 
 async function doRegister() {
   const nombre = document.getElementById('regNegocio').value.trim();
+  const tipo   = document.getElementById('regTipo').value;
   const email  = document.getElementById('regEmail').value.trim();
   const pass   = document.getElementById('regPassword').value;
   const btn    = document.getElementById('registerBtn');
@@ -2156,20 +2180,24 @@ async function doRegister() {
     err.textContent = 'Por favor rellena todos los campos.';
     err.style.display = 'block'; return;
   }
-  btn.disabled = true; btn.textContent = 'Creando cuenta...';
+  if (pass.length < 6) {
+    err.textContent = 'La contraseña debe tener al menos 6 caracteres.';
+    err.style.display = 'block'; return;
+  }
+  btn.disabled = true; btn.textContent = 'Creando tu cuenta...';
   const { data, error } = await sb.auth.signUp({ email, password: pass });
   if (error) {
-    err.textContent = error.message;
+    err.textContent = error.message === 'User already registered' ? 'Este email ya está registrado.' : error.message;
     err.style.display = 'block';
-    btn.disabled = false; btn.textContent = 'Crear cuenta →';
-    return;
+    btn.disabled = false; btn.textContent = 'Crear cuenta →'; return;
   }
   currentUser = data.user;
-  // Crear negocio
-  const { data: neg } = await sb.from('negocios').insert({ user_id: currentUser.id, nombre }).select().single();
+  const { data: neg } = await sb.from('negocios').insert({
+    user_id: currentUser.id, nombre, tipo
+  }).select().single();
   currentNegocio = neg;
-  document.getElementById('registerScreen').style.display = 'none';
-  document.getElementById('onboardingScreen').style.display = 'block';
+  btn.textContent = '¡Listo! Entrando...';
+  await loadApp(true);
 }
 
 async function doLogout() {
@@ -2182,16 +2210,20 @@ async function doLogout() {
 async function loadNegocio() {
   const { data } = await sb.from('negocios').select('*').eq('user_id', currentUser.id).single();
   if (!data) {
-    // Sin negocio → onboarding
-    showLoader(false);
-    document.getElementById('onboardingScreen').style.display = 'block';
-    return;
+    // Sin negocio — crear uno vacío y entrar al panel
+    const email = currentUser.email;
+    const nombre = email.split('@')[0] || 'Mi negocio';
+    const { data: neg } = await sb.from('negocios').insert({
+      user_id: currentUser.id, nombre, tipo: 'Restaurante'
+    }).select().single();
+    currentNegocio = neg;
+  } else {
+    currentNegocio = data;
   }
-  currentNegocio = data;
   await loadApp();
 }
 
-async function loadApp() {
+async function loadApp(isNewUser = false) {
   showLoader(false);
   document.getElementById('loginScreen').style.display = 'none';
   document.getElementById('registerScreen').style.display = 'none';
@@ -2204,6 +2236,11 @@ async function loadApp() {
   document.getElementById('sidebarNegocio').textContent = currentNegocio.nombre;
   document.getElementById('previewNombre').textContent = currentNegocio.nombre;
   document.getElementById('webUrl').textContent = slugify(currentNegocio.nombre) + '.hostelia.app';
+
+  // Banner bienvenida para nuevos usuarios
+  if (isNewUser) {
+    document.getElementById('dashWelcomeBanner').style.display = 'flex';
+  }
 
   // Cargar datos
   await Promise.all([

@@ -2079,6 +2079,14 @@
           <button class="btn-primary" style="max-width:220px;" onclick="saveConfig()">Guardar slug</button>
         </div>
         <div class="card" style="margin-bottom:20px;">
+          <div class="card-title">Copia de seguridad</div>
+          <p style="font-size:13px;color:var(--muted);margin-bottom:16px;">Descarga todos los datos de tu negocio en un archivo JSON. Incluye carta, reservas, pedidos, configuración y web.</p>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;">
+            <button class="btn-primary" style="max-width:220px;" onclick="descargarBackup()" id="btnBackup">⬇️ Descargar copia</button>
+            <div id="backupStatus" style="display:none;font-size:13px;color:var(--success);align-self:center;font-weight:600;"></div>
+          </div>
+        </div>
+        <div class="card" style="margin-bottom:20px;">
           <div class="card-title">Notificaciones SMS</div>
           <div class="toggle-row"><div class="toggle-info"><div class="toggle-title">SMS confirmación de reserva</div><div class="toggle-sub">El cliente recibe SMS al reservar</div></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
           <div class="toggle-row"><div class="toggle-info"><div class="toggle-title">SMS recordatorio 24h antes</div><div class="toggle-sub">Recordatorio automático</div></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
@@ -3214,7 +3222,64 @@ function renderChartDual(canvasId, labels, pedData, impData) {
 
 // ── FIN MÉTRICAS ──────────────────────────────────────
 
-function showPanel(name, el) {
+async function descargarBackup() {
+  const btn = document.getElementById('btnBackup');
+  const status = document.getElementById('backupStatus');
+  btn.disabled = true; btn.textContent = '⏳ Preparando...';
+  status.style.display = 'none';
+
+  try {
+    const nid = currentNegocio.id;
+    const [neg, wc, cats, carta, mesas, resConfig, turnos, agente, conocimiento, reservas, pedidos] = await Promise.all([
+      sb.from('negocios').select('*').eq('id', nid).single(),
+      sb.from('web_config').select('*').eq('negocio_id', nid).limit(1).maybeSingle(),
+      sb.from('categorias').select('*').eq('negocio_id', nid),
+      sb.from('carta').select('*').eq('negocio_id', nid),
+      sb.from('mesas').select('*').eq('negocio_id', nid),
+      sb.from('reservas_config').select('*').eq('negocio_id', nid).limit(1).maybeSingle(),
+      sb.from('turnos').select('*').eq('negocio_id', nid),
+      sb.from('agente_config').select('*').eq('negocio_id', nid).limit(1).maybeSingle(),
+      sb.from('conocimiento').select('*').eq('negocio_id', nid),
+      sb.from('reservas').select('*').eq('negocio_id', nid).order('fecha', { ascending: false }).limit(500),
+      sb.from('pedidos').select('*').eq('negocio_id', nid).order('creado_en', { ascending: false }).limit(500),
+    ]);
+
+    const backup = {
+      version: '1.0',
+      fecha: new Date().toISOString(),
+      negocio: neg.data,
+      web_config: wc.data,
+      categorias: cats.data || [],
+      carta: carta.data || [],
+      mesas: mesas.data || [],
+      reservas_config: resConfig.data,
+      turnos: turnos.data || [],
+      agente_config: agente.data,
+      conocimiento: conocimiento.data || [],
+      reservas: reservas.data || [],
+      pedidos: pedidos.data || [],
+    };
+
+    const json = JSON.stringify(backup, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const fecha = new Date().toISOString().split('T')[0];
+    a.href = url;
+    a.download = `hostelia-backup-${currentNegocio.nombre.replace(/\s+/g,'-').toLowerCase()}-${fecha}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+
+    status.style.display = 'inline';
+    status.textContent = `✅ Backup descargado (${(json.length/1024).toFixed(0)} KB)`;
+    toast('✅ Copia de seguridad descargada');
+  } catch(e) {
+    toast('Error al generar backup: ' + e.message, true);
+  }
+
+  btn.disabled = false; btn.textContent = '⬇️ Descargar copia';
+}
+
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   document.getElementById('panel-' + name).classList.add('active');

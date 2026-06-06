@@ -524,7 +524,10 @@ window.addEventListener('DOMContentLoaded',async()=>{
     mesasData=m.data||[];resConfig=rc.data;envioConf=ec.data;
     if(!negocio){document.getElementById('loader').innerHTML='<p>Negocio no encontrado</p>';return}
     render();
-  }catch(e){console.error(e)}
+  }catch(e){
+    console.error(e);
+    document.getElementById('loader').innerHTML=`<div style="font-size:13px;color:#e05252;text-align:center;padding:20px;">Error: ${e.message}</div>`;
+  }
 });
 
 function render(){

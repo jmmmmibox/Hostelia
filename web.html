@@ -845,7 +845,7 @@ function selectHora(hora){
   // Summary
   const d=new Date(calSelectedDate+'T12:00:00');
   const dateLabel=d.toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long'});
-  document.getElementById('selectedSummary').innerHTML=`📅 ${dateLabel} · 🕐 ${hora}h`;
+  document.getElementById('selectedSummary').innerHTML=`📅 ${fechaLabel} · 🕐 ${hora}h`;
 }
 
 function backToCalendar(){calSelectedDate=null;renderCalendar();showResStep(1)}
@@ -894,8 +894,6 @@ async function submitReserva(){
     personas, zona, notas: ''
   });
   // Mostrar confirmación visual
-  const d=new Date(calSelectedDate+'T12:00:00');
-  const dateLabel=d.toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
   document.getElementById('stepForm').style.display='none';
   document.getElementById('resSteps').style.display='none';
   document.getElementById('reservaConfirm').style.display='block';
@@ -904,7 +902,7 @@ async function submitReserva(){
   document.getElementById('confirmTicket').innerHTML=`
     <div class="confirm-ticket-row"><div class="confirm-ticket-icon">👤</div><div><div class="confirm-ticket-label">Nombre</div><div class="confirm-ticket-value">${nombre}</div></div></div>
     <div class="confirm-ticket-row"><div class="confirm-ticket-icon">📞</div><div><div class="confirm-ticket-label">Teléfono</div><div class="confirm-ticket-value">${tel}</div></div></div>
-    <div class="confirm-ticket-row"><div class="confirm-ticket-icon">📅</div><div><div class="confirm-ticket-label">Fecha</div><div class="confirm-ticket-value">${dateLabel}</div></div></div>
+    <div class="confirm-ticket-row"><div class="confirm-ticket-icon">📅</div><div><div class="confirm-ticket-label">Fecha</div><div class="confirm-ticket-value">${fechaLabel}</div></div></div>
     <div class="confirm-ticket-row"><div class="confirm-ticket-icon">🕐</div><div><div class="confirm-ticket-label">Hora</div><div class="confirm-ticket-value">${calSelectedHora}h</div></div></div>
     <div class="confirm-ticket-row"><div class="confirm-ticket-icon">👥</div><div><div class="confirm-ticket-label">Comensales</div><div class="confirm-ticket-value">${personas} persona${personas>1?'s':''}</div></div></div>
     <div class="confirm-ticket-row"><div class="confirm-ticket-icon">📍</div><div><div class="confirm-ticket-label">Zona</div><div class="confirm-ticket-value">${zona}</div></div></div>`;

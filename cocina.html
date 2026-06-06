@@ -347,7 +347,8 @@ async function loadPedidos(){
   pedidos.forEach(p=>{
     if(p.estado==='nuevo')cols.nuevo.push(p);
     else if(p.estado==='preparando')cols.preparando.push(p);
-    else cols.listo.push(p);
+    else if(p.estado==='listo')cols.listo.push(p);
+    // 'enviado' no aparece en cocina — va al historial del panel
   });
 
   renderCol('colNuevo','colCountNuevo','countNuevo',cols.nuevo,'nuevo');
@@ -375,6 +376,8 @@ function renderCol(colId,countId,statId,items,tipo){
       ?`<button class="btn-mover btn-nuevo" onclick="mover('${p.id}','preparando')">→ Iniciar preparación</button>`
       :tipo==='prep'
       ?`<button class="btn-mover btn-prep" onclick="mover('${p.id}','listo')">✓ Marcar como listo</button>`
+      :tipo==='listo'
+      ?`<button class="btn-mover" style="background:var(--listo);color:#fff;" onclick="mover('${p.id}','enviado')">🚀 Confirmar envío</button>`
       :'';
     return`<div class="order-card ${tipo}-card">
       <div class="order-header">

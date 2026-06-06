@@ -845,7 +845,7 @@ function selectHora(hora){
   // Summary
   const d=new Date(calSelectedDate+'T12:00:00');
   const dateLabel=d.toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long'});
-  document.getElementById('selectedSummary').innerHTML=`📅 ${fechaLabel} · 🕐 ${hora}h`;
+  document.getElementById('selectedSummary').innerHTML=`📅 ${dateLabel} · 🕐 ${hora}h`;
 }
 
 function backToCalendar(){calSelectedDate=null;renderCalendar();showResStep(1)}

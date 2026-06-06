@@ -109,7 +109,7 @@ exports.handler = async (event) => {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
       body: JSON.stringify({
-        from: `${datos.negocio} <noreply@hostelia.app>`,
+        from: `Hostelia <noreply@hostelia.app>`,
         to: [datos.email],
         subject,
         html,

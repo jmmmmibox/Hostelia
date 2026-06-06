@@ -930,12 +930,15 @@ function showToast(msg){const t=document.getElementById('toast');t.textContent=m
 
 async function sendEmail(tipo, datos) {
   try {
-    await fetch('/.netlify/functions/email', {
+    const res = await fetch('/.netlify/functions/email', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ tipo, datos })
     });
-  } catch(e) { console.log('Email error:', e); }
+    const result = await res.json();
+    console.log('Email result:', result);
+    if (!result.ok) console.error('Email error:', result.error);
+  } catch(e) { console.error('Email fetch error:', e); }
 }
 </script>
 </body>

@@ -385,6 +385,7 @@ function renderCol(colId,countId,statId,items,tipo){
         <div class="order-time${urgent?' urgent':''}">${mins===0?'Ahora':mins+'min'}</div>
       </div>
       <div class="order-client">👤 ${p.nombre_cliente} · 📞 ${p.telefono_cliente}</div>
+      ${tipo==='listo'&&p.direccion_entrega?`<div class="order-notas" style="background:rgba(16,185,129,0.08);border-color:rgba(16,185,129,0.2);color:#065f46;">📍 ${p.direccion_entrega}</div>`:''}
       ${p.notas?`<div class="order-notas">📝 ${p.notas}</div>`:''}
       <div class="order-items">${items_html}</div>
       <div class="order-footer">

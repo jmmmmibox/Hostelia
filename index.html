@@ -1513,8 +1513,51 @@
           </div>
         </div>
 
-        <!-- CONFIGURACIÓN DE ENVÍO -->
+        <!-- TURNOS DE PEDIDOS -->
         <div class="card" style="margin-top:20px;">
+          <div class="card-title">🕐 Turnos de pedidos</div>
+          <p style="font-size:13px;color:var(--muted);margin-bottom:16px;">Define cuándo y cuántos pedidos puedes aceptar en cada turno. Fuera de horario o al llegar al máximo, los clientes verán un aviso.</p>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+            <div style="font-size:13px;font-weight:600;">Turnos configurados</div>
+            <button class="topbar-btn accent" onclick="showAddTurnoPedido()">+ Añadir turno</button>
+          </div>
+          <div id="turnosPedidosList" style="display:flex;flex-direction:column;gap:10px;margin-bottom:16px;">
+            <div class="loading-row">Cargando...</div>
+          </div>
+          <!-- Modal turno pedido -->
+          <div id="modalTurnoPedido" style="display:none;">
+            <div class="card" style="background:var(--bg);">
+              <div class="card-title" id="modalTurnoPedidoTitle">Nuevo turno de pedidos</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+                <div><div class="setting-label">Nombre</div><input class="setting-input" id="tpNombre" type="text" placeholder="Ej: Mediodía, Cena..."></div>
+                <div><div class="setting-label">Máx. pedidos en este turno</div><input class="setting-input" id="tpMax" type="number" min="1" value="20"></div>
+                <div><div class="setting-label">Hora inicio</div><input class="setting-input" id="tpInicio" type="time" value="13:00"></div>
+                <div><div class="setting-label">Hora fin</div><input class="setting-input" id="tpFin" type="time" value="16:00"></div>
+              </div>
+              <div style="display:flex;gap:10px;">
+                <button class="btn-primary" style="flex:1;" onclick="saveTurnoPedido()">Guardar</button>
+                <button class="btn-secondary" style="padding:10px 20px;" onclick="hideModalTurnoPedido()">Cancelar</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- MENSAJES PERSONALIZABLES -->
+        <div class="card" style="margin-top:16px;">
+          <div class="card-title">💬 Mensajes para el cliente</div>
+          <div style="margin-bottom:14px;">
+            <div class="setting-label">Mensaje fuera de horario</div>
+            <input class="setting-input" id="cfgMsgFueraHorario" type="text" placeholder="Ahora mismo no estamos tomando pedidos..." oninput="showSaveBar('pedidos')">
+          </div>
+          <div style="margin-bottom:16px;">
+            <div class="setting-label">Mensaje máximo de pedidos alcanzado</div>
+            <input class="setting-input" id="cfgMsgMaxPedidos" type="text" placeholder="Hemos alcanzado el máximo de pedidos..." oninput="showSaveBar('pedidos')">
+          </div>
+          <button class="btn-primary" style="max-width:200px;" onclick="saveMensajesPedidos()">Guardar mensajes</button>
+        </div>
+
+        <!-- CONFIGURACIÓN DE ENVÍO -->
+        <div class="card" style="margin-top:16px;">
           <div class="card-title">⚙️ Configuración de envío</div>
           <div class="settings-grid" style="margin-bottom:16px;">
             <div class="setting-group">
@@ -2630,7 +2673,7 @@ function editReserva(id) {
 
 // ── PEDIDOS ───────────────────────────────────────────
 async function loadPedidos() {
-  // Cargar config de envío
+  // Cargar config de envío y mensajes
   const { data: ec } = await sb.from('envio_config').select('*').eq('negocio_id', currentNegocio.id).limit(1).maybeSingle();
   if (ec) {
     document.getElementById('cfgCosteEnvio').value = ec.coste_envio || 3;
@@ -2639,7 +2682,11 @@ async function loadPedidos() {
     else document.getElementById('cfgEnvioGratisSimepre').classList.remove('on');
     if (ec.cobrar_envio_siempre) document.getElementById('cfgCobrarEnvioSiempre').classList.add('on');
     else document.getElementById('cfgCobrarEnvioSiempre').classList.remove('on');
+    document.getElementById('cfgMsgFueraHorario').value = ec.mensaje_fuera_horario || '';
+    document.getElementById('cfgMsgMaxPedidos').value = ec.mensaje_max_pedidos || '';
   }
+  // Cargar turnos de pedidos
+  await loadTurnosPedidos();
 
   const { data } = await sb.from('pedidos').select('*').eq('negocio_id', currentNegocio.id).order('creado_en', { ascending: false });
   const cols = { nuevo: [], preparando: [], listo: [], enviado: [] };
@@ -2663,6 +2710,89 @@ async function loadPedidos() {
   document.getElementById('countNuevos').textContent = cols.nuevo.length;
   document.getElementById('countPrep').textContent = cols.preparando.length;
   document.getElementById('countListo').textContent = cols.listo.length + cols.enviado.length;
+}
+
+async function saveMensajesPedidos() {
+  const payload = { mensaje_fuera_horario: document.getElementById('cfgMsgFueraHorario').value.trim(), mensaje_max_pedidos: document.getElementById('cfgMsgMaxPedidos').value.trim() };
+  const { data: ex } = await sb.from('envio_config').select('id').eq('negocio_id', currentNegocio.id).limit(1).maybeSingle();
+  if (ex) await sb.from('envio_config').update(payload).eq('id', ex.id);
+  else await sb.from('envio_config').insert({ ...payload, negocio_id: currentNegocio.id });
+  hideSaveBar(); toast('✅ Mensajes guardados');
+}
+
+// ── TURNOS PEDIDOS ─────────────────────────────────────
+let turnosPedidosData = [];
+let editandoTurnoPedidoId = null;
+
+async function loadTurnosPedidos() {
+  const { data } = await sb.from('turnos_pedidos').select('*').eq('negocio_id', currentNegocio.id).order('hora_inicio');
+  turnosPedidosData = data || [];
+  renderTurnosPedidos();
+}
+
+function renderTurnosPedidos() {
+  const el = document.getElementById('turnosPedidosList');
+  if (!el) return;
+  if (turnosPedidosData.length === 0) {
+    el.innerHTML = `<div class="empty-state" style="padding:20px 0;"><div class="empty-icon">🛵</div><div class="empty-title" style="font-size:14px;">Sin turnos configurados</div><div class="empty-sub">Añade turnos para controlar el horario y máximo de pedidos.</div></div>`;
+    return;
+  }
+  el.innerHTML = turnosPedidosData.map(t => `
+    <div class="card" style="padding:14px 18px;display:flex;align-items:center;gap:12px;">
+      <div style="flex:1;">
+        <div style="font-size:14px;font-weight:700;">${t.nombre}</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:2px;">🕐 ${t.hora_inicio.slice(0,5)} – ${t.hora_fin.slice(0,5)} &nbsp;·&nbsp; 🛵 Máx. ${t.max_pedidos} pedidos</div>
+      </div>
+      <div class="toggle ${t.activo?'on':''}" onclick="toggleTurnoPedido('${t.id}',${t.activo})"></div>
+      <div class="icon-btn" onclick="editTurnoPedido('${t.id}')">✏️</div>
+      <div class="icon-btn danger" onclick="deleteTurnoPedido('${t.id}')">🗑️</div>
+    </div>`).join('');
+}
+
+function showAddTurnoPedido() {
+  editandoTurnoPedidoId = null;
+  document.getElementById('modalTurnoPedidoTitle').textContent = 'Nuevo turno de pedidos';
+  document.getElementById('tpNombre').value = '';
+  document.getElementById('tpInicio').value = '13:00';
+  document.getElementById('tpFin').value = '16:00';
+  document.getElementById('tpMax').value = '20';
+  document.getElementById('modalTurnoPedido').style.display = 'block';
+}
+
+function editTurnoPedido(id) {
+  const t = turnosPedidosData.find(x => x.id === id); if (!t) return;
+  editandoTurnoPedidoId = id;
+  document.getElementById('modalTurnoPedidoTitle').textContent = 'Editar turno de pedidos';
+  document.getElementById('tpNombre').value = t.nombre;
+  document.getElementById('tpInicio').value = t.hora_inicio.slice(0,5);
+  document.getElementById('tpFin').value = t.hora_fin.slice(0,5);
+  document.getElementById('tpMax').value = t.max_pedidos;
+  document.getElementById('modalTurnoPedido').style.display = 'block';
+}
+
+function hideModalTurnoPedido() { document.getElementById('modalTurnoPedido').style.display = 'none'; editandoTurnoPedidoId = null; }
+
+async function saveTurnoPedido() {
+  const nombre = document.getElementById('tpNombre').value.trim();
+  const inicio = document.getElementById('tpInicio').value;
+  const fin = document.getElementById('tpFin').value;
+  const max = parseInt(document.getElementById('tpMax').value);
+  if (!nombre || !inicio || !fin || isNaN(max)) { toast('Rellena todos los campos', true); return; }
+  const payload = { negocio_id: currentNegocio.id, nombre, hora_inicio: inicio, hora_fin: fin, max_pedidos: max };
+  if (editandoTurnoPedidoId) await sb.from('turnos_pedidos').update(payload).eq('id', editandoTurnoPedidoId);
+  else await sb.from('turnos_pedidos').insert({ ...payload, orden: turnosPedidosData.length });
+  hideModalTurnoPedido(); await loadTurnosPedidos(); toast('✅ Turno guardado');
+}
+
+async function deleteTurnoPedido(id) {
+  if (!confirm('¿Eliminar este turno?')) return;
+  await sb.from('turnos_pedidos').delete().eq('id', id);
+  await loadTurnosPedidos(); toast('Turno eliminado');
+}
+
+async function toggleTurnoPedido(id, activo) {
+  await sb.from('turnos_pedidos').update({ activo: !activo }).eq('id', id);
+  await loadTurnosPedidos();
 }
 
 async function saveEnvioConfig() {

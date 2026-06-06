@@ -403,6 +403,9 @@
         <div class="confirm-check">✓</div>
         <h3 class="confirm-title-premium">¡Reserva confirmada!</h3>
         <div class="confirm-ticket" id="confirmTicket"></div>
+        <div id="reservaEmailAviso" style="display:none;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.2);border-radius:12px;padding:12px 16px;font-size:12px;color:#92620a;margin-bottom:20px;">
+          📧 Te enviamos confirmación por email. Si no lo ves, revisa <strong>spam o correo no deseado</strong>.
+        </div>
         <button class="btn-submit" style="max-width:220px;margin:0 auto;" onclick="resetReserva()">Volver al inicio</button>
       </div>
     </div>
@@ -451,7 +454,10 @@
         <div class="confirm-icon">🎉</div>
         <div class="confirm-title">¡Pedido enviado!</div>
         <div class="confirm-detail" id="pedidoConfirmText"></div>
-        <button class="btn-submit" style="margin-top:24px;max-width:200px;margin-left:auto;margin-right:auto;" onclick="document.getElementById('pedidoConfirm').style.display='none';document.getElementById('pedidoContent').style.display='block';goPage('inicio')">OK ✓</button>
+        <div id="pedidoEmailAviso" style="display:none;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.2);border-radius:12px;padding:12px 16px;font-size:12px;color:#92620a;margin:12px 0;">
+          📧 Te enviamos confirmación por email. Si no lo ves, revisa <strong>spam o correo no deseado</strong>.
+        </div>
+        <button class="btn-submit" style="margin-top:16px;max-width:200px;margin-left:auto;margin-right:auto;" onclick="document.getElementById('pedidoConfirm').style.display='none';document.getElementById('pedidoContent').style.display='block';goPage('inicio')">OK ✓</button>
       </div>
     </div>
   </div>
@@ -726,6 +732,7 @@ async function submitPedido(){
   carrito=[];renderCart();
   document.getElementById('pedidoContent').style.display='none';
   document.getElementById('pedidoConfirm').style.display='block';
+  if(email) document.getElementById('pedidoEmailAviso').style.display='block';
   document.getElementById('pedidoConfirmText').innerHTML=`<p>${nombre}, tu pedido está en camino.${email?' Te enviamos confirmación a '+email:''}</p>${ticketHTML}`;
   ['pedNombre','pedTel','pedDir','pedNotas'].forEach(id=>document.getElementById(id).value='');
   if(document.getElementById('pedEmail')) document.getElementById('pedEmail').value='';
@@ -897,6 +904,7 @@ async function submitReserva(){
   document.getElementById('stepForm').style.display='none';
   document.getElementById('resSteps').style.display='none';
   document.getElementById('reservaConfirm').style.display='block';
+  if(email) document.getElementById('reservaEmailAviso').style.display='block';
   document.querySelector('#reservaConfirm .confirm-check').textContent = autoConfirm ? '✓' : '📨';
   document.querySelector('#reservaConfirm .confirm-title-premium').textContent = autoConfirm ? '¡Reserva confirmada!' : '¡Solicitud enviada!';
   document.getElementById('confirmTicket').innerHTML=`

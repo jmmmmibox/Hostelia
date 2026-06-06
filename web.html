@@ -385,6 +385,7 @@
           <div class="field"><label>Tu nombre</label><input id="pubResNombre" type="text" placeholder="Nombre completo"></div>
           <div class="field"><label>Teléfono</label><input id="pubResTel" type="tel" placeholder="+34 600..."></div>
         </div>
+        <div class="field"><label>Email (para recibir confirmación)</label><input id="pubResEmail" type="email" placeholder="tu@email.com"></div>
         <div class="field-row">
           <div class="field"><label>Comensales</label><input id="pubResPers" type="number" min="1" max="20" value="2"></div>
           <div class="field"><label>Zona</label><select id="pubResZona"><option>Interior</option><option>Terraza</option></select></div>
@@ -436,6 +437,7 @@
         <div id="cartCheckout" style="display:none" class="checkout-fields">
           <div class="field"><label>Nombre</label><input id="pedNombre" type="text" placeholder="Tu nombre"></div>
           <div class="field"><label>Teléfono</label><input id="pedTel" type="tel" placeholder="+34 600..."></div>
+          <div class="field"><label>Email (para confirmación)</label><input id="pedEmail" type="email" placeholder="tu@email.com"></div>
           <div class="field"><label>Dirección</label><input id="pedDir" type="text" placeholder="Calle, número, piso..."></div>
           <div class="field"><label>Observaciones</label><input id="pedNotas" type="text" placeholder="Sin cebolla, portal 3B..."></div>
           <div class="field"><label>Forma de pago</label><select id="pedPago"><option>Efectivo</option><option>Datáfono a la entrega</option><option>Pago online (próximamente)</option></select></div>
@@ -674,17 +676,26 @@ function renderCart(){
   tot.style.display='block';chk.style.display='block';
 }
 async function submitPedido(){
-  const nombre=document.getElementById('pedNombre').value.trim(),tel=document.getElementById('pedTel').value.trim(),dir=document.getElementById('pedDir').value.trim();
+  const nombre=document.getElementById('pedNombre').value.trim();
+  const tel=document.getElementById('pedTel').value.trim();
+  const email=document.getElementById('pedEmail')?.value.trim()||'';
+  const dir=document.getElementById('pedDir').value.trim();
   if(!nombre||!tel||!dir){showToast('Rellena nombre, teléfono y dirección');return}
   const sub=carrito.reduce((s,c)=>s+c.precio*c.qty,0);const ec=envioConf||{};let envio=parseFloat(ec.coste_envio)||3;
   if(ec.envio_gratis_siempre||(!ec.cobrar_envio_siempre&&sub>=(parseFloat(ec.pedido_minimo_envio_gratis)||25)))envio=0;
   const totalFinal = (sub+envio).toFixed(2);
-  const pedidoItems = [...carrito]; // guardar antes de limpiar
-
-  await sb.from('pedidos').insert({negocio_id:NID,nombre_cliente:nombre,telefono_cliente:tel,direccion_entrega:dir,items:pedidoItems.map(c=>({nombre:c.nombre,precio:c.precio,qty:c.qty})),total:sub+envio,forma_pago:document.getElementById('pedPago').value,notas:document.getElementById('pedNotas').value.trim(),estado:'nuevo'});
-
+  const pedidoItems = [...carrito];
   const formaPago = document.getElementById('pedPago').value;
   const notas = document.getElementById('pedNotas').value.trim();
+
+  await sb.from('pedidos').insert({negocio_id:NID,nombre_cliente:nombre,telefono_cliente:tel,direccion_entrega:dir,items:pedidoItems.map(c=>({nombre:c.nombre,precio:c.precio,qty:c.qty})),total:sub+envio,forma_pago:formaPago,notas,estado:'nuevo'});
+
+  // Email al cliente
+  if(email) await sendEmail('pedido_recibido', {
+    email, nombre, negocio: negocio.nombre,
+    items: pedidoItems, total: totalFinal,
+    direccion: dir, forma_pago: formaPago, notas
+  });
 
   // Construir ticket
   const itemsHTML = pedidoItems.map(c=>`
@@ -712,8 +723,9 @@ async function submitPedido(){
   carrito=[];renderCart();
   document.getElementById('pedidoContent').style.display='none';
   document.getElementById('pedidoConfirm').style.display='block';
-  document.getElementById('pedidoConfirmText').innerHTML=`<p>${nombre}, tu pedido está en camino. Te confirmaremos por SMS.</p>${ticketHTML}`;
+  document.getElementById('pedidoConfirmText').innerHTML=`<p>${nombre}, tu pedido está en camino.${email?' Te enviamos confirmación a '+email:''}</p>${ticketHTML}`;
   ['pedNombre','pedTel','pedDir','pedNotas'].forEach(id=>document.getElementById(id).value='');
+  if(document.getElementById('pedEmail')) document.getElementById('pedEmail').value='';
 }
 
 // RESERVAS — CALENDARIO
@@ -855,6 +867,7 @@ function showResStep(n){
 async function submitReserva(){
   const nombre=document.getElementById('pubResNombre').value.trim();
   const tel=document.getElementById('pubResTel').value.trim();
+  const email=document.getElementById('pubResEmail').value.trim();
   const personas=parseInt(document.getElementById('pubResPers').value);
   const zona=document.getElementById('pubResZona').value;
   if(!nombre||!tel){showToast('Rellena tu nombre y teléfono');return}
@@ -863,13 +876,19 @@ async function submitReserva(){
   const autoConfirm = resConfig?.confirmacion_automatica === true || resConfig?.confirmacion_automatica === 'true';
   const estadoReserva = autoConfirm ? 'confirmada' : 'pendiente';
   await sb.from('reservas').insert({
-    negocio_id:NID,
-    nombre_cliente:nombre,
-    telefono_cliente:tel,
-    fecha:calSelectedDate,
-    hora:calSelectedHora,
-    personas,zona,
+    negocio_id:NID, nombre_cliente:nombre, telefono_cliente:tel,
+    email_cliente:email,
+    fecha:calSelectedDate, hora:calSelectedHora, personas, zona,
     estado: estadoReserva
+  });
+
+  // Email al cliente
+  const d=new Date(calSelectedDate+'T12:00:00');
+  const fechaLabel=d.toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  if(email) await sendEmail(autoConfirm ? 'reserva_confirmada' : 'reserva_recibida', {
+    email, nombre, negocio: negocio.nombre,
+    fecha: fechaLabel, hora: calSelectedHora,
+    personas, zona, notas: ''
   });
   // Mostrar confirmación visual
   const d=new Date(calSelectedDate+'T12:00:00');
@@ -907,6 +926,16 @@ async function loadCalendar(){await initCalendar()}
 // HELPERS
 function hexToGlow(hex){try{const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);return`rgba(${r},${g},${b},0.12)`}catch(e){return'rgba(255,107,53,0.12)'}}
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500)}
+
+async function sendEmail(tipo, datos) {
+  try {
+    await fetch('/.netlify/functions/email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ tipo, datos })
+    });
+  } catch(e) { console.log('Email error:', e); }
+}
 </script>
 </body>
 </html>

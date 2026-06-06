@@ -2587,6 +2587,23 @@ async function loadReservas(filtro = 'hoy') {
 
 async function updateReservaEstado(id, estado) {
   await sb.from('reservas').update({ estado }).eq('id', id);
+  // Enviar email si se confirma y tiene email
+  if (estado === 'confirmada') {
+    const { data: r } = await sb.from('reservas').select('*').eq('id', id).single();
+    if (r?.email_cliente) {
+      const d = new Date(r.fecha+'T12:00:00');
+      const fechaLabel = d.toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+      await fetch('/.netlify/functions/email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tipo: 'reserva_confirmada', datos: {
+          email: r.email_cliente, nombre: r.nombre_cliente,
+          negocio: currentNegocio.nombre, fecha: fechaLabel,
+          hora: (r.hora||'').slice(0,5), personas: r.personas, zona: r.zona
+        }})
+      });
+    }
+  }
   toast(estado === 'confirmada' ? '✅ Reserva confirmada' : 'Reserva cancelada');
   loadReservas();
   loadDashboard();

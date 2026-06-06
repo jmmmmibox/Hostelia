@@ -2737,8 +2737,7 @@ async function loadHistorialPedidos() {
       <div style="flex:1;">
         <div style="font-size:14px;font-weight:700;">${p.nombre_cliente}</div>
         <div style="font-size:12px;color:var(--muted);margin-top:2px;">${items}</div>
-        ${p.telefono_cliente ? `<div style="font-size:12px;color:var(--muted);">📞 ${p.telefono_cliente}</div>` : ''}
-        ${p.direccion_entrega ? `<div style="font-size:12px;color:var(--muted);">📍 ${p.direccion_entrega}</div>` : ''}
+        <div style="font-size:12px;color:var(--muted);">📞 ${p.telefono_cliente||'—'} &nbsp;·&nbsp; 📍 ${p.direccion_entrega||'—'}</div>
       </div>
       <div style="text-align:right;">
         <div style="font-size:16px;font-weight:800;color:var(--accent);">${parseFloat(p.total||0).toFixed(2)}€</div>

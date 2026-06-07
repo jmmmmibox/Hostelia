@@ -962,7 +962,7 @@ async function checkDisponibilidadPedidos() {
 
   // Comprobar máximo de pedidos del turno
   const hoy = ahora.toISOString().split('T')[0];
-  const { data: pedidosHoy } = await sb.from('pedidos').select('id').eq('negocio_id', NID)
+  const { data: pedidosHoy } = await sb.from('pedidos').select('id,creado_en').eq('negocio_id', NID)
     .gte('creado_en', hoy + 'T00:00:00')
     .not('estado', 'eq', 'cancelado');
 

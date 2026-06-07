@@ -1315,18 +1315,27 @@
           <!-- Modal añadir mesa -->
           <div id="modalMesa" style="display:none;">
             <div class="card">
-              <div class="card-title">Añadir grupo de mesas</div>
-              <div style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;">
-                <div style="flex:1;min-width:120px;">
+              <div class="card-title" id="modalMesaTitle">Añadir grupo de mesas</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px;">
+                <div>
+                  <div class="setting-label">Zona</div>
+                  <select class="setting-input" id="mesaZona" style="cursor:pointer;">
+                    <option value="Interior">🏠 Interior</option>
+                    <option value="Terraza">🌿 Terraza</option>
+                  </select>
+                </div>
+                <div>
                   <div class="setting-label">Cantidad de mesas</div>
                   <input class="setting-input" id="mesaCantidad" type="number" min="1" value="1" placeholder="Ej: 5">
                 </div>
-                <div style="flex:1;min-width:120px;">
+                <div>
                   <div class="setting-label">Comensales por mesa</div>
                   <input class="setting-input" id="mesaComensales" type="number" min="1" value="2" placeholder="Ej: 4">
                 </div>
-                <button class="btn-primary" style="width:auto;padding:10px 20px;margin:0;height:42px;" onclick="saveMesa()">Añadir</button>
-                <button class="btn-secondary" style="padding:10px 16px;height:42px;" onclick="document.getElementById('modalMesa').style.display='none'">Cancelar</button>
+              </div>
+              <div style="display:flex;gap:10px;">
+                <button class="btn-primary" style="flex:1;" onclick="saveMesa()">Guardar</button>
+                <button class="btn-secondary" style="padding:10px 20px;" onclick="document.getElementById('modalMesa').style.display='none'">Cancelar</button>
               </div>
             </div>
           </div>
@@ -3994,14 +4003,36 @@ function renderMesas() {
     document.getElementById('totalComensales').textContent = '0';
     return;
   }
-  grid.innerHTML = mesasData.map(m => `
-    <div class="mesa-card">
-      <div class="mesa-delete" onclick="deleteMesa('${m.id}')" title="Eliminar">🗑️</div>
-      <div class="mesa-icon">🪑</div>
-      <div class="mesa-count">${m.cantidad}</div>
-      <div class="mesa-label">${m.cantidad === 1 ? 'mesa' : 'mesas'}</div>
-      <div class="mesa-capacity">${m.comensales_max} comensales/mesa</div>
-    </div>`).join('');
+  // Agrupar por zona
+  const interior = mesasData.filter(m => m.zona === 'Interior' || !m.zona);
+  const terraza = mesasData.filter(m => m.zona === 'Terraza');
+
+  let html = '';
+  if (interior.length > 0) {
+    html += `<div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px;">🏠 Interior</div>`;
+    html += interior.map(m => `
+      <div class="mesa-card">
+        <div class="mesa-delete" onclick="deleteMesa('${m.id}')" title="Eliminar">🗑️</div>
+        <div class="mesa-edit" onclick="editMesa('${m.id}')" title="Editar" style="position:absolute;top:8px;right:32px;cursor:pointer;font-size:14px;">✏️</div>
+        <div class="mesa-icon">🪑</div>
+        <div class="mesa-count">${m.cantidad}</div>
+        <div class="mesa-label">${m.cantidad === 1 ? 'mesa' : 'mesas'}</div>
+        <div class="mesa-capacity">${m.comensales_max} pax/mesa</div>
+      </div>`).join('');
+  }
+  if (terraza.length > 0) {
+    html += `<div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin:16px 0 10px;">🌿 Terraza</div>`;
+    html += terraza.map(m => `
+      <div class="mesa-card">
+        <div class="mesa-delete" onclick="deleteMesa('${m.id}')" title="Eliminar">🗑️</div>
+        <div class="mesa-edit" onclick="editMesa('${m.id}')" title="Editar" style="position:absolute;top:8px;right:32px;cursor:pointer;font-size:14px;">✏️</div>
+        <div class="mesa-icon">🌿</div>
+        <div class="mesa-count">${m.cantidad}</div>
+        <div class="mesa-label">${m.cantidad === 1 ? 'mesa' : 'mesas'}</div>
+        <div class="mesa-capacity">${m.comensales_max} pax/mesa</div>
+      </div>`).join('');
+  }
+  grid.innerHTML = html;
 
   const totalM = mesasData.reduce((s, m) => s + m.cantidad, 0);
   const totalC = mesasData.reduce((s, m) => s + (m.cantidad * m.comensales_max), 0);
@@ -4009,28 +4040,43 @@ function renderMesas() {
   document.getElementById('totalComensales').textContent = totalC + ' personas';
 }
 
+let editandoMesaId = null;
+
 function showAddMesa() {
+  editandoMesaId = null;
+  document.getElementById('modalMesaTitle').textContent = 'Añadir grupo de mesas';
+  document.getElementById('mesaZona').value = 'Interior';
   document.getElementById('mesaCantidad').value = 1;
   document.getElementById('mesaComensales').value = 2;
   document.getElementById('modalMesa').style.display = 'block';
 }
 
+function editMesa(id) {
+  const m = mesasData.find(x => x.id === id); if (!m) return;
+  editandoMesaId = id;
+  document.getElementById('modalMesaTitle').textContent = 'Editar grupo de mesas';
+  document.getElementById('mesaZona').value = m.zona || 'Interior';
+  document.getElementById('mesaCantidad').value = m.cantidad;
+  document.getElementById('mesaComensales').value = m.comensales_max;
+  document.getElementById('modalMesa').style.display = 'block';
+}
+
 async function saveMesa() {
+  const zona = document.getElementById('mesaZona').value;
   const cantidad = parseInt(document.getElementById('mesaCantidad').value);
   const comensales_max = parseInt(document.getElementById('mesaComensales').value);
 
   if (!cantidad || cantidad < 1) { toast('Introduce una cantidad válida', true); return; }
   if (!comensales_max || comensales_max < 1) { toast('Introduce comensales válidos', true); return; }
 
-  // Comprobar si ya existe un grupo con esa capacidad
-  const existente = mesasData.find(m => m.comensales_max === comensales_max);
-  if (existente) {
-    await sb.from('mesas').update({ cantidad: existente.cantidad + cantidad }).eq('id', existente.id);
-    toast(`Añadidas ${cantidad} mesas de ${comensales_max} comensales ✓`);
+  if (editandoMesaId) {
+    await sb.from('mesas').update({ zona, cantidad, comensales_max }).eq('id', editandoMesaId);
+    toast('✅ Grupo de mesas actualizado');
   } else {
-    await sb.from('mesas').insert({ negocio_id: currentNegocio.id, cantidad, comensales_max });
-    toast(`Creadas ${cantidad} mesas de ${comensales_max} comensales ✓`);
+    await sb.from('mesas').insert({ negocio_id: currentNegocio.id, zona, cantidad, comensales_max });
+    toast(`✅ ${cantidad} mesa${cantidad>1?'s':''} de ${comensales_max} pax añadidas en ${zona}`);
   }
+  editandoMesaId = null;
   document.getElementById('modalMesa').style.display = 'none';
   await loadMesas();
 }

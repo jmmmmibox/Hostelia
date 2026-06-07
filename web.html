@@ -388,7 +388,7 @@
         <div class="field"><label>Email (para recibir confirmación)</label><input id="pubResEmail" type="email" placeholder="tu@email.com"></div>
         <div class="field-row">
           <div class="field"><label>Comensales</label><input id="pubResPers" type="number" min="1" max="20" value="2"></div>
-          <div class="field"><label>Zona</label><select id="pubResZona"><option>Interior</option><option>Terraza</option></select></div>
+          <div class="field" id="zonaField"><label>Zona preferida</label><select id="pubResZona"><option value="Interior">🏠 Interior</option><option value="Terraza">🌿 Terraza</option></select></div>
         </div>
         <div style="display:flex;gap:10px;">
           <button class="btn-submit" style="background:var(--bg2);color:var(--text2);box-shadow:none;flex:0 0 auto;width:auto;padding:15px 20px;" onclick="backToHoras()">‹</button>
@@ -853,10 +853,46 @@ function renderHoras(dateStr){
 function selectHora(hora){
   calSelectedHora=hora;
   showResStep(3);
-  // Summary
   const d=new Date(calSelectedDate+'T12:00:00');
   const dateLabel=d.toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long'});
   document.getElementById('selectedSummary').innerHTML=`📅 ${dateLabel} · 🕐 ${hora}h`;
+  // Calcular zonas disponibles para este día/hora
+  actualizarZonasDisponibles(hora);
+}
+
+async function actualizarZonasDisponibles(hora) {
+  const zonaField = document.getElementById('zonaField');
+  const zonaSelect = document.getElementById('pubResZona');
+  if (!zonaField || !zonaSelect) return;
+
+  // Reservas ya existentes en este día/hora
+  const { data: resExistentes } = await sb.from('reservas')
+    .select('zona').eq('negocio_id', NID)
+    .eq('fecha', calSelectedDate).eq('hora', hora)
+    .not('estado', 'eq', 'cancelada');
+
+  const reservasPorZona = { Interior: 0, Terraza: 0 };
+  (resExistentes||[]).forEach(r => { if (r.zona) reservasPorZona[r.zona] = (reservasPorZona[r.zona]||0) + 1; });
+
+  const mesasInterior = mesasData.filter(m => m.zona === 'Interior' || !m.zona).reduce((s,m) => s+m.cantidad, 0);
+  const mesasTerraza = mesasData.filter(m => m.zona === 'Terraza').reduce((s,m) => s+m.cantidad, 0);
+
+  const hayInterior = mesasInterior > 0;
+  const hayTerraza = mesasTerraza > 0;
+  const libreInterior = hayInterior && (mesasInterior - (reservasPorZona.Interior||0)) > 0;
+  const libreTerraza = hayTerraza && (mesasTerraza - (reservasPorZona.Terraza||0)) > 0;
+
+  // Construir opciones según disponibilidad
+  zonaSelect.innerHTML = '';
+  if (libreInterior) zonaSelect.innerHTML += `<option value="Interior">🏠 Interior</option>`;
+  if (libreTerraza) zonaSelect.innerHTML += `<option value="Terraza">🌿 Terraza</option>`;
+
+  // Si solo hay una zona con mesas configuradas, ocultar el selector
+  if (!hayInterior || !hayTerraza) {
+    zonaField.style.display = 'none';
+  } else {
+    zonaField.style.display = 'block';
+  }
 }
 
 function backToCalendar(){calSelectedDate=null;renderCalendar();showResStep(1)}

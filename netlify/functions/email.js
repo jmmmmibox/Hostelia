@@ -17,7 +17,7 @@ exports.handler = async (event) => {
     let subject, html;
 
     if (tipo === 'reserva_recibida') {
-      subject = `Reserva recibida — ${datos.negocio}`;
+      subject = `${datos.negocio} — Reserva recibida, pendiente de confirmación`;
       html = `
         <div style="font-family:Arial,sans-serif;max-width:520px;margin:0 auto;background:#fff;border-radius:12px;overflow:hidden;border:1px solid #e8e4df;">
           <div style="background:linear-gradient(135deg,#ff6b35,#ffb347);padding:28px 32px;">
@@ -44,7 +44,7 @@ exports.handler = async (event) => {
     }
 
     else if (tipo === 'reserva_confirmada') {
-      subject = `✅ Reserva confirmada — ${datos.negocio}`;
+      subject = `${datos.negocio} — ✅ Tu reserva está confirmada`;
       html = `
         <div style="font-family:Arial,sans-serif;max-width:520px;margin:0 auto;background:#fff;border-radius:12px;overflow:hidden;border:1px solid #e8e4df;">
           <div style="background:linear-gradient(135deg,#34a853,#52d99e);padding:28px 32px;">
@@ -73,7 +73,7 @@ exports.handler = async (event) => {
       const itemsHTML = (datos.items || []).map(i =>
         `<tr><td style="padding:5px 0;color:#444;">${i.qty}× ${i.nombre}</td><td style="text-align:right;font-weight:600;">${(i.precio * i.qty).toFixed(2)}€</td></tr>`
       ).join('');
-      subject = `🛵 Pedido recibido — ${datos.negocio}`;
+      subject = `${datos.negocio} — 🛵 Tu pedido está en camino`;
       html = `
         <div style="font-family:Arial,sans-serif;max-width:520px;margin:0 auto;background:#fff;border-radius:12px;overflow:hidden;border:1px solid #e8e4df;">
           <div style="background:linear-gradient(135deg,#ff6b35,#ffb347);padding:28px 32px;">
@@ -105,11 +105,13 @@ exports.handler = async (event) => {
       return { statusCode: 400, headers, body: JSON.stringify({ error: 'Tipo de email no reconocido' }) };
     }
 
+    const nombreNegocio = (datos.negocio || 'Hostelia').replace(/[<>"]/g, '').trim();
+
     const res = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
       body: JSON.stringify({
-        from: `Hostelia <noreply@hostelia.app>`,
+        from: `${nombreNegocio} <noreply@hostelia.app>`,
         to: [datos.email],
         subject,
         html,

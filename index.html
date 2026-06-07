@@ -2313,19 +2313,23 @@ async function loadDashboard() {
   dashRefreshTimer = setTimeout(loadDashboard,30000);
 }
 
+async function getNombreEmail() {
+  const { data: wc } = await sb.from('web_config').select('hero_titulo').eq('negocio_id', currentNegocio.id).limit(1).maybeSingle();
+  return wc?.hero_titulo || currentNegocio.nombre;
+}
+
 async function confirmarDesdeResumen(id) {
   await sb.from('reservas').update({estado:'confirmada'}).eq('id',id);
-  // Enviar email de confirmación al cliente
   const { data: r } = await sb.from('reservas').select('*').eq('id',id).single();
   if (r?.email_cliente) {
     const d = new Date(r.fecha+'T12:00:00');
     const fechaLabel = d.toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+    const nombreEmail = await getNombreEmail();
     await fetch('/.netlify/functions/email', {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
+      method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({ tipo:'reserva_confirmada', datos:{
         email: r.email_cliente, nombre: r.nombre_cliente,
-        negocio: currentNegocio.nombre, fecha: fechaLabel,
+        negocio: nombreEmail, fecha: fechaLabel,
         hora: (r.hora||'').slice(0,5), personas: r.personas, zona: r.zona
       }})
     });
@@ -2671,12 +2675,13 @@ async function updateReservaEstado(id, estado) {
     if (r?.email_cliente) {
       const d = new Date(r.fecha+'T12:00:00');
       const fechaLabel = d.toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+      const nombreEmail = await getNombreEmail();
       await fetch('/.netlify/functions/email', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ tipo: 'reserva_confirmada', datos: {
           email: r.email_cliente, nombre: r.nombre_cliente,
-          negocio: currentNegocio.nombre, fecha: fechaLabel,
+          negocio: nombreEmail, fecha: fechaLabel,
           hora: (r.hora||'').slice(0,5), personas: r.personas, zona: r.zona
         }})
       });

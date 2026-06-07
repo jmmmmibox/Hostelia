@@ -705,7 +705,7 @@ async function submitPedido(){
 
   // Email al cliente
   if(email) await sendEmail('pedido_recibido', {
-    email, nombre, negocio: negocio.nombre,
+    email, nombre, negocio: (webConf?.hero_titulo || negocio.nombre),
     items: pedidoItems, total: totalFinal,
     direccion: dir, forma_pago: formaPago, notas
   });
@@ -900,7 +900,7 @@ async function submitReserva(){
   const d=new Date(calSelectedDate+'T12:00:00');
   const fechaLabel=d.toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
   if(email) await sendEmail(autoConfirm ? 'reserva_confirmada' : 'reserva_recibida', {
-    email, nombre, negocio: negocio.nombre,
+    email, nombre, negocio: (webConf?.hero_titulo || negocio.nombre),
     fecha: fechaLabel, hora: calSelectedHora,
     personas, zona, notas: ''
   });

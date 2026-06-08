@@ -2934,6 +2934,7 @@ async function loadPedidos() {
 
   document.getElementById('turnosPedidosList').innerHTML = '<div class="loading-row">Cargando...</div>';
   await loadTurnosPedidos();
+}
 
 async function saveMensajesPedidos() {
   const payload = { mensaje_fuera_horario: document.getElementById('cfgMsgFueraHorario').value.trim(), mensaje_max_pedidos: document.getElementById('cfgMsgMaxPedidos').value.trim() };
@@ -3758,9 +3759,7 @@ async function saveWebConfig() {
     webConfigData = Array.isArray(inserted) ? inserted[0] : inserted;
   }
 
-  // Recargar desde la base de datos
-  const { data: fresh } = await sb.from('web_config').select('*')
-    .eq('negocio_id', currentNegocio.id).limit(1);
+  const { data: fresh } = await sb.from('web_config').select('*').eq('negocio_id', currentNegocio.id).limit(1);
   if (fresh?.[0]) webConfigData = fresh[0];
 
   hideSaveBar();

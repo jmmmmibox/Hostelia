@@ -2373,12 +2373,12 @@ async function loadDashboard() {
 let suscripcionData = null;
 
 async function checkSuscripcion() {
-  const { data: sus } = await sb.from('suscripciones').select('*').eq('negocio_id', currentNegocio.id).limit(1).maybeSingle();
+  const { data: sus } = await sb.from('suscripciones_hostelia').select('*').eq('negocio_id', currentNegocio.id).limit(1).maybeSingle();
 
   // Si no existe, crear trial
   if (!sus) {
     const trial_fin = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
-    const { data: nuevo } = await sb.from('suscripciones').insert({
+    const { data: nuevo } = await sb.from('suscripciones_hostelia').insert({
       negocio_id: currentNegocio.id, plan: 'trial', estado: 'activo', trial_fin
     }).select().single();
     suscripcionData = nuevo;
@@ -2393,7 +2393,7 @@ async function checkSuscripcion() {
     const fin = new Date(suscripcionData.trial_fin);
     if (ahora > fin) {
       // Trial expirado → standby
-      await sb.from('suscripciones').update({ plan: 'standby', estado: 'standby' }).eq('negocio_id', currentNegocio.id);
+      await sb.from('suscripciones_hostelia').update({ plan: 'standby', estado: 'standby' }).eq('negocio_id', currentNegocio.id);
       mostrarStandby(); return;
     }
     const diasRestantes = Math.ceil((fin - ahora) / (1000 * 60 * 60 * 24));

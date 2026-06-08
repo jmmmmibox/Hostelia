@@ -2917,7 +2917,7 @@ async function loadHistorialPedidos() {
 
 async function loadPedidos() {
   // Cargar config de envío y mensajes
-  const { data: ec } = await sb.from('envio_config').select('*').eq('negocio_id', currentNegocio.id);
+  const { data: ec } = await sbGet(sb.from('envio_config').select('*').eq('negocio_id', currentNegocio.id));
   if (ec) {
     document.getElementById('cfgCosteEnvio').value = ec.coste_envio || 3;
     document.getElementById('cfgMinEnvioGratis').value = ec.pedido_minimo_envio_gratis || 25;
@@ -2947,17 +2947,13 @@ async function loadPedidos() {
       </div>`;
     }).join('');
 
-  document.getElementById('colNuevos').innerHTML = renderCol(cols.nuevo, 'preparando');
-  document.getElementById('colPreparando').innerHTML = renderCol(cols.preparando, 'listo');
-  document.getElementById('colListo').innerHTML = renderCol([...cols.listo, ...cols.enviado], null);
-  document.getElementById('countNuevos').textContent = cols.nuevo.length;
-  document.getElementById('countPrep').textContent = cols.preparando.length;
-  document.getElementById('countListo').textContent = cols.listo.length + cols.enviado.length;
+  document.getElementById('turnosPedidosList').innerHTML = '<div class="loading-row">Cargando...</div>';
+  await loadTurnosPedidos();
 }
 
 async function saveMensajesPedidos() {
   const payload = { mensaje_fuera_horario: document.getElementById('cfgMsgFueraHorario').value.trim(), mensaje_max_pedidos: document.getElementById('cfgMsgMaxPedidos').value.trim() };
-  const { data: ex } = await sb.from('envio_config').select('id').eq('negocio_id', currentNegocio.id);
+  const { data: ex } = await sbGet(sb.from('envio_config').select('id').eq('negocio_id', currentNegocio.id));
   if (ex) await sb.from('envio_config').update(payload).eq('id', ex.id);
   else await sb.from('envio_config').insert({ ...payload, negocio_id: currentNegocio.id });
   hideSaveBar(); toast('✅ Mensajes guardados');
@@ -3046,7 +3042,7 @@ async function saveEnvioConfig() {
     envio_gratis_siempre: document.getElementById('cfgEnvioGratisSimepre').classList.contains('on'),
     cobrar_envio_siempre: document.getElementById('cfgCobrarEnvioSiempre').classList.contains('on'),
   };
-  const { data: ex } = await sb.from('envio_config').select('id').eq('negocio_id', currentNegocio.id);
+  const { data: ex } = await sbGet(sb.from('envio_config').select('id').eq('negocio_id', currentNegocio.id));
   if (ex) await sb.from('envio_config').update(payload).eq('id', ex.id);
   else await sb.from('envio_config').insert(payload);
   hideSaveBar();
@@ -3661,8 +3657,9 @@ function switchWebTab(tab, el) {
 }
 
 async function loadWebConfig() {
-  const { data } = await sb.from('web_config').select('*')
-    .eq('negocio_id', currentNegocio.id).order('creado_en', { ascending: false });
+  const { data: rows } = await sb.from('web_config').select('*')
+    .eq('negocio_id', currentNegocio.id).limit(1);
+  const data = rows?.[0] ?? null;
   webConfigData = data;
 
   if (!data) return; // Primera vez, campos vacíos
@@ -3779,10 +3776,8 @@ async function saveWebConfig() {
     webConfigData = Array.isArray(_wcArr) ? _wcArr[0] : _wcArr;
   }
 
-  // Recargar desde la base de datos para estar 100% sincronizado
-  const { data: fresh } = await sb.from('web_config').select('*')
-    .eq('negocio_id', currentNegocio.id).order('creado_en', { ascending: false });
-  if (fresh) webConfigData = fresh;
+  const { data: freshRows } = await sb.from('web_config').select('*').eq('negocio_id', currentNegocio.id).limit(1);
+  if (freshRows?.[0]) webConfigData = freshRows[0];
 
   hideSaveBar();
   const imgs = [logo_url ? 'logo ✓' : '', hero_imagen_url ? 'hero ✓' : '', sobre_nosotros_imagen_url ? 'sobre ✓' : ''].filter(Boolean).join(', ');

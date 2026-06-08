@@ -2932,13 +2932,8 @@ async function loadPedidos() {
       </div>`;
     }).join('');
 
-  document.getElementById('colNuevos').innerHTML = renderCol(cols.nuevo, 'preparando');
-  document.getElementById('colPreparando').innerHTML = renderCol(cols.preparando, 'listo');
-  document.getElementById('colListo').innerHTML = renderCol([...cols.listo, ...cols.enviado], null);
-  document.getElementById('countNuevos').textContent = cols.nuevo.length;
-  document.getElementById('countPrep').textContent = cols.preparando.length;
-  document.getElementById('countListo').textContent = cols.listo.length + cols.enviado.length;
-}
+  document.getElementById('turnosPedidosList').innerHTML = '<div class="loading-row">Cargando...</div>';
+  await loadTurnosPedidos();
 
 async function saveMensajesPedidos() {
   const payload = { mensaje_fuera_horario: document.getElementById('cfgMsgFueraHorario').value.trim(), mensaje_max_pedidos: document.getElementById('cfgMsgMaxPedidos').value.trim() };
@@ -3758,15 +3753,15 @@ async function saveWebConfig() {
     // Actualizar datos locales para que no se pierdan en el próximo guardado
     webConfigData = { ...webConfigData, ...payload };
   } else {
-    const { data, error } = await sb.from('web_config').insert(payload).select();
+    const { data: inserted, error } = await sb.from('web_config').insert(payload).select();
     if (error) { toast('Error al crear: ' + error.message, true); return; }
-    webConfigData = data;
+    webConfigData = Array.isArray(inserted) ? inserted[0] : inserted;
   }
 
-  // Recargar desde la base de datos para estar 100% sincronizado
+  // Recargar desde la base de datos
   const { data: fresh } = await sb.from('web_config').select('*')
-    .eq('negocio_id', currentNegocio.id).order('creado_en', { ascending: false });
-  if (fresh) webConfigData = fresh;
+    .eq('negocio_id', currentNegocio.id).limit(1);
+  if (fresh?.[0]) webConfigData = fresh[0];
 
   hideSaveBar();
   const imgs = [logo_url ? 'logo ✓' : '', hero_imagen_url ? 'hero ✓' : '', sobre_nosotros_imagen_url ? 'sobre ✓' : ''].filter(Boolean).join(', ');

@@ -1,5 +1,5 @@
 {
-  "name": "hostelia-functions",
+  "name": "hostelia",
   "version": "1.0.0",
   "dependencies": {
     "stripe": "^14.0.0",

@@ -943,6 +943,12 @@
       <div class="topbar-title" id="topbarTitle">Resumen</div>
       <div class="topbar-actions">
         <button class="topbar-btn" onclick="copySnippet()">📋 Copiar snippet</button>
+        <div id="trialBanner" style="display:none;background:linear-gradient(135deg,var(--accent),var(--accent2));padding:6px 14px;border-radius:100px;font-size:12px;font-weight:700;color:#fff;cursor:pointer;" onclick="mostrarModalPago()">
+          ⏱️ <span id="trialDias">30</span> días gratis restantes · Suscribirse
+        </div>
+        <div id="graciaBanner" style="display:none;background:rgba(224,82,82,0.1);border:1px solid var(--danger);padding:6px 14px;border-radius:100px;font-size:12px;font-weight:700;color:var(--danger);cursor:pointer;" onclick="mostrarModalPago()">
+          ⚠️ Pago fallido · <span id="graciaDias">7</span> días para reactivar
+        </div>
         <button class="topbar-btn accent" onclick="const s=currentNegocio.slug;window.open(s?'/'+s:'/web.html?negocio='+currentNegocio.id,'_blank')">👁️ Ver mi web</button>
         <div class="avatar" id="avatarInitial">?</div>
       </div>
@@ -1987,6 +1993,51 @@
   </div>
 </div>
 
+<!-- MODAL PAGO -->
+<div id="modalPago" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:400;align-items:center;justify-content:center;padding:20px;">
+  <div style="background:var(--surface);border-radius:20px;max-width:460px;width:100%;padding:36px;text-align:center;">
+    <div style="font-size:48px;margin-bottom:16px;">🍽️</div>
+    <div style="font-size:22px;font-weight:800;margin-bottom:8px;">Elige tu plan</div>
+    <div style="font-size:14px;color:var(--muted);margin-bottom:28px;">Sin permanencia. Cancela cuando quieras.</div>
+    <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:20px;">
+      <div style="border:2px solid var(--accent);border-radius:14px;padding:20px;cursor:pointer;text-align:left;" onclick="iniciarPago('monthly')">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <div>
+            <div style="font-size:16px;font-weight:700;">Plan mensual</div>
+            <div style="font-size:12px;color:var(--muted);margin-top:2px;">Todas las funciones incluidas</div>
+          </div>
+          <div style="font-size:22px;font-weight:900;color:var(--accent);">35€<span style="font-size:13px;font-weight:400;color:var(--muted);">/mes</span></div>
+        </div>
+      </div>
+      <div style="border:2px solid var(--success);border-radius:14px;padding:20px;cursor:pointer;text-align:left;position:relative;" onclick="iniciarPago('annual')">
+        <div style="position:absolute;top:-10px;right:16px;background:var(--success);color:#fff;font-size:11px;font-weight:700;padding:3px 10px;border-radius:100px;">AHORRA 72€</div>
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <div>
+            <div style="font-size:16px;font-weight:700;">Plan anual</div>
+            <div style="font-size:12px;color:var(--muted);margin-top:2px;">348€/año · Pago único</div>
+          </div>
+          <div style="font-size:22px;font-weight:900;color:var(--success);">29€<span style="font-size:13px;font-weight:400;color:var(--muted);">/mes</span></div>
+        </div>
+      </div>
+    </div>
+    <button onclick="document.getElementById('modalPago').style.display='none'" style="background:none;border:none;color:var(--muted);font-size:13px;cursor:pointer;">Cerrar</button>
+  </div>
+</div>
+
+<!-- PANTALLA STANDBY -->
+<div id="standbyScreen" style="display:none;position:fixed;inset:0;background:var(--bg);z-index:500;display:none;align-items:center;justify-content:center;">
+  <div style="text-align:center;max-width:480px;padding:40px;">
+    <div style="font-size:64px;margin-bottom:24px;">⏸️</div>
+    <div style="font-size:24px;font-weight:800;margin-bottom:12px;">Cuenta en pausa</div>
+    <div style="font-size:15px;color:var(--muted);margin-bottom:32px;line-height:1.7;">Tu suscripción ha vencido y el período de gracia ha terminado. Reactiva tu cuenta para seguir usando Hostelia. Todos tus datos están a salvo.</div>
+    <div style="display:flex;flex-direction:column;gap:12px;align-items:center;">
+      <button class="btn-primary" style="max-width:280px;font-size:15px;padding:14px 24px;" onclick="iniciarPago('monthly')">💳 Reactivar — 35€/mes</button>
+      <button class="btn-secondary" style="max-width:280px;padding:12px 24px;" onclick="iniciarPago('annual')">🏷️ Plan anual — 29€/mes (348€/año)</button>
+      <button onclick="doLogout()" style="background:none;border:none;color:var(--muted);font-size:13px;cursor:pointer;margin-top:8px;">Cerrar sesión</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -2143,6 +2194,9 @@ async function loadApp(isNewUser = false) {
     document.getElementById('dashWelcomeBanner').style.display = 'flex';
   }
 
+  // Verificar suscripción
+  await checkSuscripcion();
+
   // Cargar datos
   await Promise.all([
     loadDashboard(),
@@ -2153,8 +2207,6 @@ async function loadApp(isNewUser = false) {
 
   updateSnippet();
 }
-
-// ── DASHBOARD ─────────────────────────────────────────
 let dashRefreshTimer = null;
 
 async function loadDashboard() {
@@ -2320,6 +2372,87 @@ async function loadDashboard() {
   // Auto-refresco
   clearTimeout(dashRefreshTimer);
   dashRefreshTimer = setTimeout(loadDashboard,30000);
+}
+
+// ── SUSCRIPCIÓN ────────────────────────────────────────
+let suscripcionData = null;
+
+async function checkSuscripcion() {
+  const { data: sus } = await sb.from('suscripciones').select('*').eq('negocio_id', currentNegocio.id).limit(1).maybeSingle();
+
+  // Si no existe, crear trial
+  if (!sus) {
+    const trial_fin = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+    const { data: nuevo } = await sb.from('suscripciones').insert({
+      negocio_id: currentNegocio.id, plan: 'trial', estado: 'activo', trial_fin
+    }).select().single();
+    suscripcionData = nuevo;
+  } else {
+    suscripcionData = sus;
+  }
+
+  const ahora = new Date();
+
+  // Trial activo
+  if (suscripcionData.plan === 'trial') {
+    const fin = new Date(suscripcionData.trial_fin);
+    if (ahora > fin) {
+      // Trial expirado → standby
+      await sb.from('suscripciones').update({ plan: 'standby', estado: 'standby' }).eq('negocio_id', currentNegocio.id);
+      mostrarStandby(); return;
+    }
+    const diasRestantes = Math.ceil((fin - ahora) / (1000 * 60 * 60 * 24));
+    document.getElementById('trialDias').textContent = diasRestantes;
+    document.getElementById('trialBanner').style.display = 'flex';
+    return;
+  }
+
+  // Standby
+  if (suscripcionData.estado === 'standby') { mostrarStandby(); return; }
+
+  // Gracia
+  if (suscripcionData.estado === 'gracia') {
+    const fin = new Date(suscripcionData.gracia_fin);
+    if (ahora > fin) { mostrarStandby(); return; }
+    const diasRestantes = Math.ceil((fin - ahora) / (1000 * 60 * 60 * 24));
+    document.getElementById('graciaDias').textContent = diasRestantes;
+    document.getElementById('graciaBanner').style.display = 'flex';
+    return;
+  }
+
+  // Plan activo — no mostrar nada
+}
+
+function mostrarStandby() {
+  document.getElementById('appScreen').style.display = 'none';
+  document.getElementById('standbyScreen').style.display = 'flex';
+}
+
+function mostrarModalPago() {
+  document.getElementById('modalPago').style.display = 'flex';
+}
+
+async function iniciarPago(plan) {
+  const btn = event?.target;
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Redirigiendo...'; }
+  try {
+    const res = await fetch('/.netlify/functions/stripe-checkout', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        plan,
+        negocio_id: currentNegocio.id,
+        email: currentUser.email,
+        nombre: currentNegocio.nombre
+      })
+    });
+    const data = await res.json();
+    if (data.url) window.location.href = data.url;
+    else toast('Error al iniciar el pago: ' + (data.error || 'desconocido'), true);
+  } catch(e) {
+    toast('Error de conexión: ' + e.message, true);
+  }
+  if (btn) { btn.disabled = false; }
 }
 
 async function getNombreEmail() {

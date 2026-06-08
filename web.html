@@ -537,19 +537,19 @@ window.addEventListener('DOMContentLoaded',async()=>{
   try{
     // Resolver slug a UUID si viene por ruta limpia
     if(!NID&&isSlug){
-      const{data:negBySlug}=await sb.from('negocios').select('id').eq('slug',pathSlug).maybeSingle();
+      const{data:negBySlug}=await sbSingle(sb.from('negocios').select('id').eq('slug',pathSlug));
       if(negBySlug) NID=negBySlug.id;
       else{document.getElementById('loader').innerHTML='<p style="color:#999;font-size:14px">Página no encontrada</p>';return;}
     }
     if(!NID){document.getElementById('loader').innerHTML='<p style="color:#999;font-size:14px">Página no encontrada</p>';return;}
     const[n,w,c,p,m,rc,ec]=await Promise.all([
       sb.from('negocios').select('*').eq('id',NID).single(),
-      sb.from('web_config').select('*').eq('negocio_id',NID).order('creado_en',{ascending:false}).limit(1).maybeSingle(),
+      sb.from('web_config').select('*').eq('negocio_id',NID).order('creado_en',{ascending:false}).limit(1),
       sb.from('categorias').select('*').eq('negocio_id',NID).eq('activa',true).order('orden'),
       sb.from('carta').select('*').eq('negocio_id',NID).eq('disponible',true).order('orden'),
       sb.from('mesas').select('*').eq('negocio_id',NID),
-      sb.from('reservas_config').select('*').eq('negocio_id',NID).limit(1).maybeSingle(),
-      sb.from('envio_config').select('*').eq('negocio_id',NID).limit(1).maybeSingle()
+      sb.from('reservas_config').select('*').eq('negocio_id',NID).limit(1),
+      sb.from('envio_config').select('*').eq('negocio_id',NID).limit(1)
     ]);
     negocio=n.data;webConf=w.data;categorias=c.data||[];platos=p.data||[];
     mesasData=m.data||[];resConfig=rc.data;envioConf=ec.data;
@@ -1069,7 +1069,7 @@ async function initChat() {
   if (chatInited) return;
   chatInited = true;
 
-  const { data: ag } = await sb.from('agente_config').select('*').eq('negocio_id', NID).limit(1).maybeSingle();
+  const { data: ag } = await sbSingle(sb.from('agente_config').select('*').eq('negocio_id', NID).limit(1));
   const { data: kb } = await sb.from('conocimiento').select('pregunta,respuesta').eq('negocio_id', NID);
   const { data: carta } = await sb.from('carta').select('nombre,precio,descripcion').eq('negocio_id', NID).eq('disponible', true).limit(30);
   const { data: turnos } = await sb.from('turnos').select('nombre,hora_inicio,hora_fin').eq('negocio_id', NID).eq('activo', true);

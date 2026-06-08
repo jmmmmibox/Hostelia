@@ -2047,6 +2047,15 @@ const SUPA_KEY = 'sb_publishable_DPTZ1h-aIDgU3AZnN2Z5Zg_7optuCLN';
 const { createClient } = supabase;
 const sb = createClient(SUPA_URL, SUPA_KEY);
 
+// Helper para reemplazar maybeSingle() - evita error 406
+async function sbSingle(query) {
+  const result = await query;
+  if (Array.isArray(result.data)) {
+    return { ...result, data: result.data[0] ?? null };
+  }
+  return result;
+}
+
 let currentUser = null;
 let currentNegocio = null;
 let currentSaveContext = null;
@@ -2373,7 +2382,7 @@ async function loadDashboard() {
 let suscripcionData = null;
 
 async function checkSuscripcion() {
-  const { data: sus } = await sb.from('suscripciones_hostelia').select('*').eq('negocio_id', currentNegocio.id).limit(1).maybeSingle();
+  const { data: sus } = await sbSingle(sb.from('suscripciones_hostelia').select('*').eq('negocio_id', currentNegocio.id).limit(1));
 
   // Si no existe, crear trial
   if (!sus) {
@@ -2451,7 +2460,7 @@ async function iniciarPago(plan) {
 }
 
 async function getNombreEmail() {
-  const { data: wc } = await sb.from('web_config').select('hero_titulo').eq('negocio_id', currentNegocio.id).limit(1).maybeSingle();
+  const { data: wc } = await sbSingle(sb.from('web_config').select('hero_titulo').eq('negocio_id', currentNegocio.id).limit(1));
   return wc?.hero_titulo || currentNegocio.nombre;
 }
 
@@ -2653,7 +2662,7 @@ async function saveReservasConfig() {
     antelacion_min_horas: parseInt(document.getElementById('cfgMinHoras').value),
     confirmacion_automatica: autoConfirm,
   };
-  const { data: existing } = await sb.from('reservas_config').select('id').eq('negocio_id', currentNegocio.id).limit(1).maybeSingle();
+  const { data: existing } = await sbSingle(sb.from('reservas_config').select('id').eq('negocio_id', currentNegocio.id).limit(1));
   if (existing) {
     const { error } = await sb.from('reservas_config').update(payload).eq('id', existing.id);
     if (error) { toast('Error al guardar: ' + error.message, true); return; }
@@ -2907,7 +2916,7 @@ async function loadHistorialPedidos() {
 
 async function loadPedidos() {
   // Cargar config de envío y mensajes
-  const { data: ec } = await sb.from('envio_config').select('*').eq('negocio_id', currentNegocio.id).limit(1).maybeSingle();
+  const { data: ec } = await sbSingle(sb.from('envio_config').select('*').eq('negocio_id', currentNegocio.id).limit(1));
   if (ec) {
     document.getElementById('cfgCosteEnvio').value = ec.coste_envio || 3;
     document.getElementById('cfgMinEnvioGratis').value = ec.pedido_minimo_envio_gratis || 25;
@@ -2947,7 +2956,7 @@ async function loadPedidos() {
 
 async function saveMensajesPedidos() {
   const payload = { mensaje_fuera_horario: document.getElementById('cfgMsgFueraHorario').value.trim(), mensaje_max_pedidos: document.getElementById('cfgMsgMaxPedidos').value.trim() };
-  const { data: ex } = await sb.from('envio_config').select('id').eq('negocio_id', currentNegocio.id).limit(1).maybeSingle();
+  const { data: ex } = await sbSingle(sb.from('envio_config').select('id').eq('negocio_id', currentNegocio.id).limit(1));
   if (ex) await sb.from('envio_config').update(payload).eq('id', ex.id);
   else await sb.from('envio_config').insert({ ...payload, negocio_id: currentNegocio.id });
   hideSaveBar(); toast('✅ Mensajes guardados');
@@ -3036,7 +3045,7 @@ async function saveEnvioConfig() {
     envio_gratis_siempre: document.getElementById('cfgEnvioGratisSimepre').classList.contains('on'),
     cobrar_envio_siempre: document.getElementById('cfgCobrarEnvioSiempre').classList.contains('on'),
   };
-  const { data: ex } = await sb.from('envio_config').select('id').eq('negocio_id', currentNegocio.id).limit(1).maybeSingle();
+  const { data: ex } = await sbSingle(sb.from('envio_config').select('id').eq('negocio_id', currentNegocio.id).limit(1));
   if (ex) await sb.from('envio_config').update(payload).eq('id', ex.id);
   else await sb.from('envio_config').insert(payload);
   hideSaveBar();
@@ -3066,7 +3075,7 @@ async function saveConfig() {
   
   if (slug) {
     // Verificar que el slug no está en uso por otro negocio
-    const { data: existe } = await sb.from('negocios').select('id').eq('slug', slug).neq('id', currentNegocio.id).maybeSingle();
+    const { data: existe } = await sbSingle(sb.from('negocios').select('id').eq('slug', slug).neq('id', currentNegocio.id));
     if (existe) { toast('Ese slug ya está en uso. Elige otro.', true); return; }
   }
 
@@ -3221,7 +3230,7 @@ async function loadMetricas() {
   const inicioPeriodo = new Date(hoy - metPeriodo*86400000).toISOString().split('T')[0];
 
   // Config agente
-  const {data:ag} = await sb.from('agente_config').select('activo_reservas,activo_pedidos').eq('negocio_id',currentNegocio.id).maybeSingle();
+  const {data:ag} = await sbSingle(sb.from('agente_config').select('activo_reservas,activo_pedidos').eq('negocio_id',currentNegocio.id));
   const resActivo = ag?.activo_reservas !== false;
   const pedActivo = ag?.activo_pedidos === true;
 
@@ -3440,13 +3449,13 @@ async function descargarBackup() {
     const nid = currentNegocio.id;
     const [neg, wc, cats, carta, mesas, resConfig, turnos, agente, conocimiento, reservas, pedidos] = await Promise.all([
       sb.from('negocios').select('*').eq('id', nid).single(),
-      sb.from('web_config').select('*').eq('negocio_id', nid).limit(1).maybeSingle(),
+      sb.from('web_config').select('*').eq('negocio_id', nid).limit(1),
       sb.from('categorias').select('*').eq('negocio_id', nid),
       sb.from('carta').select('*').eq('negocio_id', nid),
       sb.from('mesas').select('*').eq('negocio_id', nid),
-      sb.from('reservas_config').select('*').eq('negocio_id', nid).limit(1).maybeSingle(),
+      sb.from('reservas_config').select('*').eq('negocio_id', nid).limit(1),
       sb.from('turnos').select('*').eq('negocio_id', nid),
-      sb.from('agente_config').select('*').eq('negocio_id', nid).limit(1).maybeSingle(),
+      sb.from('agente_config').select('*').eq('negocio_id', nid).limit(1),
       sb.from('conocimiento').select('*').eq('negocio_id', nid),
       sb.from('reservas').select('*').eq('negocio_id', nid).order('fecha', { ascending: false }).limit(500),
       sb.from('pedidos').select('*').eq('negocio_id', nid).order('creado_en', { ascending: false }).limit(500),
@@ -3537,21 +3546,21 @@ async function confirmarRestaurar() {
     // Restaurar reservas_config
     if (backupData.reservas_config) {
       const rc = { ...backupData.reservas_config, negocio_id: nid };
-      const { data: ex } = await sb.from('reservas_config').select('id').eq('negocio_id', nid).limit(1).maybeSingle();
+      const { data: ex } = await sbSingle(sb.from('reservas_config').select('id').eq('negocio_id', nid).limit(1));
       if (ex) await sb.from('reservas_config').update(rc).eq('id', ex.id);
       else await sb.from('reservas_config').insert(rc);
     }
     // Restaurar agente_config
     if (backupData.agente_config) {
       const ac = { ...backupData.agente_config, negocio_id: nid };
-      const { data: ex } = await sb.from('agente_config').select('id').eq('negocio_id', nid).limit(1).maybeSingle();
+      const { data: ex } = await sbSingle(sb.from('agente_config').select('id').eq('negocio_id', nid).limit(1));
       if (ex) await sb.from('agente_config').update(ac).eq('id', ex.id);
       else await sb.from('agente_config').insert(ac);
     }
     // Restaurar web_config
     if (backupData.web_config) {
       const wc = { ...backupData.web_config, negocio_id: nid };
-      const { data: ex } = await sb.from('web_config').select('id').eq('negocio_id', nid).limit(1).maybeSingle();
+      const { data: ex } = await sbSingle(sb.from('web_config').select('id').eq('negocio_id', nid).limit(1));
       if (ex) await sb.from('web_config').update(wc).eq('id', ex.id);
       else await sb.from('web_config').insert(wc);
     }
@@ -3650,8 +3659,8 @@ function switchWebTab(tab, el) {
 }
 
 async function loadWebConfig() {
-  const { data } = await sb.from('web_config').select('*')
-    .eq('negocio_id', currentNegocio.id).order('creado_en', { ascending: false }).limit(1).maybeSingle();
+  const { data } = await sbSingle(sb.from('web_config').select('*')
+    .eq('negocio_id', currentNegocio.id).order('creado_en', { ascending: false }).limit(1));
   webConfigData = data;
 
   if (!data) return; // Primera vez, campos vacíos
@@ -3769,8 +3778,8 @@ async function saveWebConfig() {
   }
 
   // Recargar desde la base de datos para estar 100% sincronizado
-  const { data: fresh } = await sb.from('web_config').select('*')
-    .eq('negocio_id', currentNegocio.id).order('creado_en', { ascending: false }).limit(1).maybeSingle();
+  const { data: fresh } = await sbSingle(sb.from('web_config').select('*')
+    .eq('negocio_id', currentNegocio.id).order('creado_en', { ascending: false }).limit(1));
   if (fresh) webConfigData = fresh;
 
   hideSaveBar();

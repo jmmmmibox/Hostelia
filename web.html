@@ -628,8 +628,8 @@ function render(){
   document.getElementById('footerInfo').innerHTML=[wc.contacto_direccion,wc.contacto_telefono].filter(Boolean).join(' · ');
   document.getElementById('footerEl').style.display='block';
 
-  // Mostrar chatbot
-  document.getElementById('chatBtn').style.display = 'block';
+  // Mostrar chatbot (desactivado hasta tener créditos Anthropic)
+  // document.getElementById('chatBtn').style.display = 'block';
 
   // Show
   setTimeout(()=>{document.getElementById('loader').classList.add('hide')},300);

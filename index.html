@@ -2036,16 +2036,11 @@
 
 <script>
 const SUPA_URL = 'https://fltomutxpijtuudjdgca.supabase.co';
-const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZsdG9tdXR4cGlqdHV1ZGpkZ2NhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA5Mjc4OTcsImV4cCI6MjA5NjUwMzg5N30._-qLLzxc-lOX3LVtrbplwJqt_Tu7bIPm71z99JuIyW0';
+const SUPA_KEY = 'sb_publishable_DPTZ1h-aIDgU3AZnN2Z5Zg_7optuCLN';
 
 const { createClient } = supabase;
 const sb = createClient(SUPA_URL, SUPA_KEY);
-
-// Helper seguro para leer una sola fila (evita 406 en tablas vacías)
-async function sbGet(query) {
-  const r = await query.limit(1);
-  return { data: r.data?.[0] ?? null, error: r.error };
-}
+async function sbGet(q){const r=await q.limit(1);return{data:r.data?.[0]??null,error:r.error};}
 
 let currentUser = null;
 let currentNegocio = null;
@@ -2158,7 +2153,7 @@ async function doLogout() {
 
 // ── NEGOCIO ───────────────────────────────────────────
 async function loadNegocio() {
-  const { data } = await sbGet(sb.from('negocios').select('*').eq('user_id', currentUser.id));
+  const { data } = await sbGet(sb.from('negocios').select('*').eq('user_id',currentUser.id));
   if (!data) {
     // Primer login tras confirmación — recuperar datos del registro
     const pending = localStorage.getItem('hostelia_pending_negocio');
@@ -2484,8 +2479,7 @@ async function moverPedidoDesdeResumen(id) {
 
 // ── AGENTE CONFIG ─────────────────────────────────────
 async function loadAgenteConfig() {
-  const { data: rows } = await sb.from('agente_config').select('*').eq('negocio_id', currentNegocio.id).limit(1);
-  const data = rows?.[0] ?? null;
+  const { data } = await sbGet(sb.from('agente_config').select('*').eq('negocio_id',currentNegocio.id));
   if (!data) return;
   document.getElementById('agNombre').value = data.nombre_agente || '';
   document.getElementById('agTono').value = data.tono || 'Cercano y amigable 😊';
@@ -2512,7 +2506,7 @@ async function saveAgente() {
     activo_pedidos: document.getElementById('togPedidos').classList.contains('on'),
     activo_lista_espera: document.getElementById('togEspera').classList.contains('on'),
   };
-  const { data: existing } = await sbGet(sb.from('agente_config').select('id').eq('negocio_id', currentNegocio.id));
+  const { data: existing } = await sbGet(sb.from('agente_config').select('id').eq('negocio_id',currentNegocio.id));
   if (existing) {
     await sb.from('agente_config').update(payload).eq('negocio_id', currentNegocio.id);
   } else {
@@ -2598,13 +2592,13 @@ async function saveCuestionario() {
 }
 
 async function loadTextoLibre() {
-  const { data } = await sbGet(sb.from('conocimiento').select('*').eq('negocio_id', currentNegocio.id).eq('tipo','texto'));
+  const { data } = await sbGet(sb.from('conocimiento').select('*').eq('negocio_id',currentNegocio.id).eq('tipo','texto'));
   if (data) document.getElementById('textoLibre').value = data.contenido || '';
 }
 
 async function saveTextoLibre() {
   const contenido = document.getElementById('textoLibre').value;
-  const { data: existing } = await sbGet(sb.from('conocimiento').select('id').eq('negocio_id', currentNegocio.id).eq('tipo','texto'));
+  const { data: existing } = await sbGet(sb.from('conocimiento').select('id').eq('negocio_id',currentNegocio.id).eq('tipo','texto'));
   if (existing) {
     await sb.from('conocimiento').update({ contenido, actualizado_en: new Date().toISOString() }).eq('id', existing.id);
   } else {
@@ -2616,7 +2610,7 @@ async function saveTextoLibre() {
 async function saveUrl() {
   const url = document.getElementById('urlWeb').value.trim();
   if (!url) return;
-  const { data: existing } = await sbGet(sb.from('conocimiento').select('id').eq('negocio_id', currentNegocio.id).eq('tipo','url'));
+  const { data: existing } = await sbGet(sb.from('conocimiento').select('id').eq('negocio_id',currentNegocio.id).eq('tipo','url'));
   if (existing) {
     await sb.from('conocimiento').update({ contenido: url }).eq('id', existing.id);
   } else {
@@ -2627,7 +2621,7 @@ async function saveUrl() {
 }
 
 async function loadUrlGuardada() {
-  const { data } = await sbGet(sb.from('conocimiento').select('*').eq('negocio_id', currentNegocio.id).eq('tipo','url'));
+  const { data } = await sbGet(sb.from('conocimiento').select('*').eq('negocio_id',currentNegocio.id).eq('tipo','url'));
   if (data) {
     document.getElementById('urlWeb').value = data.contenido || '';
     document.getElementById('urlGuardada').innerHTML = `<div class="kb-item"><div class="kb-item-icon">🔗</div><div class="kb-item-info"><div class="kb-item-name">${data.contenido}</div><div class="kb-item-meta">URL guardada</div></div></div>`;
@@ -2636,8 +2630,7 @@ async function loadUrlGuardada() {
 
 // ── RESERVAS ──────────────────────────────────────────
 async function loadReservasConfig() {
-  const { data: rows } = await sb.from('reservas_config').select('*').eq('negocio_id', currentNegocio.id).limit(1);
-  const data = rows?.[0] ?? null;
+  const { data } = await sbGet(sb.from('reservas_config').select('*').eq('negocio_id',currentNegocio.id));
   if (data) {
     document.getElementById('cfgMaxDias').value = data.antelacion_max_dias || 30;
     document.getElementById('cfgMinHoras').value = data.antelacion_min_horas || 2;
@@ -2810,7 +2803,7 @@ async function updateReservaEstado(id, estado) {
   await sb.from('reservas').update({ estado }).eq('id', id);
   // Enviar email si se confirma y tiene email
   if (estado === 'confirmada') {
-    const { data: r } = await sbGet(sb.from('reservas').select('*').eq('id', id));
+    const { data: r } = await sbGet(sb.from('reservas').select('*').eq('id',id));
     if (r?.email_cliente) {
       const d = new Date(r.fecha+'T12:00:00');
       const fechaLabel = d.toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
@@ -2836,7 +2829,7 @@ let editandoReservaId = null;
 function editReserva(id) {
   const reservas = document.getElementById('reservasBody');
   // Buscar la reserva en Supabase
-  sbGet(sb.from('reservas').select('*').eq('id', id)).then(({ data: r }) => {
+  sbGet(sb.from('reservas').select('*').eq('id',id)).then(({ data: r }) => {
     if (!r) return;
     editandoReservaId = id;
     document.getElementById('resNombre').value = r.nombre_cliente;
@@ -3132,7 +3125,7 @@ async function finishOnboarding() {
 
     // Asegurar negocio existe — con reintento
     if (!currentNegocio) {
-      let { data: neg } = await sbGet(sb.from('negocios').select('*').eq('user_id', currentUser.id));
+      let { data: neg } = await sbGet(sb.from('negocios').select('*').eq('user_id',currentUser.id));
       if (!neg) {
         // Crear negocio si no existe todavía
         const nombre = document.getElementById('regNegocio')?.value || 'Mi Restaurante';
@@ -3441,8 +3434,8 @@ async function descargarBackup() {
   try {
     const nid = currentNegocio.id;
     const [neg, wc, cats, carta, mesas, resConfig, turnos, agente, conocimiento, reservas, pedidos] = await Promise.all([
-      sbGet(sb.from('negocios').select('*').eq('id', nid)),
-      sbGet(sb.from('web_config').select('*').eq('negocio_id', nid)),
+      sbGet(sb.from('negocios').select('*').eq('id',nid)),
+      sb.from('web_config').select('*').eq('negocio_id', nid),
       sb.from('categorias').select('*').eq('negocio_id', nid),
       sb.from('carta').select('*').eq('negocio_id', nid),
       sb.from('mesas').select('*').eq('negocio_id', nid),

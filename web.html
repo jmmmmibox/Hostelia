@@ -1138,10 +1138,11 @@ async function sendChat() {
   document.getElementById('chatMessages').appendChild(typing);
   document.getElementById('chatMessages').scrollTop = 999999;
   try {
+    const payload = JSON.stringify({ system: chatSystem, messages: chatHistory.map(m => ({ role: m.role, content: m.content })) });
     const res = await fetch('/.netlify/functions/chat', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ system: chatSystem, messages: chatHistory.map(m => ({ role: m.role, content: m.content })) })
+      headers: { 'Content-Type': 'application/json; charset=utf-8' },
+      body: payload
     });
     const data = await res.json();
     document.getElementById('chatTyping')?.remove();

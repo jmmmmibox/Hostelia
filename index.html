@@ -1929,6 +1929,12 @@
             </div>
           </div>
         </div>
+        <div class="card" style="margin-bottom:20px;">
+          <div class="card-title">Notificaciones SMS</div>
+          <div class="toggle-row"><div class="toggle-info"><div class="toggle-title">SMS confirmación de reserva</div><div class="toggle-sub">El cliente recibe SMS al reservar</div></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+          <div class="toggle-row"><div class="toggle-info"><div class="toggle-title">SMS recordatorio 24h antes</div><div class="toggle-sub">Recordatorio automático</div></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+          <div class="toggle-row"><div class="toggle-info"><div class="toggle-title">SMS confirmación de pedido</div><div class="toggle-sub">El cliente recibe SMS cuando su pedido sale</div></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+        </div>
         <div class="card">
           <div class="card-title">Tu snippet de instalación</div>
           <p style="font-size:13px;color:var(--muted);margin-bottom:14px;">Copia este código y pégalo antes del <code style="color:var(--accent);">&lt;/body&gt;</code> en tu web.</p>
@@ -2036,11 +2042,20 @@
 
 <script>
 const SUPA_URL = 'https://fltomutxpijtuudjdgca.supabase.co';
-const SUPA_KEY = 'sb_publishable_DPTZ1h-aIDgU3AZnN2Z5Zg_7optuCLN';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZsdG9tdXR4cGlqdHV1ZGpkZ2NhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA5Mjc4OTcsImV4cCI6MjA5NjUwMzg5N30._-qLLzxc-lOX3LVtrbplwJqt_Tu7bIPm71z99JuIyW0';
 
 const { createClient } = supabase;
 const sb = createClient(SUPA_URL, SUPA_KEY);
-async function sbGet(q){const r=await q.limit(1);return{data:r.data?.[0]??null,error:r.error};}
+// ── Helpers para nuevo PostgREST (evita 406 en tablas vacías) ──
+async function sbGet(q){
+  const r = await q.limit(1);
+  return { data: Array.isArray(r.data) ? (r.data[0] ?? null) : r.data, error: r.error };
+}
+async function sbIns(q){
+  const r = await q;
+  return { data: Array.isArray(r.data) ? (r.data[0] ?? null) : r.data, error: r.error };
+}
+
 
 let currentUser = null;
 let currentNegocio = null;
@@ -2137,9 +2152,9 @@ async function doRegister() {
   }
 
   // Con sesión activa (email confirmation desactivado en Supabase)
-  const { data: neg } = await sb.from('negocios').insert({
+  const { data: neg } = await sbIns(sb.from('negocios').insert({
     user_id: currentUser.id, nombre, tipo
-  }).select();
+  }).select());
   currentNegocio = neg;
   btn.textContent = '¡Listo! Entrando...';
   await loadApp(true);
@@ -2153,15 +2168,15 @@ async function doLogout() {
 
 // ── NEGOCIO ───────────────────────────────────────────
 async function loadNegocio() {
-  const { data } = await sbGet(sb.from('negocios').select('*').eq('user_id',currentUser.id));
+  const { data } = await sbGet(sb.from('negocios').select('*').eq('user_id', currentUser.id));
   if (!data) {
     // Primer login tras confirmación — recuperar datos del registro
     const pending = localStorage.getItem('hostelia_pending_negocio');
     const { nombre, tipo } = pending ? JSON.parse(pending) : { nombre: 'Mi negocio', tipo: 'Restaurante' };
     localStorage.removeItem('hostelia_pending_negocio');
-    const { data: neg } = await sb.from('negocios').insert({
+    const { data: neg } = await sbIns(sb.from('negocios').insert({
       user_id: currentUser.id, nombre, tipo
-    }).select();
+    }).select());
     currentNegocio = neg;
     await loadApp(true); // isNewUser = true → muestra banner bienvenida
   } else {
@@ -2373,9 +2388,9 @@ async function checkSuscripcion() {
   // Si no existe, crear trial
   if (!sus) {
     const trial_fin = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
-    const { data: nuevo } = await sb.from('suscripciones_hostelia').insert({
+    const { data: nuevo } = await sbIns(sb.from('suscripciones_hostelia').insert({
       negocio_id: currentNegocio.id, plan: 'trial', estado: 'activo', trial_fin
-    }).select();
+    }).select());
     suscripcionData = nuevo;
   } else {
     suscripcionData = sus;
@@ -2578,12 +2593,12 @@ async function saveCuestionario() {
       await sb.from('conocimiento').update({ contenido, actualizado_en: new Date().toISOString() }).eq('id', id);
     } else {
       // Insertar nueva y guardar el id para futuras ediciones
-      const { data: nuevo } = await sb.from('conocimiento').insert({
+      const { data: nuevo } = await sbIns(sb.from('conocimiento').insert({
         negocio_id: currentNegocio.id,
         tipo: 'cuestionario',
         pregunta,
         contenido
-      }).select();
+      }).select());
       if (nuevo) el.dataset.id = nuevo.id;
     }
     guardados++;
@@ -2932,8 +2947,12 @@ async function loadPedidos() {
       </div>`;
     }).join('');
 
-  document.getElementById('turnosPedidosList').innerHTML = '<div class="loading-row">Cargando...</div>';
-  await loadTurnosPedidos();
+  document.getElementById('colNuevos').innerHTML = renderCol(cols.nuevo, 'preparando');
+  document.getElementById('colPreparando').innerHTML = renderCol(cols.preparando, 'listo');
+  document.getElementById('colListo').innerHTML = renderCol([...cols.listo, ...cols.enviado], null);
+  document.getElementById('countNuevos').textContent = cols.nuevo.length;
+  document.getElementById('countPrep').textContent = cols.preparando.length;
+  document.getElementById('countListo').textContent = cols.listo.length + cols.enviado.length;
 }
 
 async function saveMensajesPedidos() {
@@ -3121,11 +3140,12 @@ async function finishOnboarding() {
 
     // Asegurar negocio existe — con reintento
     if (!currentNegocio) {
-      let { data: neg } = await sbGet(sb.from('negocios').select('*').eq('user_id',currentUser.id));
+      let { data: neg } = await sbGet(sb.from('negocios').select('*').eq('user_id', currentUser.id));
       if (!neg) {
         // Crear negocio si no existe todavía
         const nombre = document.getElementById('regNegocio')?.value || 'Mi Restaurante';
-        const { data: nuevo, error: errNeg } = await sb.from('negocios').insert({ user_id: currentUser.id, nombre }).select();
+        const { data: _negArr, error: errNeg } = await sb.from('negocios').insert({ user_id: currentUser.id, nombre }).select();
+    const nuevo = Array.isArray(_negArr) ? _negArr[0] : _negArr;
         if (errNeg) throw new Error('No se pudo crear el negocio: ' + errNeg.message);
         neg = nuevo;
       }
@@ -3430,7 +3450,7 @@ async function descargarBackup() {
   try {
     const nid = currentNegocio.id;
     const [neg, wc, cats, carta, mesas, resConfig, turnos, agente, conocimiento, reservas, pedidos] = await Promise.all([
-      sbGet(sb.from('negocios').select('*').eq('id',nid)),
+      sbGet(sb.from('negocios').select('*').eq('id', nid)),
       sb.from('web_config').select('*').eq('negocio_id', nid),
       sb.from('categorias').select('*').eq('negocio_id', nid),
       sb.from('carta').select('*').eq('negocio_id', nid),
@@ -3754,13 +3774,15 @@ async function saveWebConfig() {
     // Actualizar datos locales para que no se pierdan en el próximo guardado
     webConfigData = { ...webConfigData, ...payload };
   } else {
-    const { data: inserted, error } = await sb.from('web_config').insert(payload).select();
+    const { data: _wcArr, error } = await sb.from('web_config').insert(payload).select();
     if (error) { toast('Error al crear: ' + error.message, true); return; }
-    webConfigData = Array.isArray(inserted) ? inserted[0] : inserted;
+    webConfigData = Array.isArray(_wcArr) ? _wcArr[0] : _wcArr;
   }
 
-  const { data: fresh } = await sb.from('web_config').select('*').eq('negocio_id', currentNegocio.id).limit(1);
-  if (fresh?.[0]) webConfigData = fresh[0];
+  // Recargar desde la base de datos para estar 100% sincronizado
+  const { data: fresh } = await sb.from('web_config').select('*')
+    .eq('negocio_id', currentNegocio.id).order('creado_en', { ascending: false });
+  if (fresh) webConfigData = fresh;
 
   hideSaveBar();
   const imgs = [logo_url ? 'logo ✓' : '', hero_imagen_url ? 'hero ✓' : '', sobre_nosotros_imagen_url ? 'sobre ✓' : ''].filter(Boolean).join(', ');

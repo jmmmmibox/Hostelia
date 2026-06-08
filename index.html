@@ -2937,12 +2937,8 @@ async function loadPedidos() {
       </div>`;
     }).join('');
 
-  document.getElementById('colNuevos').innerHTML = renderCol(cols.nuevo, 'preparando');
-  document.getElementById('colPreparando').innerHTML = renderCol(cols.preparando, 'listo');
-  document.getElementById('colListo').innerHTML = renderCol([...cols.listo, ...cols.enviado], null);
-  document.getElementById('countNuevos').textContent = cols.nuevo.length;
-  document.getElementById('countPrep').textContent = cols.preparando.length;
-  document.getElementById('countListo').textContent = cols.listo.length + cols.enviado.length;
+  document.getElementById('turnosPedidosList').innerHTML = '<div class="loading-row">Cargando...</div>';
+  await loadTurnosPedidos();
 }
 
 async function saveMensajesPedidos() {

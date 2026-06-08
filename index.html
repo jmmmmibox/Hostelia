@@ -2186,13 +2186,8 @@ async function loadApp(isNewUser = false) {
   const inicial = (currentNegocio.nombre || 'N')[0].toUpperCase();
   document.getElementById('avatarInitial').textContent = inicial;
   document.getElementById('sidebarNegocio').textContent = currentNegocio.nombre;
-  document.getElementById('previewNombre').textContent = currentNegocio.nombre;
-  document.getElementById('webUrl').textContent = slugify(currentNegocio.nombre) + '.hostelia.app';
-
-  // Banner bienvenida para nuevos usuarios
-  if (isNewUser) {
-    document.getElementById('dashWelcomeBanner').style.display = 'flex';
-  }
+  const webUrlEl = document.getElementById('webUrl');
+  if (webUrlEl) webUrlEl.textContent = slugify(currentNegocio.nombre) + '.hostelia.app';
 
   // Verificar suscripción
   await checkSuscripcion();

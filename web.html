@@ -543,7 +543,7 @@ window.addEventListener('DOMContentLoaded',async()=>{
     }
     if(!NID){document.getElementById('loader').innerHTML='<p style="color:#999;font-size:14px">Página no encontrada</p>';return;}
     const[n,w,c,p,m,rc,ec]=await Promise.all([
-      sb.from('negocios').select('*').eq('id',NID).single(),
+      sb.from('negocios').select('*').eq('id',NID).limit(1),
       sb.from('web_config').select('*').eq('negocio_id',NID).order('creado_en',{ascending:false}).limit(1),
       sb.from('categorias').select('*').eq('negocio_id',NID).eq('activa',true).order('orden'),
       sb.from('carta').select('*').eq('negocio_id',NID).eq('disponible',true).order('orden'),

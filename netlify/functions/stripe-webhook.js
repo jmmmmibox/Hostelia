@@ -2,7 +2,7 @@ const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const { createClient } = require('@supabase/supabase-js');
 
 const sb = createClient(
-  'https://rjpjqrsyzkeghofziejy.supabase.co',
+  'https://fltomutxpijtuudjdgca.supabase.co',
   process.env.SUPABASE_SERVICE_KEY
 );
 

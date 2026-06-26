@@ -2047,6 +2047,16 @@ const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsI
 const { createClient } = supabase;
 const sb = createClient(SUPA_URL, SUPA_KEY);
 
+// Helpers para PostgREST moderno (evita 406 en tablas vacías)
+async function sbGet(q) {
+  const r = await q.limit(1);
+  return { data: Array.isArray(r.data) ? (r.data[0] ?? null) : r.data, error: r.error };
+}
+async function sbIns(q) {
+  const r = await q;
+  return { data: Array.isArray(r.data) ? (r.data[0] ?? null) : r.data, error: r.error };
+}
+
 let currentUser = null;
 let currentNegocio = null;
 let currentSaveContext = null;
@@ -2142,9 +2152,9 @@ async function doRegister() {
   }
 
   // Con sesión activa (email confirmation desactivado en Supabase)
-  const { data: neg } = await sb.from('negocios').insert({
+  const { data: neg } = await sbIns(sb.from('negocios').insert({
     user_id: currentUser.id, nombre, tipo
-  }).select().single();
+  }).select());
   currentNegocio = neg;
   btn.textContent = '¡Listo! Entrando...';
   await loadApp(true);
@@ -2158,7 +2168,7 @@ async function doLogout() {
 
 // ── NEGOCIO ───────────────────────────────────────────
 async function loadNegocio() {
-  const { data } = await sb.from('negocios').select('*').eq('user_id', currentUser.id).single();
+  const { data } = await sbGet(sb.from('negocios').select('*').eq('user_id',currentUser.id));
   if (!data) {
     // Primer login tras confirmación — recuperar datos del registro
     const pending = localStorage.getItem('hostelia_pending_negocio');
@@ -2166,7 +2176,7 @@ async function loadNegocio() {
     localStorage.removeItem('hostelia_pending_negocio');
     const { data: neg } = await sb.from('negocios').insert({
       user_id: currentUser.id, nombre, tipo
-    }).select().single();
+    }).select();
     currentNegocio = neg;
     await loadApp(true); // isNewUser = true → muestra banner bienvenida
   } else {
@@ -2216,7 +2226,7 @@ async function loadDashboard() {
   document.getElementById('dashDate').textContent = ahora.toLocaleDateString('es-ES', {weekday:'long',day:'numeric',month:'long',year:'numeric'});
 
   // Config agente
-  const {data:ag} = await sb.from('agente_config').select('*').eq('negocio_id',currentNegocio.id).single();
+  const {data:ag} = await sbGet(sb.from('agente_config').select('*').eq('negocio_id',currentNegocio.id));
   const resActivo = ag?.activo_reservas !== false;
   const pedActivo = ag?.activo_pedidos === true;
 
@@ -2373,14 +2383,14 @@ async function loadDashboard() {
 let suscripcionData = null;
 
 async function checkSuscripcion() {
-  const { data: sus } = await sb.from('suscripciones_hostelia').select('*').eq('negocio_id', currentNegocio.id).limit(1).maybeSingle();
+  const { data: sus } = await sbGet(sb.from('suscripciones_hostelia').select('*').eq('negocio_id',currentNegocio.id));
 
   // Si no existe, crear trial
   if (!sus) {
     const trial_fin = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
-    const { data: nuevo } = await sb.from('suscripciones_hostelia').insert({
+    const { data: nuevo } = await sbIns(sb.from('suscripciones_hostelia').insert({
       negocio_id: currentNegocio.id, plan: 'trial', estado: 'activo', trial_fin
-    }).select().single();
+    }).select());
     suscripcionData = nuevo;
   } else {
     suscripcionData = sus;
@@ -2451,13 +2461,13 @@ async function iniciarPago(plan) {
 }
 
 async function getNombreEmail() {
-  const { data: wc } = await sb.from('web_config').select('hero_titulo').eq('negocio_id', currentNegocio.id).limit(1).maybeSingle();
+  const { data: wc } = await sbGet(sb.from('web_config').select('hero_titulo').eq('negocio_id',currentNegocio.id));
   return wc?.hero_titulo || currentNegocio.nombre;
 }
 
 async function confirmarDesdeResumen(id) {
   await sb.from('reservas').update({estado:'confirmada'}).eq('id',id);
-  const { data: r } = await sb.from('reservas').select('*').eq('id',id).single();
+  const { data: r } = await sbGet(sb.from('reservas').select('*').eq('id',id));
   if (r?.email_cliente) {
     const d = new Date(r.fecha+'T12:00:00');
     const fechaLabel = d.toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
@@ -2484,7 +2494,7 @@ async function moverPedidoDesdeResumen(id) {
 
 // ── AGENTE CONFIG ─────────────────────────────────────
 async function loadAgenteConfig() {
-  const { data } = await sb.from('agente_config').select('*').eq('negocio_id', currentNegocio.id).single();
+  const { data } = await sbGet(sb.from('agente_config').select('*').eq('negocio_id',currentNegocio.id));
   if (!data) return;
   document.getElementById('agNombre').value = data.nombre_agente || '';
   document.getElementById('agTono').value = data.tono || 'Cercano y amigable 😊';
@@ -2511,7 +2521,7 @@ async function saveAgente() {
     activo_pedidos: document.getElementById('togPedidos').classList.contains('on'),
     activo_lista_espera: document.getElementById('togEspera').classList.contains('on'),
   };
-  const { data: existing } = await sb.from('agente_config').select('id').eq('negocio_id', currentNegocio.id).single();
+  const { data: existing } = await sbGet(sb.from('agente_config').select('id').eq('negocio_id',currentNegocio.id));
   if (existing) {
     await sb.from('agente_config').update(payload).eq('negocio_id', currentNegocio.id);
   } else {
@@ -2588,7 +2598,7 @@ async function saveCuestionario() {
         tipo: 'cuestionario',
         pregunta,
         contenido
-      }).select().single();
+      }).select();
       if (nuevo) el.dataset.id = nuevo.id;
     }
     guardados++;
@@ -2597,13 +2607,13 @@ async function saveCuestionario() {
 }
 
 async function loadTextoLibre() {
-  const { data } = await sb.from('conocimiento').select('*').eq('negocio_id', currentNegocio.id).eq('tipo','texto').single();
+  const { data } = await sbGet(sb.from('conocimiento').select('*').eq('negocio_id',currentNegocio.id).eq('tipo','texto'));
   if (data) document.getElementById('textoLibre').value = data.contenido || '';
 }
 
 async function saveTextoLibre() {
   const contenido = document.getElementById('textoLibre').value;
-  const { data: existing } = await sb.from('conocimiento').select('id').eq('negocio_id', currentNegocio.id).eq('tipo','texto').single();
+  const { data: existing } = await sbGet(sb.from('conocimiento').select('id').eq('negocio_id',currentNegocio.id).eq('tipo','texto'));
   if (existing) {
     await sb.from('conocimiento').update({ contenido, actualizado_en: new Date().toISOString() }).eq('id', existing.id);
   } else {
@@ -2615,7 +2625,7 @@ async function saveTextoLibre() {
 async function saveUrl() {
   const url = document.getElementById('urlWeb').value.trim();
   if (!url) return;
-  const { data: existing } = await sb.from('conocimiento').select('id').eq('negocio_id', currentNegocio.id).eq('tipo','url').single();
+  const { data: existing } = await sbGet(sb.from('conocimiento').select('id').eq('negocio_id',currentNegocio.id).eq('tipo','url'));
   if (existing) {
     await sb.from('conocimiento').update({ contenido: url }).eq('id', existing.id);
   } else {
@@ -2626,7 +2636,7 @@ async function saveUrl() {
 }
 
 async function loadUrlGuardada() {
-  const { data } = await sb.from('conocimiento').select('*').eq('negocio_id', currentNegocio.id).eq('tipo','url').single();
+  const { data } = await sbGet(sb.from('conocimiento').select('*').eq('negocio_id',currentNegocio.id).eq('tipo','url'));
   if (data) {
     document.getElementById('urlWeb').value = data.contenido || '';
     document.getElementById('urlGuardada').innerHTML = `<div class="kb-item"><div class="kb-item-icon">🔗</div><div class="kb-item-info"><div class="kb-item-name">${data.contenido}</div><div class="kb-item-meta">URL guardada</div></div></div>`;
@@ -2635,7 +2645,7 @@ async function loadUrlGuardada() {
 
 // ── RESERVAS ──────────────────────────────────────────
 async function loadReservasConfig() {
-  const { data } = await sb.from('reservas_config').select('*').eq('negocio_id', currentNegocio.id).single();
+  const { data } = await sbGet(sb.from('reservas_config').select('*').eq('negocio_id',currentNegocio.id));
   if (data) {
     document.getElementById('cfgMaxDias').value = data.antelacion_max_dias || 30;
     document.getElementById('cfgMinHoras').value = data.antelacion_min_horas || 2;
@@ -2653,7 +2663,7 @@ async function saveReservasConfig() {
     antelacion_min_horas: parseInt(document.getElementById('cfgMinHoras').value),
     confirmacion_automatica: autoConfirm,
   };
-  const { data: existing } = await sb.from('reservas_config').select('id').eq('negocio_id', currentNegocio.id).limit(1).maybeSingle();
+  const { data: existing } = await sbGet(sb.from('reservas_config').select('id').eq('negocio_id',currentNegocio.id));
   if (existing) {
     const { error } = await sb.from('reservas_config').update(payload).eq('id', existing.id);
     if (error) { toast('Error al guardar: ' + error.message, true); return; }
@@ -2808,7 +2818,7 @@ async function updateReservaEstado(id, estado) {
   await sb.from('reservas').update({ estado }).eq('id', id);
   // Enviar email si se confirma y tiene email
   if (estado === 'confirmada') {
-    const { data: r } = await sb.from('reservas').select('*').eq('id', id).single();
+    const { data: r } = await sbGet(sb.from('reservas').select('*').eq('id',id));
     if (r?.email_cliente) {
       const d = new Date(r.fecha+'T12:00:00');
       const fechaLabel = d.toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
@@ -2834,7 +2844,7 @@ let editandoReservaId = null;
 function editReserva(id) {
   const reservas = document.getElementById('reservasBody');
   // Buscar la reserva en Supabase
-  sb.from('reservas').select('*').eq('id', id).single().then(({ data: r }) => {
+  sbGet(sb.from('reservas').select('*').eq('id',id)).then(({ data: r }) => {
     if (!r) return;
     editandoReservaId = id;
     document.getElementById('resNombre').value = r.nombre_cliente;
@@ -2907,7 +2917,7 @@ async function loadHistorialPedidos() {
 
 async function loadPedidos() {
   // Cargar config de envío y mensajes
-  const { data: ec } = await sb.from('envio_config').select('*').eq('negocio_id', currentNegocio.id).limit(1).maybeSingle();
+  const { data: ec } = await sbGet(sb.from('envio_config').select('*').eq('negocio_id',currentNegocio.id));
   if (ec) {
     document.getElementById('cfgCosteEnvio').value = ec.coste_envio || 3;
     document.getElementById('cfgMinEnvioGratis').value = ec.pedido_minimo_envio_gratis || 25;
@@ -2921,7 +2931,7 @@ async function loadPedidos() {
   // Cargar turnos de pedidos
   await loadTurnosPedidos();
 
-  const { data } = await sb.from('pedidos').select('*').eq('negocio_id', currentNegocio.id).order('creado_en', { ascending: false });
+  const { data } = await sb.from('pedidos').select('*').eq('negocio_id', currentNegocio.id).limit(1);
   const cols = { nuevo: [], preparando: [], listo: [], enviado: [] };
   (data || []).forEach(p => { if (cols[p.estado]) cols[p.estado].push(p); });
 
@@ -2943,7 +2953,7 @@ async function loadPedidos() {
 
 async function saveMensajesPedidos() {
   const payload = { mensaje_fuera_horario: document.getElementById('cfgMsgFueraHorario').value.trim(), mensaje_max_pedidos: document.getElementById('cfgMsgMaxPedidos').value.trim() };
-  const { data: ex } = await sb.from('envio_config').select('id').eq('negocio_id', currentNegocio.id).limit(1).maybeSingle();
+  const { data: ex } = await sbGet(sb.from('envio_config').select('id').eq('negocio_id',currentNegocio.id));
   if (ex) await sb.from('envio_config').update(payload).eq('id', ex.id);
   else await sb.from('envio_config').insert({ ...payload, negocio_id: currentNegocio.id });
   hideSaveBar(); toast('✅ Mensajes guardados');
@@ -3032,7 +3042,7 @@ async function saveEnvioConfig() {
     envio_gratis_siempre: document.getElementById('cfgEnvioGratisSimepre').classList.contains('on'),
     cobrar_envio_siempre: document.getElementById('cfgCobrarEnvioSiempre').classList.contains('on'),
   };
-  const { data: ex } = await sb.from('envio_config').select('id').eq('negocio_id', currentNegocio.id).limit(1).maybeSingle();
+  const { data: ex } = await sbGet(sb.from('envio_config').select('id').eq('negocio_id',currentNegocio.id));
   if (ex) await sb.from('envio_config').update(payload).eq('id', ex.id);
   else await sb.from('envio_config').insert(payload);
   hideSaveBar();
@@ -3062,7 +3072,7 @@ async function saveConfig() {
   
   if (slug) {
     // Verificar que el slug no está en uso por otro negocio
-    const { data: existe } = await sb.from('negocios').select('id').eq('slug', slug).neq('id', currentNegocio.id).maybeSingle();
+    const { data: existe } = await sb.from('negocios').select('id').eq('slug', slug).neq('id', currentNegocio.id);
     if (existe) { toast('Ese slug ya está en uso. Elige otro.', true); return; }
   }
 
@@ -3126,11 +3136,11 @@ async function finishOnboarding() {
 
     // Asegurar negocio existe — con reintento
     if (!currentNegocio) {
-      let { data: neg } = await sb.from('negocios').select('*').eq('user_id', currentUser.id).single();
+      let { data: neg } = await sbGet(sb.from('negocios').select('*').eq('user_id',currentUser.id));
       if (!neg) {
         // Crear negocio si no existe todavía
         const nombre = document.getElementById('regNegocio')?.value || 'Mi Restaurante';
-        const { data: nuevo, error: errNeg } = await sb.from('negocios').insert({ user_id: currentUser.id, nombre }).select().single();
+        const { data: nuevo, error: errNeg } = await sb.from('negocios').insert({ user_id: currentUser.id, nombre }).select();
         if (errNeg) throw new Error('No se pudo crear el negocio: ' + errNeg.message);
         neg = nuevo;
       }
@@ -3217,7 +3227,7 @@ async function loadMetricas() {
   const inicioPeriodo = new Date(hoy - metPeriodo*86400000).toISOString().split('T')[0];
 
   // Config agente
-  const {data:ag} = await sb.from('agente_config').select('activo_reservas,activo_pedidos').eq('negocio_id',currentNegocio.id).maybeSingle();
+  const {data:ag} = await sb.from('agente_config').select('activo_reservas,activo_pedidos').eq('negocio_id',currentNegocio.id);
   const resActivo = ag?.activo_reservas !== false;
   const pedActivo = ag?.activo_pedidos === true;
 
@@ -3435,14 +3445,14 @@ async function descargarBackup() {
   try {
     const nid = currentNegocio.id;
     const [neg, wc, cats, carta, mesas, resConfig, turnos, agente, conocimiento, reservas, pedidos] = await Promise.all([
-      sb.from('negocios').select('*').eq('id', nid).single(),
-      sb.from('web_config').select('*').eq('negocio_id', nid).limit(1).maybeSingle(),
+      sbGet(sb.from('negocios').select('*').eq('id',nid)),
+      sbGet(sb.from('web_config').select('*').eq('negocio_id',nid)),
       sb.from('categorias').select('*').eq('negocio_id', nid),
       sb.from('carta').select('*').eq('negocio_id', nid),
       sb.from('mesas').select('*').eq('negocio_id', nid),
-      sb.from('reservas_config').select('*').eq('negocio_id', nid).limit(1).maybeSingle(),
+      sbGet(sb.from('reservas_config').select('*').eq('negocio_id',nid)),
       sb.from('turnos').select('*').eq('negocio_id', nid),
-      sb.from('agente_config').select('*').eq('negocio_id', nid).limit(1).maybeSingle(),
+      sbGet(sb.from('agente_config').select('*').eq('negocio_id',nid)),
       sb.from('conocimiento').select('*').eq('negocio_id', nid),
       sb.from('reservas').select('*').eq('negocio_id', nid).order('fecha', { ascending: false }).limit(500),
       sb.from('pedidos').select('*').eq('negocio_id', nid).order('creado_en', { ascending: false }).limit(500),
@@ -3533,21 +3543,21 @@ async function confirmarRestaurar() {
     // Restaurar reservas_config
     if (backupData.reservas_config) {
       const rc = { ...backupData.reservas_config, negocio_id: nid };
-      const { data: ex } = await sb.from('reservas_config').select('id').eq('negocio_id', nid).limit(1).maybeSingle();
+      const { data: ex } = await sbGet(sb.from('reservas_config').select('id').eq('negocio_id',nid));
       if (ex) await sb.from('reservas_config').update(rc).eq('id', ex.id);
       else await sb.from('reservas_config').insert(rc);
     }
     // Restaurar agente_config
     if (backupData.agente_config) {
       const ac = { ...backupData.agente_config, negocio_id: nid };
-      const { data: ex } = await sb.from('agente_config').select('id').eq('negocio_id', nid).limit(1).maybeSingle();
+      const { data: ex } = await sbGet(sb.from('agente_config').select('id').eq('negocio_id',nid));
       if (ex) await sb.from('agente_config').update(ac).eq('id', ex.id);
       else await sb.from('agente_config').insert(ac);
     }
     // Restaurar web_config
     if (backupData.web_config) {
       const wc = { ...backupData.web_config, negocio_id: nid };
-      const { data: ex } = await sb.from('web_config').select('id').eq('negocio_id', nid).limit(1).maybeSingle();
+      const { data: ex } = await sbGet(sb.from('web_config').select('id').eq('negocio_id',nid));
       if (ex) await sb.from('web_config').update(wc).eq('id', ex.id);
       else await sb.from('web_config').insert(wc);
     }
@@ -3646,8 +3656,7 @@ function switchWebTab(tab, el) {
 }
 
 async function loadWebConfig() {
-  const { data } = await sb.from('web_config').select('*')
-    .eq('negocio_id', currentNegocio.id).order('creado_en', { ascending: false }).limit(1).maybeSingle();
+  const { data } = await sbGet(sb.from('web_config').select('*').eq('negocio_id', currentNegocio.id));
   webConfigData = data;
 
   if (!data) return; // Primera vez, campos vacíos
@@ -3759,14 +3768,14 @@ async function saveWebConfig() {
     // Actualizar datos locales para que no se pierdan en el próximo guardado
     webConfigData = { ...webConfigData, ...payload };
   } else {
-    const { data, error } = await sb.from('web_config').insert(payload).select().single();
+    const { data, error } = await sb.from('web_config').insert(payload).select();
     if (error) { toast('Error al crear: ' + error.message, true); return; }
     webConfigData = data;
   }
 
   // Recargar desde la base de datos para estar 100% sincronizado
   const { data: fresh } = await sb.from('web_config').select('*')
-    .eq('negocio_id', currentNegocio.id).order('creado_en', { ascending: false }).limit(1).maybeSingle();
+    .eq('negocio_id', currentNegocio.id).limit(1);
   if (fresh) webConfigData = fresh;
 
   hideSaveBar();

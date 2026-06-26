@@ -545,9 +545,6 @@ function render(){
   document.documentElement.style.setProperty('--font',`'${wc.tipografia||'Outfit'}',sans-serif`);
   const titulo = wc.hero_titulo || '';
   document.title = titulo || 'Hostelia';
-
-  // Nav
-  document.getElementById('navName').textContent = titulo;
   if(wc.logo_url)document.getElementById('navLogoImg').innerHTML=`<img src="${wc.logo_url}" style="height:34px;border-radius:8px">`;
 
   const pages=[{id:'inicio',label:'Inicio'}];

@@ -543,10 +543,11 @@ function render(){
   document.documentElement.style.setProperty('--p2',wc.color_secundario||'#ffb347');
   document.documentElement.style.setProperty('--p-glow',hexToGlow(wc.color_primario||'#ff6b35'));
   document.documentElement.style.setProperty('--font',`'${wc.tipografia||'Outfit'}',sans-serif`);
-  document.title=negocio.nombre;
+  const titulo = wc.hero_titulo || '';
+  document.title = titulo || 'Hostelia';
 
   // Nav
-  document.getElementById('navName').textContent=negocio.nombre;
+  document.getElementById('navName').textContent = titulo;
   if(wc.logo_url)document.getElementById('navLogoImg').innerHTML=`<img src="${wc.logo_url}" style="height:34px;border-radius:8px">`;
 
   const pages=[{id:'inicio',label:'Inicio'}];
@@ -564,9 +565,10 @@ function render(){
   // Hero
   if(wc.hero_imagen_url)document.getElementById('heroBg').style.backgroundImage=`url(${wc.hero_imagen_url})`;
   else document.getElementById('heroBg').style.background='linear-gradient(135deg,#1a1714,#2a2520)';
-  document.getElementById('heroTitle').textContent=wc.hero_titulo||negocio.nombre;
+  document.getElementById('heroTitle').textContent = titulo;
   document.getElementById('heroSub').textContent=wc.hero_subtitulo||'';
-  if(negocio.tipo)document.getElementById('heroTag').textContent=negocio.tipo;
+  if(wc.hero_tag)document.getElementById('heroTag').textContent=wc.hero_tag;
+  else document.getElementById('heroTag').style.display='none';
   let btns='';
   if(wc.btn_reservas!==false&&wc.seccion_reservas!==false)btns+=`<button class="btn btn-primary" onclick="goPage('reservas')">📅 Reservar mesa</button>`;
   if(wc.btn_pedidos&&wc.seccion_pedidos)btns+=`<button class="btn btn-ghost" onclick="goPage('pedidos')">🛵 Pedir a domicilio</button>`;
@@ -600,7 +602,7 @@ function render(){
   if(socials){document.getElementById('socialLinks').style.display='flex';document.getElementById('socialLinks').innerHTML=socials}
 
   // Footer
-  document.getElementById('footerName').textContent=negocio.nombre;
+  document.getElementById('footerName').textContent = titulo;
   document.getElementById('footerInfo').innerHTML=[wc.contacto_direccion,wc.contacto_telefono].filter(Boolean).join(' · ');
   document.getElementById('footerEl').style.display='block';
 

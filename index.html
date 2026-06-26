@@ -3658,7 +3658,6 @@ function switchWebTab(tab, el) {
 async function loadWebConfig() {
   const { data } = await sbGet(sb.from('web_config').select('*').eq('negocio_id', currentNegocio.id));
   webConfigData = data;
-
   if (!data) return; // Primera vez, campos vacíos
 
   // Diseño
@@ -3770,13 +3769,13 @@ async function saveWebConfig() {
   } else {
     const { data, error } = await sb.from('web_config').insert(payload).select();
     if (error) { toast('Error al crear: ' + error.message, true); return; }
-    webConfigData = data;
+    webConfigData = Array.isArray(data) ? data[0] : data;
   }
 
-  // Recargar desde la base de datos para estar 100% sincronizado
+  // Recargar desde la base de datos
   const { data: fresh } = await sb.from('web_config').select('*')
     .eq('negocio_id', currentNegocio.id).limit(1);
-  if (fresh) webConfigData = fresh;
+  if (fresh?.[0]) webConfigData = fresh[0];
 
   hideSaveBar();
   const imgs = [logo_url ? 'logo ✓' : '', hero_imagen_url ? 'hero ✓' : '', sobre_nosotros_imagen_url ? 'sobre ✓' : ''].filter(Boolean).join(', ');

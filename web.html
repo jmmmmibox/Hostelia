@@ -770,15 +770,22 @@ function renderCalendar(){
   const diasMes=new Date(calYear,calMonth+1,0).getDate();
   const grid=document.getElementById('calGrid');
   if(!grid)return;
+
+  // Antelación máxima en días
+  const maxDias = resConfig?.antelacion_max_dias || 30;
+  const fechaMaxima = new Date(hoy);
+  fechaMaxima.setDate(fechaMaxima.getDate() + maxDias);
+
   let html='';
   for(let i=0;i<startDow;i++)html+=`<div class="cal-day empty"></div>`;
   for(let d=1;d<=diasMes;d++){
     const dateStr=`${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
     const fecha=new Date(calYear,calMonth,d);
     const isPast=fecha<hoy;
+    const isTooFar=fecha>fechaMaxima;
     const isToday=fecha.getTime()===hoy.getTime();
-    let cls=isPast?'past':'available';
-    if(!isPast && calTurnos.length>0){
+    let cls=(isPast||isTooFar)?'past':'available';
+    if(!isPast && !isTooFar && calTurnos.length>0){
       const resDelDia=calReservas.filter(r=>r.fecha===dateStr);
       const turnosFull=calTurnos.filter(t=>{
         const count=resDelDia.filter(r=>r.hora>=t.hora_inicio.slice(0,5)&&r.hora<t.hora_fin.slice(0,5)).length;
@@ -788,7 +795,8 @@ function renderCalendar(){
       else if(turnosFull.length>0)cls='partial';
     }
     const isSelected=calSelectedDate===dateStr;
-    html+=`<div class="cal-day ${cls}${isSelected?' selected':''}${isToday?' today':''}" onclick="selectDay('${dateStr}')">
+    const clickable = cls !== 'past' && cls !== 'full';
+    html+=`<div class="cal-day ${cls}${isSelected?' selected':''}${isToday?' today':''}" ${clickable?`onclick="selectDay('${dateStr}')"`:'style="cursor:default;"'}>
       <span class="cal-day-num">${d}</span>
       <div class="cal-day-dot"></div>
     </div>`;
@@ -821,6 +829,13 @@ function renderHoras(dateStr){
     grid.innerHTML=`<div style="color:var(--muted);font-size:13px;padding:16px 0;">No hay turnos configurados. Contacta con el negocio.</div>`;
     return;
   }
+
+  // Antelación mínima en horas
+  const minHoras = resConfig?.antelacion_min_horas || 0;
+  const ahora = new Date();
+  const horaLimite = new Date(ahora.getTime() + minHoras * 60 * 60 * 1000);
+  const esHoy = dateStr === ahora.toISOString().split('T')[0];
+
   const resDelDia=calReservas.filter(r=>r.fecha===dateStr);
   let html='';
   calTurnos.forEach(t=>{
@@ -842,7 +857,22 @@ function renderHoras(dateStr){
         <span style="color:${turnoLleno?'var(--p)':'var(--success)'}">${turnoLleno?'Completo':libres+' mesa'+(libres!==1?'s':'')+' libres'}</span>
       </div>
       <div class="horas-grid">
-        ${horas.map(hora=>`<div class="hora-btn${turnoLleno?' llena':''}" onclick="${turnoLleno?'':` selectHora('${hora}')`}">${hora}<div class="hora-dispo">${turnoLleno?'Completo':libres<=3?libres+' libre'+(libres!==1?'s':''):'Libre'}</div></div>`).join('')}
+        ${horas.map(hora=>{
+          // Comprobar antelación mínima para hoy
+          let bloqueada = turnoLleno;
+          let motivo = turnoLleno ? 'Completo' : (libres<=3?libres+' libre'+(libres!==1?'s':''):'Libre');
+          if (!bloqueada && esHoy && minHoras > 0) {
+            const [hh,mm] = hora.split(':').map(Number);
+            const horaReserva = new Date(dateStr+'T'+hora+':00');
+            if (horaReserva < horaLimite) {
+              bloqueada = true;
+              motivo = `Mín. ${minHoras}h antes`;
+            }
+          }
+          return `<div class="hora-btn${bloqueada?' llena':''}" onclick="${bloqueada?'':` selectHora('${hora}')`}" title="${bloqueada&&!turnoLleno?'Reserva con al menos '+minHoras+'h de antelación':''}">
+            ${hora}<div class="hora-dispo">${motivo}</div>
+          </div>`;
+        }).join('')}
       </div>
     </div>`;
   });

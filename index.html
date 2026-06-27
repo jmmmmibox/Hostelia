@@ -1300,7 +1300,7 @@
           </div>
           <p style="font-size:13px;color:var(--muted);margin-bottom:16px;">Define cuántas mesas tienes y de qué capacidad. Para grupos grandes se pueden unir mesas.</p>
 
-          <div id="mesasGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;margin-bottom:20px;">
+          <div id="mesasGrid" style="margin-bottom:20px;">
             <div class="loading-row" style="width:100%;">Cargando mesas...</div>
           </div>
 
@@ -4130,44 +4130,46 @@ async function loadMesas() {
 function renderMesas() {
   const grid = document.getElementById('mesasGrid');
   if (mesasData.length === 0) {
-    grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1;"><div class="empty-icon">🪑</div><div class="empty-title">Sin mesas configuradas</div><div class="empty-sub">Añade las mesas de tu local para gestionar la disponibilidad.</div></div>';
+    grid.innerHTML = `<div class="empty-state" style="padding:32px 0;">
+      <div class="empty-icon">🪑</div>
+      <div class="empty-title">Sin mesas configuradas</div>
+      <div class="empty-sub">Añade las mesas de tu local para gestionar la disponibilidad.</div>
+    </div>`;
     document.getElementById('totalMesas').textContent = '0';
     document.getElementById('totalComensales').textContent = '0';
     return;
   }
-  // Agrupar por zona
+
   const interior = mesasData.filter(m => m.zona === 'Interior' || !m.zona);
-  const terraza = mesasData.filter(m => m.zona === 'Terraza');
+  const terraza  = mesasData.filter(m => m.zona === 'Terraza');
 
-  let html = '';
-  if (interior.length > 0) {
-    html += `<div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px;">🏠 Interior</div>`;
-    html += interior.map(m => `
-      <div class="mesa-card">
-        <div class="mesa-delete" onclick="deleteMesa('${m.id}')" title="Eliminar">🗑️</div>
-        <div class="mesa-edit" onclick="editMesa('${m.id}')" title="Editar" style="position:absolute;top:8px;right:32px;cursor:pointer;font-size:14px;">✏️</div>
-        <div class="mesa-icon">🪑</div>
-        <div class="mesa-count">${m.cantidad}</div>
-        <div class="mesa-label">${m.cantidad === 1 ? 'mesa' : 'mesas'}</div>
-        <div class="mesa-capacity">${m.comensales_max} pax/mesa</div>
+  const renderZona = (items, icono, label) => {
+    if (!items.length) return '';
+    const rows = items.map(m => `
+      <div style="display:grid;grid-template-columns:1fr auto auto auto;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--border);background:var(--surface);">
+        <div>
+          <div style="font-size:14px;font-weight:600;">${m.cantidad} ${m.cantidad===1?'mesa':'mesas'} · ${m.comensales_max} pax/mesa</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:2px;">Capacidad total: ${m.cantidad * m.comensales_max} personas</div>
+        </div>
+        <div style="font-size:12px;padding:4px 10px;border-radius:100px;background:var(--bg);color:var(--muted);font-weight:600;">${m.comensales_max} pax</div>
+        <button onclick="editMesa('${m.id}')" style="background:none;border:1px solid var(--border);border-radius:8px;padding:6px 10px;cursor:pointer;font-size:13px;color:var(--muted);">✏️</button>
+        <button onclick="deleteMesa('${m.id}')" style="background:none;border:1px solid rgba(224,82,82,0.3);border-radius:8px;padding:6px 10px;cursor:pointer;font-size:13px;color:var(--danger);">🗑️</button>
       </div>`).join('');
-  }
-  if (terraza.length > 0) {
-    html += `<div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin:16px 0 10px;">🌿 Terraza</div>`;
-    html += terraza.map(m => `
-      <div class="mesa-card">
-        <div class="mesa-delete" onclick="deleteMesa('${m.id}')" title="Eliminar">🗑️</div>
-        <div class="mesa-edit" onclick="editMesa('${m.id}')" title="Editar" style="position:absolute;top:8px;right:32px;cursor:pointer;font-size:14px;">✏️</div>
-        <div class="mesa-icon">🌿</div>
-        <div class="mesa-count">${m.cantidad}</div>
-        <div class="mesa-label">${m.cantidad === 1 ? 'mesa' : 'mesas'}</div>
-        <div class="mesa-capacity">${m.comensales_max} pax/mesa</div>
-      </div>`).join('');
-  }
-  grid.innerHTML = html;
+    return `
+      <div style="margin-bottom:16px;border-radius:12px;overflow:hidden;border:1px solid var(--border);">
+        <div style="padding:10px 16px;background:var(--bg);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;">
+          <span style="font-size:16px;">${icono}</span>
+          <span style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);">${label}</span>
+          <span style="margin-left:auto;font-size:12px;color:var(--muted);">${items.reduce((s,m)=>s+m.cantidad,0)} mesas · ${items.reduce((s,m)=>s+(m.cantidad*m.comensales_max),0)} personas</span>
+        </div>
+        ${rows}
+      </div>`;
+  };
 
-  const totalM = mesasData.reduce((s, m) => s + m.cantidad, 0);
-  const totalC = mesasData.reduce((s, m) => s + (m.cantidad * m.comensales_max), 0);
+  grid.innerHTML = renderZona(interior,'🏠','Interior') + renderZona(terraza,'🌿','Terraza');
+
+  const totalM = mesasData.reduce((s,m) => s+m.cantidad, 0);
+  const totalC = mesasData.reduce((s,m) => s+(m.cantidad*m.comensales_max), 0);
   document.getElementById('totalMesas').textContent = totalM;
   document.getElementById('totalComensales').textContent = totalC + ' personas';
 }

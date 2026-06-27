@@ -2859,6 +2859,45 @@ function editReserva(id) {
 }
 
 // ── PEDIDOS ───────────────────────────────────────────
+function imprimirEtiquetaPanel(p) {
+  const items = (p.items||[]).map(i => `
+    <tr>
+      <td style="padding:3px 8px;font-size:14px;">${i.qty}×</td>
+      <td style="padding:3px 0;font-size:14px;">${i.nombre}</td>
+      <td style="padding:3px 0;font-size:14px;text-align:right;">${(i.precio*i.qty).toFixed(2)}€</td>
+    </tr>`).join('');
+  const fecha = new Date(p.creado_en).toLocaleString('es-ES',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
+    <style>
+      body{font-family:Arial,sans-serif;margin:0;padding:16px;max-width:300px;}
+      h2{font-size:16px;margin:0 0 8px;text-align:center;}
+      .sep{border-top:1px dashed #000;margin:8px 0;}
+      .row{display:flex;justify-content:space-between;font-size:13px;margin:3px 0;}
+      .total{font-size:16px;font-weight:bold;}
+      table{width:100%;border-collapse:collapse;}
+      @media print{body{padding:0;}}
+    </style></head><body>
+    <h2>🛵 PEDIDO A DOMICILIO</h2>
+    <div class="sep"></div>
+    <div class="row"><span><b>Pedido</b></span><span>#${p.numero_pedido||p.id.slice(0,6)}</span></div>
+    <div class="row"><span><b>Fecha</b></span><span>${fecha}</span></div>
+    <div class="sep"></div>
+    <div class="row"><span><b>Cliente</b></span><span>${p.nombre_cliente}</span></div>
+    <div class="row"><span><b>Teléfono</b></span><span>${p.telefono_cliente||'—'}</span></div>
+    <div class="row"><span><b>Dirección</b></span><span style="text-align:right;max-width:180px;">${p.direccion_entrega||'—'}</span></div>
+    <div class="sep"></div>
+    <table>${items}</table>
+    <div class="sep"></div>
+    <div class="row total"><span>TOTAL</span><span>${parseFloat(p.total||0).toFixed(2)}€</span></div>
+    <div class="row"><span>Pago</span><span>${p.forma_pago||'Efectivo'}</span></div>
+    ${p.notas?`<div class="sep"></div><div style="font-size:12px;"><b>Notas:</b> ${p.notas}</div>`:''}
+    <script>window.onload=()=>window.print();<\/script>
+    </body></html>`;
+  const w = window.open('','_blank','width=350,height=600');
+  w.document.write(html);
+  w.document.close();
+}
+
 function abrirHistorialPedidos() {
   const hoy = new Date().toISOString().split('T')[0];
   document.getElementById('historialFecha').value = hoy;
@@ -2910,6 +2949,7 @@ async function loadHistorialPedidos() {
       <div style="text-align:right;">
         <div style="font-size:16px;font-weight:800;color:var(--accent);">${parseFloat(p.total||0).toFixed(2)}€</div>
         <div style="font-size:11px;font-weight:600;color:${estadoColor};margin-top:2px;">${p.estado === 'enviado' ? '✓ Enviado' : '🟡 Listo'}</div>
+        <button onclick='imprimirEtiquetaPanel(${JSON.stringify(p)})' style="margin-top:6px;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:4px 10px;font-size:12px;cursor:pointer;color:var(--text2);">🖨️ Etiqueta</button>
       </div>
     </div>`;
   }).join('');
